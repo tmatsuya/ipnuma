@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BaliProject version="2.0" title="top" device="LFE3-35EA-8FN484C" synthesis="synplify" default_implementation="impl1">
+    <Options/>
+    <Implementation title="impl1" dir="impl1" description="impl1" default_strategy="Strategy1">
+        <Options>
+            <Option name="HDL type" value="Verilog"/>
+            <Option name="def_top" value="top"/>
+            <Option name="top" value="top"/>
+        </Options>
+        <Source name="../rtl/ecp3/pcie_top.v" type="Verilog" type_short="Verilog">
+            <Options/>
+        </Source>
+        <Source name="../rtl/ecp3/pciedma_top.v" type="Verilog" type_short="Verilog">
+            <Options top_module="top"/>
+        </Source>
+        <Source name="../rtl/ipexpress/ecp3/pciex1/pcie_bb.v" type="Verilog" type_short="Verilog">
+            <Options/>
+        </Source>
+        <Source name="../rtl/ipexpress/ecp3/pciex1/pcie_eval/models/ecp3/pcs_pipe_bb.v" type="Verilog" type_short="Verilog">
+            <Options/>
+        </Source>
+        <Source name="impl1/impl1.xcf" type="Programming Project File" type_short="Programming">
+            <Options/>
+        </Source>
+        <Source name="top.lpf" type="Logic Preference" type_short="LPF">
+            <Options/>
+        </Source>
+        <Source name="top.sdc" type="Synplify Design Constraints File" type_short="SDC">
+            <Options/>
+        </Source>
+    </Implementation>
+    <Strategy name="Strategy1" file="Strategy1.sty"/>
+</BaliProject>
