@@ -179,20 +179,20 @@ reg [15:0] rx_reqid = 16'h0;
 reg [7:0]  rx_tag = 8'h0;
 reg [3:0]  rx_lastbe = 4'h0, rx_firstbe = 4'h0;
 reg [63:2] rx_addr = 62'h0000000000000000;
-reg        rx_tlp_valid = 1'b0;
+reg        rx_tlph_valid = 1'b0;
 
 always @(posedge clk_125 or negedge core_rst_n) begin
 	if (!core_rst_n) begin
 		rx_status <= RX_HEAD0;
 		rx_count <= 8'h0;
-		rx_tlp_valid <= 1'b0;
+		rx_tlph_valid <= 1'b0;
 		pd_num <= 8'h0;
 		ph_cr <= 1'b0;
 		pd_cr <= 1'b0;
 		nph_cr <= 1'b0;
 		npd_cr <= 1'b0;
 	end else begin
-		rx_tlp_valid <= 1'b0;
+		rx_tlph_valid <= 1'b0;
 		pd_num <= 8'h0;
 		ph_cr <= 1'b0;
 		pd_cr <= 1'b0;
@@ -290,7 +290,7 @@ always @(posedge clk_125 or negedge core_rst_n) begin
 			end
 			RX_REQ6: begin
 				rx_addr[31:16] <= rx_data[15:0];
-				rx_tlp_valid <= 1'b1;
+				rx_tlph_valid <= 1'b1;
 				rx_status <= RX_REQ7;
 			end
 			RX_REQ7: begin
@@ -340,7 +340,7 @@ reg [2:0]  tx_cplst = 3'h0;
 reg tx_bcm = 1'b0;
 reg [11:0] tx_bcount = 12'h0;
 reg [15:0] tx_data1;
-reg        tx_tlp_valid = 1'b0;
+reg        tx_tlph_valid = 1'b0;
 
 always @(posedge clk_125 or negedge core_rst_n) begin
 	if (!core_rst_n) begin
@@ -354,7 +354,7 @@ always @(posedge clk_125 or negedge core_rst_n) begin
 		tx_end <= 1'b0;
 		case ( tx_status )
 			TX_IDLE: begin
-				if ( tx_tlp_valid == 1'b1 ) begin
+				if ( tx_tlph_valid == 1'b1 ) begin
 					tx_req <= 1'b1;
 					tx_status <= TX_WAIT;
 				end
@@ -410,28 +410,29 @@ end
 //-----------------------------------------------------------------
 // Seaquencer
 //-----------------------------------------------------------------
-parameter [2:0]
-	SQ_IDLE  = 3'h0,
-	SQ_MREAD = 3'h1,
-	SQ_MWRITE= 3'h2,
-	SQ_COMP  = 3'h3;
-reg [2:0] sq_status = SQ_IDLE;
+parameter [3:0]
+	SQ_IDLE   = 3'h0,
+	SQ_MREADH = 3'h1,
+	SQ_MREADD = 3'h2,
+	SQ_MWRITEH= 3'h3,
+	SQ_COMP   = 3'h4;
+reg [3:0] sq_status = SQ_IDLE;
 always @(posedge clk_125 or negedge core_rst_n) begin
 	if (!core_rst_n) begin
-		tx_tlp_valid <= 1'b0;
+		tx_tlph_valid <= 1'b0;
 		sq_status <= SQ_IDLE;
 		reg_data[31:0] <= 32'hffffffff;
 	end else begin
-		tx_tlp_valid <= 1'b0;
+		tx_tlph_valid <= 1'b0;
 		case ( sq_status )
 			SQ_IDLE: begin
-				if ( rx_tlp_valid == 1'b1 ) begin
+				if ( rx_tlph_valid == 1'b1 ) begin
 					case ( rx_comm )
 						TLP_MR: begin
 							if ( rx_fmt[1] == 1'b0 )
-								sq_status <= SQ_MREAD;
+								sq_status <= SQ_MREADH;
 							else
-								sq_status <= SQ_MWRITE;
+								sq_status <= SQ_MWRITEH;
 						end
 						TLP_MRdLk: begin
 						end
@@ -450,14 +451,14 @@ always @(posedge clk_125 or negedge core_rst_n) begin
 					endcase
 				end
 			end
-			SQ_MREAD: begin
+			SQ_MREADH: begin
 				tx_fmt[1:0] <= 2'b10;
 				tx_type[4:0] <= 5'b01010;	// Cpl with data
 				tx_tc[2:0] <= 3'b000;
 				tx_td <= 1'b0;
 				tx_ep <= 1'b0;
 				tx_attr[1:0] <= 2'b00;
-				tx_length[9:0] <= 10'h1;
+				tx_length[9:0] <= rx_length;
 				tx_cplst[2:0] <= 3'b000;
 				tx_bcm <= 1'b0;
 				tx_bcount[11:0] <= 12'h1;
@@ -469,10 +470,13 @@ always @(posedge clk_125 or negedge core_rst_n) begin
 					4'b0100: tx_lowaddr[7:0] <= {rx_addr[7:2], 2'b10};
 					4'b1000: tx_lowaddr[7:0] <= {rx_addr[7:2], 2'b11};
 				endcase
-				tx_tlp_valid <= 1'b1;
+				tx_tlph_valid <= 1'b1;
+				sq_status <= SQ_MREADD;
+			end
+			SQ_MREADD: begin
 				sq_status <= SQ_IDLE;
 			end
-			SQ_MWRITE: begin
+			SQ_MWRITEH: begin
 				if ( rx_count[0] == 1'b0 ) begin
 					if ( rx_firstbe[0] == 1'b1)
 						reg_data[31:24] <= rx_data[15:8];
@@ -494,8 +498,8 @@ end
 assign tx_data = tx_data1;
 
 //assign led = 8'b11111111;
-assign led = ~(reset_n ? rx_addr[31:24] : rx_addr[23:16]);
-//assign led = ~(reset_n ? {rx_lastbe[3:0], rx_firstbe[3:0]} : rx_length[7:0]);
+//assign led = ~(reset_n ? rx_addr[31:24] : rx_addr[23:16]);
+assign led = ~(reset_n ? rx_length[7:0] : {rx_lastbe[3:0], rx_firstbe[3:0]} );
 assign led_out = 14'b11111111111111;
 
 endmodule
