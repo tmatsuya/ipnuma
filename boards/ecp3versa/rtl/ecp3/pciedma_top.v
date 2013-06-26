@@ -1,3 +1,4 @@
+`default_nettype none
 module top (
 	input rstn,
 	input FLIP_LANES,
@@ -17,7 +18,7 @@ module top (
 reg  [20:0] rstn_cnt;
 reg  sys_rst_n;
 wire sys_rst = ~sys_rst_n;
-wire [15:0] rx_data, tx_data,  tx_dout_wbm, tx_dout_ur;
+wire [15:0] rx_data, tx_data;
 wire [6:0] rx_bar_hit;
 wire [7:0] pd_num;
 wire ph_cr, pd_cr, nph_cr, npd_cr;
@@ -25,12 +26,18 @@ wire [7:0] bus_num ;
 wire [4:0] dev_num ;
 wire [2:0] func_num ;
 
+wire rx_st, rx_end;
+wire rx_us_req, rx_malf_tlp ;
+wire tx_req, tx_rdy, tx_st, tx_end;
+
 wire [8:0] tx_ca_ph ;
 wire [12:0] tx_ca_pd  ;
 wire [8:0] tx_ca_nph ;
 wire [12:0] tx_ca_npd ;
 wire [8:0] tx_ca_cplh;
 wire [12:0] tx_ca_cpld ;
+wire tx_ca_p_recheck ;
+wire tx_ca_cpl_recheck ;
 wire clk_125;
 // Reset management
 always @(posedge clk_125 or negedge rstn) begin
@@ -112,26 +119,33 @@ pcie_top pcie(
 	.ur_p_ext			( 1'b0 ),
 	.np_req_pend			( 1'b0 ),
 	.pme_status			( 1'b0 ),
-	.tx_rdy_vc0			( tx_rdy),
-	.tx_ca_ph_vc0			( tx_ca_ph),
-	.tx_ca_pd_vc0			( tx_ca_pd),
-	.tx_ca_nph_vc0			( tx_ca_nph),
+	.tx_rdy_vc0			( tx_rdy ),
+	.tx_ca_ph_vc0			( tx_ca_ph ),
+	.tx_ca_pd_vc0			( tx_ca_pd ),
+	.tx_ca_nph_vc0			( tx_ca_nph ),
 	.tx_ca_npd_vc0			( tx_ca_npd ),
 	.tx_ca_cplh_vc0			( tx_ca_cplh ),
 	.tx_ca_cpld_vc0			( tx_ca_cpld ),
 	.tx_ca_p_recheck_vc0		( tx_ca_p_recheck ),
 	.tx_ca_cpl_recheck_vc0		( tx_ca_cpl_recheck ),
-	.rx_data_vc0			( rx_data),
-	.rx_st_vc0			( rx_st),
-	.rx_end_vc0			( rx_end),
+	.rx_data_vc0			( rx_data ),
+	.rx_st_vc0			( rx_st ) ,
+	.rx_end_vc0			( rx_end ),
 	.rx_us_req_vc0			( rx_us_req ),
 	.rx_malf_tlp_vc0		( rx_malf_tlp ),
 	.rx_bar_hit			( rx_bar_hit ),
 	// From Config Registers
-	.bus_num			( bus_num  ),
-	.dev_num			( dev_num  ),
-	.func_num			( func_num  )
+	.bus_num			( bus_num ),
+	.dev_num			( dev_num ),
+	.func_num			( func_num )
 );
+
+wire slv_ce_i;
+wire slv_we_i;
+wire [19:1] slv_adr_i;
+wire [15:0] slv_dat_i;
+wire [1:0] slv_sel_i;
+wire [15:0] slv_dat_o;
 
 pcie_tlp inst_pcie_tlp (
 	// System
@@ -159,12 +173,12 @@ pcie_tlp inst_pcie_tlp (
 	.nph_cr(nph_cr),
 	.npd_cr(npd_cr),
 	// Slave bus
-	.slv_ce_i(),
-	.slv_we_i(),
-	.slv_adr_i(),
-	.slv_dat_i(),
-	.slv_sel_i(),
-	.slv_dat_o(),
+	.slv_ce_i(slv_ce_i),
+	.slv_we_i(slv_we_i),
+	.slv_adr_i(slv_adr_i),
+	.slv_dat_i(slv_dat_i),
+	.slv_sel_i(slv_sel_i),
+	.slv_dat_o(slv_dat_o),
 	// LED and Switches
 	.dipsw(dip_switch),
 	.led(led),
@@ -173,3 +187,4 @@ pcie_tlp inst_pcie_tlp (
 );
 
 endmodule
+`default_nettype wire

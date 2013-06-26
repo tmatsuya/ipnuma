@@ -1,3 +1,4 @@
+`default_nettype none
 module pcie_tlp (
 	// System
 	input pcie_clk,
@@ -15,7 +16,7 @@ module pcie_tlp (
 	output reg tx_req = 1'b0,
 	input tx_rdy,
 	output reg tx_st = 1'b0,
-	output reg tx_end = 1'b0,
+	output tx_end,
 	output [15:0] tx_data,
 	// Receive credits
 	output reg [7:0] pd_num = 8'h0,
@@ -26,7 +27,7 @@ module pcie_tlp (
 	// Slave bus
 	output slv_ce_i,
 	output slv_we_i,
-	output [31:2] slv_adr_i,
+	output [19:1] slv_adr_i,
 	output [15:0] slv_dat_i,
 	output [1:0] slv_sel_i,
 	input  [15:0] slv_dat_o,
@@ -37,7 +38,7 @@ module pcie_tlp (
 	input btn
 );
 
-reg [31:0] reg_data = 32'hffffffff;
+reg [31:0] reg_data;
 
 parameter [2:0]
 	TLP_MR   = 3'h0,
@@ -84,8 +85,10 @@ reg [7:0]  rx_tag = 8'h0;
 reg [3:0]  rx_lastbe = 4'h0, rx_firstbe = 4'h0;
 reg [63:2] rx_addr = 62'h0000000000000000;
 reg        rx_tlph_valid = 1'b0;
+reg [15:0] rx_data2 = 16'h0;
+reg rx_end2 = 1'b0;
 
-always @(posedge pcie_clk or posedge sys_rst) begin
+always @(posedge pcie_clk) begin
 	if (sys_rst) begin
 		rx_status <= RX_HEAD0;
 		rx_count <= 8'h0;
@@ -222,18 +225,15 @@ parameter [3:0]
 	TX_COMP3 = 4'h5,
 	TX_COMP4 = 4'h6,
 	TX_COMP5 = 4'h7,
-	TX_COMP6 = 4'h8,
-	TX_COMP7 = 4'h9,
-	TX_REQ2  = 4'ha,
-	TX_COMP  = 4'hf;
+	TX_REQ2  = 4'h8,
+	TX_DATA  = 4'h9;
 reg [3:0] tx_status = TX_IDLE;
-reg [7:0] tx_count = 8'h0;
 reg [1:0] tx_fmt = 2'b00;
 reg [4:0] tx_type = 5'b00000;
 reg [2:0] tx_tc = 2'b00;
 reg       tx_td = 1'b0, tx_ep = 1'b0;
 reg [1:0] tx_attr = 2'b00;
-reg [9:0] tx_length = 10'h0;
+reg [10:0] tx_length = 11'h0;
 reg [15:0] tx_reqid = 16'h0;
 reg [7:0]  tx_tag = 8'h0;
 reg [7:0]  tx_lowaddr = 8'h0;
@@ -242,19 +242,19 @@ reg [63:2] tx_addr = 62'h0000000000000000;
 reg [2:0]  tx_cplst = 3'h0;
 reg tx_bcm = 1'b0;
 reg [11:0] tx_bcount = 12'h0;
-reg [15:0] tx_data1;
+reg [15:0] tx_data1, tx_data2;
 reg        tx_tlph_valid = 1'b0;
+reg        tx_tlpd_ready = 1'b0;
+reg        tx_tlpd_done  = 1'b0;
 
-always @(posedge pcie_clk or posedge sys_rst) begin
+always @(posedge pcie_clk) begin
 	if (sys_rst) begin
 		tx_status <= TX_IDLE;
 		tx_req <= 1'b0;
 		tx_st <= 1'b0;
-		tx_end <= 1'b0;
-		tx_count <= 8'h0;
+	        tx_tlpd_ready <= 1'b0;
 	end else begin
 		tx_st <= 1'b0;
-		tx_end <= 1'b0;
 		case ( tx_status )
 			TX_IDLE: begin
 				if ( tx_tlph_valid == 1'b1 ) begin
@@ -274,7 +274,7 @@ always @(posedge pcie_clk or posedge sys_rst) begin
 				tx_status <= TX_HEAD1;
 			end
 			TX_HEAD1: begin
-				tx_data1[15:0] <= {tx_td, tx_ep, tx_attr[1:0], 2'b00, tx_length[9:0]};
+				tx_data1[15:0] <= {tx_td, tx_ep, tx_attr[1:0], 2'b00, tx_length[10:1]};
 				if ( tx_type[3] == 1'b0 )
 					tx_status <= TX_REQ2;
 				else
@@ -290,21 +290,19 @@ always @(posedge pcie_clk or posedge sys_rst) begin
 			end
 			TX_COMP4: begin
 				tx_data1[15:0] <= tx_reqid[15:0];
+				tx_tlpd_ready <= 1'b1;
 				tx_status <= TX_COMP5;
 			end
 			TX_COMP5: begin
 				tx_data1[15:0] <= { tx_tag[7:0], 1'b0, tx_lowaddr[6:0] };
-				tx_status <= TX_COMP6;
+				tx_status <= TX_DATA;
 			end
-			TX_COMP6: begin
-				tx_data1[15:0] <= reg_data[31:16];
-				tx_status <= TX_COMP7;
-			end
-			TX_COMP7: begin
-				tx_data1[15:0] <= reg_data[15:0];
-				tx_end <= 1'b1;
-				tx_status <= TX_IDLE;
-tx_count <= tx_count + 8'h1;
+			TX_DATA: begin
+				tx_data1[15:0] <= tx_data2[15:0];
+				if (tx_tlpd_done == 1'b1) begin
+					tx_status <= TX_IDLE;
+	        			tx_tlpd_ready <= 1'b0;
+				end
 			end
 		endcase
 	end
@@ -320,22 +318,29 @@ parameter [3:0]
 	SQ_MWRITEH= 3'h3,
 	SQ_COMP   = 3'h4;
 reg [3:0] sq_status = SQ_IDLE;
-always @(posedge pcie_clk or posedge sys_rst) begin
+always @(posedge pcie_clk) begin
 	if (sys_rst) begin
 		tx_tlph_valid <= 1'b0;
+		tx_tlpd_done  <= 1'b0;
 		sq_status <= SQ_IDLE;
-		reg_data[31:0] <= 32'hffffffff;
+		reg_data[31:0] <= 32'h89abcdef;
+		rx_data2[15:0] <= 16'h0;
+		rx_end2 <= 1'b0;
 	end else begin
 		tx_tlph_valid <= 1'b0;
+		tx_tlpd_done  <= 1'b0;
 		case ( sq_status )
 			SQ_IDLE: begin
 				if ( rx_tlph_valid == 1'b1 ) begin
 					case ( rx_comm )
 						TLP_MR: begin
-							if ( rx_fmt[1] == 1'b0 )
+							if ( rx_fmt[1] == 1'b0 ) begin
 								sq_status <= SQ_MREADH;
-							else
+							end else begin
+								rx_data2 <= rx_data;
+								rx_end2 <= 1'b0;
 								sq_status <= SQ_MWRITEH;
+							end
 						end
 						TLP_MRdLk: begin
 						end
@@ -361,7 +366,7 @@ always @(posedge pcie_clk or posedge sys_rst) begin
 				tx_td <= 1'b0;
 				tx_ep <= 1'b0;
 				tx_attr[1:0] <= 2'b00;
-				tx_length[9:0] <= rx_length;
+				tx_length[10:0] <= {rx_length[9:0], 1'b0};
 				tx_cplst[2:0] <= 3'b000;
 				tx_bcm <= 1'b0;
 				tx_bcount[11:0] <= 12'h1;
@@ -377,21 +382,33 @@ always @(posedge pcie_clk or posedge sys_rst) begin
 				sq_status <= SQ_MREADD;
 			end
 			SQ_MREADD: begin
-				sq_status <= SQ_IDLE;
+				if ( tx_tlpd_ready == 1'b1 ) begin
+					tx_length <= tx_length - 11'h1;
+					if ( tx_length == 11'h0 ) begin
+						sq_status <= SQ_IDLE;
+						tx_tlpd_done  <= 1'b1;
+					end
+					if ( tx_length[0] == 1'b0 )
+						tx_data2[15:0] <= reg_data[31:16];
+					else
+						tx_data2[15:0] <= reg_data[15: 0];
+				end
 			end
 			SQ_MWRITEH: begin
-				if ( rx_count[0] == 1'b0 ) begin
+				rx_data2 <= rx_data;
+				rx_end2 <= rx_end;
+				if ( rx_count[0] == 1'b1 ) begin
 					if ( rx_firstbe[0] == 1'b1)
-						reg_data[31:24] <= rx_data[15:8];
+						reg_data[31:24] <= rx_data2[15:8];
 					if ( rx_firstbe[1] == 1'b1)
-						reg_data[23:16] <= rx_data[7:0];
+						reg_data[23:16] <= rx_data2[7:0];
 				end else begin
 					if ( rx_firstbe[2] == 1'b1)
-						reg_data[15: 8] <= rx_data[15:8];
+						reg_data[15: 8] <= rx_data2[15:8];
 					if ( rx_firstbe[3] == 1'b1)
-						reg_data[ 7: 0] <= rx_data[7:0];
+						reg_data[ 7: 0] <= rx_data2[7:0];
 				end
-				if ( rx_end == 1'b1 )
+				if ( rx_end2 == 1'b1 )
 					sq_status <= SQ_IDLE;
 			end
 		endcase
@@ -399,6 +416,7 @@ always @(posedge pcie_clk or posedge sys_rst) begin
 end
 
 assign tx_data = tx_data1;
+assign tx_end = tx_tlpd_done;
 
 //assign led = 8'b11111111;
 //assign led = ~(btn ? rx_addr[31:24] : rx_addr[23:16]);
@@ -406,3 +424,4 @@ assign led = ~(btn ? rx_length[7:0] : {rx_lastbe[3:0], rx_firstbe[3:0]} );
 assign segled = 14'b11111111111111;
 
 endmodule
+`default_nettype wire
