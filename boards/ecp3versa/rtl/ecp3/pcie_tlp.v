@@ -25,11 +25,11 @@ module pcie_tlp (
 	output reg nph_cr = 1'b0,
 	output reg npd_cr = 1'b0,
 	// Slave bus
-	output slv_ce_i,
-	output slv_we_i,
-	output [19:1] slv_adr_i,
-	output [15:0] slv_dat_i,
-	output [1:0] slv_sel_i,
+	output reg slv_ce_i,
+	output reg slv_we_i,
+	output reg [19:1] slv_adr_i,
+	output reg [15:0] slv_dat_i,
+	output reg [1:0] slv_sel_i,
 	input  [15:0] slv_dat_o,
 	// LED and Switches
 	input [7:0] dipsw,
@@ -202,7 +202,7 @@ always @(posedge pcie_clk) begin
 			end
 			RX_REQ7: begin
 				rx_addr[15: 2] <= rx_data[15:2];
-				rx_count <= 8'h0;
+				rx_count <= 8'hff;
 				if ( rx_end == 1'b0 )
 					rx_status <= RX_REQ;
 			end
@@ -326,6 +326,11 @@ always @(posedge pcie_clk) begin
 		reg_data[31:0] <= 32'h89abcdef;
 		rx_data2[15:0] <= 16'h0;
 		rx_end2 <= 1'b0;
+		slv_ce_i <= 1'b0;
+		slv_we_i <= 1'b0;
+		slv_adr_i <= 20'h0;
+		slv_dat_i <= 16'b0;
+		slv_sel_i <= 2'b00;
 	end else begin
 		tx_tlph_valid <= 1'b0;
 		tx_tlpd_done  <= 1'b0;
@@ -397,7 +402,7 @@ always @(posedge pcie_clk) begin
 			SQ_MWRITEH: begin
 				rx_data2 <= rx_data;
 				rx_end2 <= rx_end;
-				if ( rx_count[0] == 1'b1 ) begin
+				if ( rx_count[0] == 1'b0 ) begin
 					if ( rx_firstbe[0] == 1'b1)
 						reg_data[31:24] <= rx_data2[15:8];
 					if ( rx_firstbe[1] == 1'b1)

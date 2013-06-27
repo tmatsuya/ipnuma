@@ -186,5 +186,15 @@ pcie_tlp inst_pcie_tlp (
 	.btn(reset_n)
 );
 
+ram_dq ram_dq_inst (
+	.Clock(clk_125),
+	.ClockEn(slv_ce_i),
+	.Reset(sys_rst),
+	.WE(slv_we_i),
+	.Address(slv_adr_i),
+	.Data(slv_dat_i),
+	.Q(slv_dat_o)
+);
+
 endmodule
 `default_nettype wire
