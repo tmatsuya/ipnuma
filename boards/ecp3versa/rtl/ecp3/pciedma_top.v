@@ -234,7 +234,7 @@ ram_dq ram_dq_inst2 (
 	.Q(slv_dat2_o)
 );
 
-assign slv_dat_o = slv_bar_i[0] ? slv_dat0_o : slv_bar_i[1] ? slv_dat1_o : slv_bar_i[2] ? slv_dat2_o : 16'h0;
+assign slv_dat_o = ( {16{slv_bar_i[0]}} & slv_dat0_o ) | ( {16{slv_bar_i[1]}} & slv_dat1_o ) | ( {16{slv_bar_i[2]}} & slv_dat2_o ) ; 
 
 endmodule
 `default_nettype wire

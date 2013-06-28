@@ -107,7 +107,7 @@ always @(posedge pcie_clk) begin
 		if ( rx_end == 1'b1 ) begin
 			case ( rx_comm )
 				TLP_MR, TLP_MRdLk: begin
-					if ( rx_bar_hit[0] || rx_bar_hit[1] ) begin
+					if ( rx_bar_hit[6:0] != 7'b0000000 ) begin
 						if ( rx_fmt[1] == 1'b0 ) begin
 							nph_cr  <= 1'b1;
 						end else begin
