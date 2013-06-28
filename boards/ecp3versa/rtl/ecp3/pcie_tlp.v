@@ -73,7 +73,6 @@ parameter [3:0]
 	RX_COMP7 = 4'he,
 	RX_COMP  = 4'hf;
 reg [3:0] rx_status = RX_HEAD0;
-reg [7:0] rx_count = 8'h0;
 reg [1:0] rx_fmt = 2'b00;
 reg [4:0] rx_type = 5'b00000;
 reg [2:0] rx_tc = 2'b00;
@@ -91,7 +90,6 @@ reg rx_end2 = 1'b0;
 always @(posedge pcie_clk) begin
 	if (sys_rst) begin
 		rx_status <= RX_HEAD0;
-		rx_count <= 8'h0;
 		rx_tlph_valid <= 1'b0;
 		pd_num <= 8'h0;
 		ph_cr <= 1'b0;
@@ -202,12 +200,10 @@ always @(posedge pcie_clk) begin
 			end
 			RX_REQ7: begin
 				rx_addr[15: 2] <= rx_data[15:2];
-				rx_count <= 8'hff;
 				if ( rx_end == 1'b0 )
 					rx_status <= RX_REQ;
 			end
 			RX_REQ: begin
-				rx_count <= rx_count + 8'h1;
 			end
 		endcase
 	 end
@@ -282,6 +278,7 @@ always @(posedge pcie_clk) begin
 			end
 			TX_COMP2: begin
 				tx_data1[15:0] <= {bus_num, dev_num, func_num};	// CplID
+				tx_tlpd_ready <= 1'b1;
 				tx_status <= TX_COMP3;
 			end
 			TX_COMP3: begin
@@ -290,7 +287,6 @@ always @(posedge pcie_clk) begin
 			end
 			TX_COMP4: begin
 				tx_data1[15:0] <= tx_reqid[15:0];
-				tx_tlpd_ready <= 1'b1;
 				tx_status <= TX_COMP5;
 			end
 			TX_COMP5: begin
@@ -316,7 +312,8 @@ parameter [3:0]
 	SQ_MREADH = 3'h1,
 	SQ_MREADD = 3'h2,
 	SQ_MWRITEH= 3'h3,
-	SQ_COMP   = 3'h4;
+	SQ_MWRITED= 3'h4,
+	SQ_COMP   = 3'h7;
 reg [3:0] sq_status = SQ_IDLE;
 always @(posedge pcie_clk) begin
 	if (sys_rst) begin
@@ -334,6 +331,10 @@ always @(posedge pcie_clk) begin
 	end else begin
 		tx_tlph_valid <= 1'b0;
 		tx_tlpd_done  <= 1'b0;
+		rx_data2 <= rx_data;
+		rx_end2 <= rx_end;
+		slv_ce_i <= 1'b0;
+		slv_we_i <= 1'b0;
 		case ( sq_status )
 			SQ_IDLE: begin
 				if ( rx_tlph_valid == 1'b1 ) begin
@@ -342,8 +343,6 @@ always @(posedge pcie_clk) begin
 							if ( rx_fmt[1] == 1'b0 ) begin
 								sq_status <= SQ_MREADH;
 							end else begin
-								rx_data2 <= rx_data;
-								rx_end2 <= 1'b0;
 								sq_status <= SQ_MWRITEH;
 							end
 						end
@@ -371,7 +370,6 @@ always @(posedge pcie_clk) begin
 				tx_td <= 1'b0;
 				tx_ep <= 1'b0;
 				tx_attr[1:0] <= 2'b00;
-				tx_length[10:0] <= {rx_length[9:0], 1'b0};
 				tx_cplst[2:0] <= 3'b000;
 				tx_bcm <= 1'b0;
 				tx_bcount[11:0] <= 12'h1;
@@ -383,35 +381,50 @@ always @(posedge pcie_clk) begin
 					4'b0100: tx_lowaddr[7:0] <= {rx_addr[7:2], 2'b10};
 					4'b1000: tx_lowaddr[7:0] <= {rx_addr[7:2], 2'b11};
 				endcase
+				tx_length[10:0] <= {rx_length[9:0], 1'b1};
+				slv_adr_i[19:1] <= ({rx_addr[19:2],1'b0} - 19'h1);
 				tx_tlph_valid <= 1'b1;
 				sq_status <= SQ_MREADD;
 			end
 			SQ_MREADD: begin
 				if ( tx_tlpd_ready == 1'b1 ) begin
 					tx_length <= tx_length - 11'h1;
-					if ( tx_length == 11'h0 ) begin
+					if ( tx_length[10:1] != 10'h000)
+						slv_adr_i[19:1] <= slv_adr_i[19:1] + 19'h1;
+					if ( tx_length == 11'h7ff ) begin
 						sq_status <= SQ_IDLE;
 						tx_tlpd_done  <= 1'b1;
-					end
-					if ( tx_length[0] == 1'b0 )
-						tx_data2[15:0] <= reg_data[31:16];
-					else
-						tx_data2[15:0] <= reg_data[15: 0];
+					end else
+						slv_ce_i <= 1'b1;
+					tx_data2[15:0] <= slv_dat_o[15:0];
 				end
 			end
 			SQ_MWRITEH: begin
-				rx_data2 <= rx_data;
-				rx_end2 <= rx_end;
-				if ( rx_count[0] == 1'b0 ) begin
-					if ( rx_firstbe[0] == 1'b1)
-						reg_data[31:24] <= rx_data2[15:8];
-					if ( rx_firstbe[1] == 1'b1)
-						reg_data[23:16] <= rx_data2[7:0];
-				end else begin
-					if ( rx_firstbe[2] == 1'b1)
-						reg_data[15: 8] <= rx_data2[15:8];
-					if ( rx_firstbe[3] == 1'b1)
-						reg_data[ 7: 0] <= rx_data2[7:0];
+				tx_length[10:0] <= 11'h0;
+				slv_adr_i[19:1] <= ({rx_addr[19:2],1'b0} - 19'h1);
+				sq_status <= SQ_MWRITED;
+			end
+			SQ_MWRITED: begin
+				tx_length <= tx_length + 11'h1;
+				slv_adr_i[19:1] <= slv_adr_i[19:1] + 19'h1;
+				slv_ce_i <= 1'b1;
+				slv_we_i <= 1'b1;
+				slv_dat_i <= rx_data2[15:0];
+				if ( tx_length[10:1] == 10'h0 ) begin
+					if ( tx_length[0] == 1'b0 ) begin
+						slv_sel_i[1:0] <= { rx_firstbe[0], rx_firstbe[1] };
+					end else begin
+						slv_sel_i[1:0] <= { rx_firstbe[2], rx_firstbe[3] };
+					end
+				end else if ( tx_length[10:1] == (rx_length[9:0] - 10'h1) )
+					if ( tx_length[0] == 1'b0 ) begin
+						slv_sel_i[1:0] <= { rx_lastbe[0], rx_lastbe[1] };
+					end else begin
+						slv_sel_i[1:0] <= { rx_lastbe[2], rx_lastbe[3] };
+						sq_status <= SQ_IDLE;
+					end
+				else begin
+					slv_sel_i[1:0] <= 2'b11;
 				end
 				if ( rx_end2 == 1'b1 )
 					sq_status <= SQ_IDLE;

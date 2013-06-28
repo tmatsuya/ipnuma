@@ -4,18 +4,19 @@ module tb;
     reg Clock = 0;
     reg ClockEn = 0;
     reg Reset = 0;
+    reg [1:0] ByteEn = 2'b0;
     reg WE = 0;
     reg [8:0] Address = 9'b0;
     reg [15:0] Data = 16'b0;
     wire [15:0] Q;
 
-    integer i0 = 0, i1 = 0, i2 = 0, i3 = 0, i4 = 0, i5 = 0, i6 = 0;
+    integer i0 = 0, i1 = 0, i2 = 0, i3 = 0, i4 = 0, i5 = 0, i6 = 0, i7 = 0;
 
     GSR GSR_INST (.GSR(1'b1));
     PUR PUR_INST (.PUR(1'b1));
 
-    ram_dq u1 (.Clock(Clock), .ClockEn(ClockEn), .Reset(Reset), .WE(WE), 
-        .Address(Address), .Data(Data), .Q(Q)
+    ram_dq u1 (.Clock(Clock), .ClockEn(ClockEn), .Reset(Reset), .ByteEn(ByteEn), 
+        .WE(WE), .Address(Address), .Data(Data), .Q(Q)
     );
 
     always
@@ -38,7 +39,7 @@ module tb;
     begin
        WE <= 1'b0;
       @(Reset == 1'b0);
-      for (i4 = 0; i4 < 515; i4 = i4 + 1) begin
+      for (i5 = 0; i5 < 515; i5 = i5 + 1) begin
         @(posedge Clock);
         #1  WE <= 1'b1;
       end
@@ -49,7 +50,7 @@ module tb;
        Address <= 0;
       #100;
       @(Reset == 1'b0);
-      for (i5 = 0; i5 < 1030; i5 = i5 + 1) begin
+      for (i6 = 0; i6 < 1030; i6 = i6 + 1) begin
         @(posedge Clock);
         #1  Address <= Address + 1'b1;
       end
@@ -59,7 +60,7 @@ module tb;
        Data <= 0;
       #100;
       @(Reset == 1'b0);
-      for (i6 = 0; i6 < 515; i6 = i6 + 1) begin
+      for (i7 = 0; i7 < 515; i7 = i7 + 1) begin
         @(posedge Clock);
         #1  Data <= Data + 1'b1;
       end

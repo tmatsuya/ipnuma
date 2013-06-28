@@ -190,8 +190,9 @@ ram_dq ram_dq_inst (
 	.Clock(clk_125),
 	.ClockEn(slv_ce_i),
 	.Reset(sys_rst),
+	.ByteEn(slv_sel_i),
 	.WE(slv_we_i),
-	.Address(slv_adr_i),
+	.Address(slv_adr_i[9:1]),
 	.Data(slv_dat_i),
 	.Q(slv_dat_o)
 );

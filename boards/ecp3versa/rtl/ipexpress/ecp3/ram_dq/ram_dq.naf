@@ -1,6 +1,8 @@
 Clock  i
 ClockEn  i
 Reset  i
+ByteEn[1]  i
+ByteEn[0]  i
 WE  i
 Address[8]  i
 Address[7]  i
