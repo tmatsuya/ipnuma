@@ -6,7 +6,7 @@ module tb;
     reg Reset = 0;
     reg [1:0] ByteEn = 2'b0;
     reg WE = 0;
-    reg [8:0] Address = 9'b0;
+    reg [13:0] Address = 14'b0;
     reg [15:0] Data = 16'b0;
     wire [15:0] Q;
 
@@ -39,7 +39,7 @@ module tb;
     begin
        WE <= 1'b0;
       @(Reset == 1'b0);
-      for (i5 = 0; i5 < 515; i5 = i5 + 1) begin
+      for (i5 = 0; i5 < 16387; i5 = i5 + 1) begin
         @(posedge Clock);
         #1  WE <= 1'b1;
       end
@@ -50,7 +50,7 @@ module tb;
        Address <= 0;
       #100;
       @(Reset == 1'b0);
-      for (i6 = 0; i6 < 1030; i6 = i6 + 1) begin
+      for (i6 = 0; i6 < 32774; i6 = i6 + 1) begin
         @(posedge Clock);
         #1  Address <= Address + 1'b1;
       end
@@ -60,7 +60,7 @@ module tb;
        Data <= 0;
       #100;
       @(Reset == 1'b0);
-      for (i7 = 0; i7 < 515; i7 = i7 + 1) begin
+      for (i7 = 0; i7 < 16387; i7 = i7 + 1) begin
         @(posedge Clock);
         #1  Data <= Data + 1'b1;
       end

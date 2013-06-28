@@ -4,6 +4,11 @@ Reset  i
 ByteEn[1]  i
 ByteEn[0]  i
 WE  i
+Address[13]  i
+Address[12]  i
+Address[11]  i
+Address[10]  i
+Address[9]  i
 Address[8]  i
 Address[7]  i
 Address[6]  i

@@ -3,7 +3,7 @@ Starting process: Module
 Starting process: 
 
 SCUBA, Version Diamond_2.2_Production (99)
-Fri Jun 28 20:58:35 2013
+Fri Jun 28 23:31:06 2013
 
 Copyright (c) 1991-1994 by NeoCAD Inc. All rights reserved.
 Copyright (c) 1995 AT&T Corp.   All rights reserved.
@@ -13,12 +13,12 @@ Copyright (c) 2002-2013 Lattice Semiconductor Corporation,  All rights reserved.
 
 BEGIN SCUBA Module Synthesis
 
-    Issued command   : C:\lscc\diamond\2.2\ispfpga\bin\nt\scuba.exe -w -n ram_dq -lang verilog -synth synplify -bus_exp 7 -bb -arch ep5c00 -type ramdq -device LFE3-35EA -addr_width 9 -data_width 16 -num_words 512 -writemode NORMAL -byte 8 -cascade 11 -e 
+    Issued command   : C:\lscc\diamond\2.2\ispfpga\bin\nt\scuba.exe -w -n ram_dq -lang verilog -synth synplify -bus_exp 7 -bb -arch ep5c00 -type ramdq -device LFE3-35EA -addr_width 14 -data_width 16 -num_words 16384 -writemode NORMAL -byte 8 -cascade 11 -e 
     Circuit name     : ram_dq
     Module type      : RAM_DQ
     Module Version   : 7.2
     Ports            : 
-	Inputs       : Clock, ClockEn, Reset, ByteEn[1:0], WE, Address[8:0], Data[15:0]
+	Inputs       : Clock, ClockEn, Reset, ByteEn[1:0], WE, Address[13:0], Data[15:0]
 	Outputs      : Q[15:0]
     I/O buffer       : not inserted
     EDIF output      : suppressed
@@ -29,7 +29,9 @@ BEGIN SCUBA Module Synthesis
     Bus notation     : big endian
     Report output    : ram_dq.srp
     Estimated Resource Usage:
-            EBR : 1
+            LUT : 81
+            EBR : 16
+            Reg : 4
 
 END   SCUBA Module Synthesis
 

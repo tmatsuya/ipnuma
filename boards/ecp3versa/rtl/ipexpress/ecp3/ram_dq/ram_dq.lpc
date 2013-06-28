@@ -17,7 +17,7 @@ ModuleName=ram_dq
 SourceFormat=Verilog HDL
 ParameterFileVersion=1.0
 Date=06/28/2013
-Time=20:58:35
+Time=23:31:06
 
 [Parameters]
 Verilog=1
@@ -27,7 +27,7 @@ Destination=Synplicity
 Expression=BusA(0 to 7)
 Order=Big Endian [MSB:LSB]
 IO=0
-Address=512
+Address=16384
 Data=16
 enByte=1
 ByteSize=8

@@ -10,7 +10,7 @@ module top (
 	output hdoutn,
 	input [7:0] dip_switch,
 	output [7:0] led,
-	output [13:0] led_out,
+	output reg [13:0] led_out,
 	output dp,
 	input reset_n
 );
@@ -140,12 +140,14 @@ pcie_top pcie(
 	.func_num			( func_num )
 );
 
+wire [6:0] slv_bar_i;
 wire slv_ce_i;
 wire slv_we_i;
 wire [19:1] slv_adr_i;
 wire [15:0] slv_dat_i;
 wire [1:0] slv_sel_i;
-wire [15:0] slv_dat_o;
+wire [15:0] slv_dat_o, slv_dat1_o, slv_dat2_o;
+reg [15:0] slv_dat0_o;
 
 pcie_tlp inst_pcie_tlp (
 	// System
@@ -173,6 +175,7 @@ pcie_tlp inst_pcie_tlp (
 	.nph_cr(nph_cr),
 	.npd_cr(npd_cr),
 	// Slave bus
+	.slv_bar_i(slv_bar_i),
 	.slv_ce_i(slv_ce_i),
 	.slv_we_i(slv_we_i),
 	.slv_adr_i(slv_adr_i),
@@ -182,20 +185,56 @@ pcie_tlp inst_pcie_tlp (
 	// LED and Switches
 	.dipsw(dip_switch),
 	.led(led),
-	.segled(led_out),
+	.segled(),
 	.btn(reset_n)
 );
 
-ram_dq ram_dq_inst (
+always @(posedge clk_125) begin
+	if (sys_rst == 1'b1) begin
+		slv_dat0_o <= 16'h0;
+	end else begin
+		if (slv_bar_i[0] == 1'b1) begin
+			case (slv_adr_i[9:1])
+				9'h000: begin
+					if (slv_we_i) begin
+						if (slv_sel_i[0])
+							led_out[7:0] <= slv_dat_i[7:0];
+						if (slv_sel_i[1])
+							led_out[13:8] <= slv_dat_i[13:8];
+					end else
+						slv_dat0_o <= {2'b0, led_out[13:0]};
+				end
+				default: begin
+					slv_dat0_o <= 16'h0;
+				end
+			endcase
+		end
+	end
+end
+
+ram_dq ram_dq_inst1 (
 	.Clock(clk_125),
-	.ClockEn(slv_ce_i),
+	.ClockEn(slv_ce_i & slv_bar_i[1]),
 	.Reset(sys_rst),
 	.ByteEn(slv_sel_i),
 	.WE(slv_we_i),
-	.Address(slv_adr_i[9:1]),
+	.Address(slv_adr_i[14:1]),
 	.Data(slv_dat_i),
-	.Q(slv_dat_o)
+	.Q(slv_dat1_o)
 );
+
+ram_dq ram_dq_inst2 (
+	.Clock(clk_125),
+	.ClockEn(slv_ce_i & slv_bar_i[2]),
+	.Reset(sys_rst),
+	.ByteEn(slv_sel_i),
+	.WE(slv_we_i),
+	.Address(slv_adr_i[14:1]),
+	.Data(slv_dat_i),
+	.Q(slv_dat2_o)
+);
+
+assign slv_dat_o = slv_bar_i[0] ? slv_dat0_o : slv_bar_i[1] ? slv_dat1_o : slv_bar_i[2] ? slv_dat2_o : 16'h0;
 
 endmodule
 `default_nettype wire

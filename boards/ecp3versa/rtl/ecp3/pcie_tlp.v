@@ -25,6 +25,7 @@ module pcie_tlp (
 	output reg nph_cr = 1'b0,
 	output reg npd_cr = 1'b0,
 	// Slave bus
+	output reg [6:0] slv_bar_i,
 	output reg slv_ce_i,
 	output reg slv_we_i,
 	output reg [19:1] slv_adr_i,
@@ -323,6 +324,7 @@ always @(posedge pcie_clk) begin
 		reg_data[31:0] <= 32'h89abcdef;
 		rx_data2[15:0] <= 16'h0;
 		rx_end2 <= 1'b0;
+		slv_bar_i <= 7'h0;
 		slv_ce_i <= 1'b0;
 		slv_we_i <= 1'b0;
 		slv_adr_i <= 20'h0;
@@ -337,9 +339,11 @@ always @(posedge pcie_clk) begin
 		slv_we_i <= 1'b0;
 		case ( sq_status )
 			SQ_IDLE: begin
+				slv_bar_i <= 7'h0;
 				if ( rx_tlph_valid == 1'b1 ) begin
 					case ( rx_comm )
 						TLP_MR: begin
+							slv_bar_i <= rx_bar_hit;
 							if ( rx_fmt[1] == 1'b0 ) begin
 								sq_status <= SQ_MREADH;
 							end else begin

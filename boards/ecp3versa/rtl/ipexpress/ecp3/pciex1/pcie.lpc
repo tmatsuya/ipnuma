@@ -17,7 +17,7 @@ ModuleName=pcie
 SourceFormat=Verilog HDL
 ParameterFileVersion=1.0
 Date=06/28/2013
-Time=21:57:11
+Time=23:49:02
 
 [Parameters]
 LANE_WIDTH=X1 Native
@@ -47,10 +47,10 @@ BIST=00
 HEADER_TYPE=00
 BAR0=fffc0000
 EN_BAR0=1
-BAR1=fffc0000
+BAR1=fffc0008
 EN_BAR1=1
-BAR2=00000000
-EN_BAR2=0
+BAR2=fffc0000
+EN_BAR2=1
 BAR3=00000000
 EN_BAR3=0
 BAR4=00000000

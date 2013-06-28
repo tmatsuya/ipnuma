@@ -27,9 +27,10 @@
 `define INIT_REG_00C  32'h00000000
 `define	EN_BAR0
 `define	EN_BAR1
+`define	EN_BAR2
 `define INIT_REG_010  32'hfffc0000
-`define INIT_REG_014  32'hfffc0000
-`define INIT_REG_018  32'h00000000
+`define INIT_REG_014  32'hfffc0008
+`define INIT_REG_018  32'hfffc0000
 `define INIT_REG_01C  32'h00000000
 `define INIT_REG_020  32'h00000000
 `define INIT_REG_024  32'h00000000
