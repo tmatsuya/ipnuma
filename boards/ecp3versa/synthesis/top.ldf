@@ -13,16 +13,13 @@
         <Source name="../rtl/ecp3/pciedma_top.v" type="Verilog" type_short="Verilog">
             <Options top_module="top"/>
         </Source>
-        <Source name="../rtl/ipexpress/ecp3/pciex1/pcie_bb.v" type="Verilog" type_short="Verilog">
-            <Options/>
-        </Source>
-        <Source name="../rtl/ipexpress/ecp3/pciex1/pcie_eval/models/ecp3/pcs_pipe_bb.v" type="Verilog" type_short="Verilog">
-            <Options/>
-        </Source>
         <Source name="../rtl/ecp3/pcie_tlp.v" type="Verilog" type_short="Verilog">
             <Options/>
         </Source>
         <Source name="../rtl/ipexpress/ecp3/ram_dq/ram_dq.ipx" type="IPX_Module" type_short="IPX">
+            <Options/>
+        </Source>
+        <Source name="../rtl/ipexpress/ecp3/pciex1/pcie.ipx" type="IPX_Module" type_short="IPX">
             <Options/>
         </Source>
         <Source name="impl1/impl1.xcf" type="Programming Project File" type_short="Programming">
