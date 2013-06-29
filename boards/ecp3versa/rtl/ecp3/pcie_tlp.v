@@ -24,6 +24,14 @@ module pcie_tlp (
 	output reg pd_cr = 1'b0,
 	output reg nph_cr = 1'b0,
 	output reg npd_cr = 1'b0,
+	// Master bus
+	input  mst_req_o,
+	output mst_rdy_i,
+	input  [15:0] mst_dat_o,
+	output mst_st_i,
+	output mst_ce_i,
+	output [15:0] mst_dat_i,
+	output [1:0] mst_sel_i,
 	// Slave bus
 	output reg [6:0] slv_bar_i,
 	output reg slv_ce_i,

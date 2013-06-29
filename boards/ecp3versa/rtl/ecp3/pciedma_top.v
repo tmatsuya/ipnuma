@@ -214,7 +214,7 @@ end
 
 ram_dq ram_dq_inst1 (
 	.Clock(clk_125),
-	.ClockEn(slv_ce_i & slv_bar_i[1]),
+	.ClockEn(slv_ce_i & slv_bar_i[2]),
 	.Reset(sys_rst),
 	.ByteEn(slv_sel_i),
 	.WE(slv_we_i),
@@ -225,7 +225,7 @@ ram_dq ram_dq_inst1 (
 
 ram_dq ram_dq_inst2 (
 	.Clock(clk_125),
-	.ClockEn(slv_ce_i & slv_bar_i[2]),
+	.ClockEn(slv_ce_i & slv_bar_i[4]),
 	.Reset(sys_rst),
 	.ByteEn(slv_sel_i),
 	.WE(slv_we_i),
@@ -234,7 +234,7 @@ ram_dq ram_dq_inst2 (
 	.Q(slv_dat2_o)
 );
 
-assign slv_dat_o = ( {16{slv_bar_i[0]}} & slv_dat0_o ) | ( {16{slv_bar_i[1]}} & slv_dat1_o ) | ( {16{slv_bar_i[2]}} & slv_dat2_o ) ; 
+assign slv_dat_o = ( {16{slv_bar_i[0]}} & slv_dat0_o ) | ( {16{slv_bar_i[2]}} & slv_dat1_o ) | ( {16{slv_bar_i[4]}} & slv_dat2_o ) ; 
 
 endmodule
 `default_nettype wire
