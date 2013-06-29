@@ -223,18 +223,7 @@ ram_dq ram_dq_inst1 (
 	.Q(slv_dat1_o)
 );
 
-ram_dq ram_dq_inst2 (
-	.Clock(clk_125),
-	.ClockEn(slv_ce_i & slv_bar_i[4]),
-	.Reset(sys_rst),
-	.ByteEn(slv_sel_i),
-	.WE(slv_we_i),
-	.Address(slv_adr_i[14:1]),
-	.Data(slv_dat_i),
-	.Q(slv_dat2_o)
-);
-
-assign slv_dat_o = ( {16{slv_bar_i[0]}} & slv_dat0_o ) | ( {16{slv_bar_i[2]}} & slv_dat1_o ) | ( {16{slv_bar_i[4]}} & slv_dat2_o ) ; 
+assign slv_dat_o = ( {16{slv_bar_i[0]}} & slv_dat0_o ) | ( {16{slv_bar_i[2]}} & slv_dat1_o );
 
 endmodule
 `default_nettype wire

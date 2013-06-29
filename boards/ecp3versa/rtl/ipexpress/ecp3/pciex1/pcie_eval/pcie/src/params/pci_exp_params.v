@@ -29,14 +29,12 @@
 `define	EN_BAR1
 `define	EN_BAR2
 `define	EN_BAR3
-`define	EN_BAR4
-`define	EN_BAR5
 `define INIT_REG_010  32'hfffc0000
 `define INIT_REG_014  32'h00000000
-`define INIT_REG_018  32'hfffc000c
+`define INIT_REG_018  32'hff00000c
 `define INIT_REG_01C  32'hffffffff
-`define INIT_REG_020  32'hfffc0004
-`define INIT_REG_024  32'hffffffff
+`define INIT_REG_020  32'h00000000
+`define INIT_REG_024  32'h00000000
 `define INIT_REG_028  32'h00000000
 `define INIT_REG_02C  32'h00000000
 `define INIT_REG_030  32'h00000000
