@@ -47,8 +47,6 @@ module pcie_tlp (
 	input btn
 );
 
-reg [31:0] reg_data;
-
 parameter [2:0]
 	TLP_MR   = 3'h0,
 	TLP_MRdLk= 3'h1,
@@ -329,7 +327,6 @@ always @(posedge pcie_clk) begin
 		tx_tlph_valid <= 1'b0;
 		tx_tlpd_done  <= 1'b0;
 		sq_status <= SQ_IDLE;
-		reg_data[31:0] <= 32'h89abcdef;
 		rx_data2[15:0] <= 16'h0;
 		rx_end2 <= 1'b0;
 		slv_bar_i <= 7'h0;
