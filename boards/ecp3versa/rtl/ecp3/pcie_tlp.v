@@ -91,6 +91,8 @@ reg [7:0]  rx_tag = 8'h0;
 reg [3:0]  rx_lastbe = 4'h0, rx_firstbe = 4'h0;
 reg [63:2] rx_addr = 62'h0000000000000000;
 reg        rx_tlph_valid = 1'b0;
+reg [15:0] rx_data2 = 16'h0;
+reg rx_end2 = 1'b0;
 
 always @(posedge pcie_clk) begin
 	if (sys_rst) begin
@@ -101,6 +103,8 @@ always @(posedge pcie_clk) begin
 		pd_cr <= 1'b0;
 		nph_cr <= 1'b0;
 		npd_cr <= 1'b0;
+		rx_data2[15:0] <= 16'h0;
+		rx_end2 <= 1'b0;
 	end else begin
 		rx_tlph_valid <= 1'b0;
 		pd_num <= 8'h0;
@@ -108,6 +112,8 @@ always @(posedge pcie_clk) begin
 		pd_cr <= 1'b0;
 		nph_cr <= 1'b0;
 		npd_cr <= 1'b0;
+		rx_data2 <= rx_data;
+		rx_end2 <= rx_end;
 		if ( rx_end == 1'b1 ) begin
 			case ( rx_comm )
 				TLP_MR, TLP_MRdLk: begin
@@ -320,15 +326,11 @@ parameter [3:0]
 	SLV_MWRITED= 3'h4,
 	SLV_COMP   = 3'h7;
 reg [3:0] slv_status = SLV_IDLE;
-reg [15:0] rx_data2 = 16'h0;
-reg rx_end2 = 1'b0;
 always @(posedge pcie_clk) begin
 	if (sys_rst) begin
 		tx1_tlph_valid <= 1'b0;
 		tx1_tlpd_done  <= 1'b0;
 		slv_status <= SLV_IDLE;
-		rx_data2[15:0] <= 16'h0;
-		rx_end2 <= 1'b0;
 		slv_bar_i <= 7'h0;
 		slv_ce_i <= 1'b0;
 		slv_we_i <= 1'b0;
@@ -338,8 +340,6 @@ always @(posedge pcie_clk) begin
 	end else begin
 		tx1_tlph_valid <= 1'b0;
 		tx1_tlpd_done  <= 1'b0;
-		rx_data2 <= rx_data;
-		rx_end2 <= rx_end;
 		slv_ce_i <= 1'b0;
 		slv_we_i <= 1'b0;
 		case ( slv_status )
