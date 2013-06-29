@@ -192,8 +192,9 @@ pcie_tlp inst_pcie_tlp (
 always @(posedge clk_125) begin
 	if (sys_rst == 1'b1) begin
 		slv_dat0_o <= 16'h0;
+		led_out[13:0] <= 14'h3fff;
 	end else begin
-		if (slv_bar_i[0] == 1'b1) begin
+		if (slv_bar_i[0] & slv_ce_i) begin
 			case (slv_adr_i[9:1])
 				9'h000: begin
 					if (slv_we_i) begin
@@ -205,7 +206,7 @@ always @(posedge clk_125) begin
 						slv_dat0_o <= {2'b0, led_out[13:0]};
 				end
 				default: begin
-					slv_dat0_o <= 16'h0;
+					slv_dat0_o <= slv_adr_i[16:1];
 				end
 			endcase
 		end
