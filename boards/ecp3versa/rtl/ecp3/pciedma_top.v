@@ -10,7 +10,7 @@ module top (
 	output hdoutn,
 	input [7:0] dip_switch,
 	output [7:0] led,
-	output reg [13:0] led_out,
+	output [13:0] led_out,
 	output dp,
 	input reset_n
 );
@@ -69,7 +69,7 @@ pcie_top pcie(
 	.vendor_id			(16'h3776),
 	.device_id			(16'h8010),
 	.rev_id				(8'h00),
-	.class_code			(24'h000000),
+	.class_code			({4'h0, dip_switch[7:4], 4'h0, dip_switch[3:0], 8'h00}),
 	.subsys_ven_id			(16'h3776),
 	.subsys_id			(16'h8010),
 	.load_id			(1'b1),
@@ -185,25 +185,26 @@ pcie_tlp inst_pcie_tlp (
 	// LED and Switches
 	.dipsw(dip_switch),
 	.led(led),
-	.segled(),
+	.segled(led_out),
 	.btn(reset_n)
 );
 
+reg [13:0] segled;
 always @(posedge clk_125) begin
 	if (sys_rst == 1'b1) begin
 		slv_dat0_o <= 16'h0;
-		led_out[13:0] <= 14'h3fff;
+		segled[13:0] <= 14'h3fff;
 	end else begin
 		if (slv_bar_i[0] & slv_ce_i) begin
 			case (slv_adr_i[9:1])
 				9'h000: begin
 					if (slv_we_i) begin
 						if (slv_sel_i[0])
-							led_out[7:0] <= slv_dat_i[7:0];
+							segled[7:0] <= slv_dat_i[7:0];
 						if (slv_sel_i[1])
-							led_out[13:8] <= slv_dat_i[13:8];
+							segled[13:8] <= slv_dat_i[13:8];
 					end else
-						slv_dat0_o <= {2'b0, led_out[13:0]};
+						slv_dat0_o <= {2'b0, segled[13:0]};
 				end
 				default: begin
 					slv_dat0_o <= slv_adr_i[16:1];

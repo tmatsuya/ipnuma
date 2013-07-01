@@ -26,12 +26,12 @@ module pcie_tlp (
 	output reg npd_cr = 1'b0,
 	// Master bus
 	input  mst_req_o,
-	output mst_rdy_i,
+	output reg mst_rdy_i,
 	input  [15:0] mst_dat_o,
-	output mst_st_i,
-	output mst_ce_i,
-	output [15:0] mst_dat_i,
-	output [1:0] mst_sel_i,
+	output reg mst_st_i,
+	output reg mst_ce_i,
+	output reg [15:0] mst_dat_i,
+	output reg [1:0] mst_sel_i,
 	// Slave bus
 	output reg [6:0] slv_bar_i,
 	output reg slv_ce_i,
@@ -247,12 +247,29 @@ reg        tx1_td = 1'b0, tx1_ep = 1'b0;
 reg [1:0]  tx1_attr = 2'b00;
 reg [10:0] tx1_length = 11'h0;
 reg [2:0]  tx1_cplst = 3'h0;
-reg tx1_bcm = 1'b0;
+reg        tx1_bcm = 1'b0;
 reg [11:0] tx1_bcount = 12'h0;
 reg [15:0] tx1_reqid = 16'h0;
 reg [7:0]  tx1_tag = 8'h0;
 reg [7:0]  tx1_lowaddr = 8'h0;
 reg [3:0]  tx1_lastbe = 4'h0, tx1_firstbe = 4'h0;
+
+reg [15:0] tx2_data, tx2_datad;
+reg        tx2_tlph_valid = 1'b0;
+reg        tx2_tlpd_done  = 1'b0;
+reg [1:0]  tx2_fmt = 2'b00;
+reg [4:0]  tx2_type = 5'b00000;
+reg [2:0]  tx2_tc = 2'b00;
+reg        tx2_td = 1'b0, tx2_ep = 1'b0;
+reg [1:0]  tx2_attr = 2'b00;
+reg [10:0] tx2_length = 11'h0;
+reg [2:0]  tx2_cplst = 3'h0;
+reg        tx2_bcm = 1'b0;
+reg [11:0] tx2_bcount = 12'h0;
+reg [15:0] tx2_reqid = 16'h0;
+reg [7:0]  tx2_tag = 8'h0;
+reg [7:0]  tx2_lowaddr = 8'h0;
+reg [3:0]  tx2_lastbe = 4'h0, tx2_firstbe = 4'h0;
 
 always @(posedge pcie_clk) begin
 	if (sys_rst) begin
@@ -442,13 +459,136 @@ always @(posedge pcie_clk) begin
 	end
 end
 
+
+//-----------------------------------------------------------------
+// Master Seaquencer
+//-----------------------------------------------------------------
+parameter [3:0]
+	MST_IDLE   = 3'h0,
+	MST_MREADH = 3'h1,
+	MST_MREADD = 3'h2,
+	MST_MWRITEH= 3'h3,
+	MST_MWRITED= 3'h4,
+	MST_COMP   = 3'h7;
+reg [3:0] mst_status = MST_IDLE;
+reg [31:1] mst_adr;
+always @(posedge pcie_clk) begin
+	if (sys_rst) begin
+		tx2_tlph_valid <= 1'b0;
+		tx2_tlpd_done  <= 1'b0;
+		mst_status <= MST_IDLE;
+		mst_ce_i <= 1'b0;
+		mst_adr <= 31'h0;
+		mst_dat_i <= 16'b0;
+		mst_sel_i <= 2'b00;
+	end else begin
+		tx2_tlph_valid <= 1'b0;
+		tx2_tlpd_done  <= 1'b0;
+		mst_ce_i <= 1'b0;
+		case ( mst_status )
+			MST_IDLE: begin
+				if ( rx_tlph_valid == 1'b1 ) begin
+					case ( rx_comm )
+						TLP_MR: begin
+							if ( rx_fmt[1] == 1'b0 ) begin
+								mst_status <= MST_MREADH;
+							end else begin
+								mst_status <= MST_MWRITEH;
+							end
+						end
+						TLP_MRdLk: begin
+						end
+						TLP_IO: begin
+						end
+						TLP_Cfg0: begin
+						end
+						TLP_Cfg1: begin
+						end
+						TLP_Msg: begin
+						end
+						TLP_Cpl: begin
+						end
+						TLP_CplLk: begin
+						end
+					endcase
+				end
+			end
+			MST_MREADH: begin
+				tx2_fmt[1:0] <= 2'b10;
+				tx2_type[4:0] <= 5'b01010;	// Cpl with data
+				tx2_tc[2:0] <= 3'b000;
+				tx2_td <= 1'b0;
+				tx2_ep <= 1'b0;
+				tx2_attr[1:0] <= 2'b00;
+				tx2_cplst[2:0] <= 3'b000;
+				tx2_bcm <= 1'b0;
+				tx2_bcount[11:0] <= 12'h1;
+				tx2_reqid[15:0] <= rx_reqid[15:0];
+				tx2_tag[7:0] <= rx_tag[7:0];
+				case (rx_firstbe[3:0])
+					4'b0001: tx2_lowaddr[7:0] <= {rx_addr[7:2], 2'b00};
+					4'b0010: tx2_lowaddr[7:0] <= {rx_addr[7:2], 2'b01};
+					4'b0100: tx2_lowaddr[7:0] <= {rx_addr[7:2], 2'b10};
+					4'b1000: tx2_lowaddr[7:0] <= {rx_addr[7:2], 2'b11};
+				endcase
+				tx2_length[10:0] <= {rx_length[9:0], 1'b1};
+				mst_adr[19:1] <= ({rx_addr[19:2],1'b0} - 19'h1);
+				tx2_tlph_valid <= 1'b1;
+				mst_status <= MST_MREADD;
+			end
+			MST_MREADD: begin
+				if ( tx_tlpd_ready == 1'b1 ) begin
+					tx2_length <= tx2_length - 11'h1;
+					if ( tx2_length[10:1] != 10'h000)
+						mst_adr[19:1] <= mst_adr[19:1] + 19'h1;
+					if ( tx2_length == 11'h7ff ) begin
+						mst_status <= MST_IDLE;
+						tx2_tlpd_done  <= 1'b1;
+					end else
+						mst_ce_i <= 1'b1;
+					tx2_datad[15:0] <= mst_dat_o[15:0];
+				end
+			end
+			MST_MWRITEH: begin
+				tx2_length[10:0] <= 11'h0;
+				mst_adr[19:1] <= ({rx_addr[19:2],1'b0} - 19'h1);
+				mst_status <= MST_MWRITED;
+			end
+			MST_MWRITED: begin
+				tx2_length <= tx2_length + 11'h1;
+				mst_adr[19:1] <= mst_adr[19:1] + 19'h1;
+				mst_ce_i <= 1'b1;
+				mst_dat_i <= rx_data2[15:0];
+				if ( tx2_length[10:1] == 10'h0 ) begin
+					if ( tx2_length[0] == 1'b0 ) begin
+						mst_sel_i[1:0] <= { rx_firstbe[0], rx_firstbe[1] };
+					end else begin
+						mst_sel_i[1:0] <= { rx_firstbe[2], rx_firstbe[3] };
+					end
+				end else if ( tx2_length[10:1] == (rx_length[9:0] - 10'h1) )
+					if ( tx2_length[0] == 1'b0 ) begin
+						mst_sel_i[1:0] <= { rx_lastbe[0], rx_lastbe[1] };
+					end else begin
+						mst_sel_i[1:0] <= { rx_lastbe[2], rx_lastbe[3] };
+						mst_status <= MST_IDLE;
+					end
+				else begin
+					mst_sel_i[1:0] <= 2'b11;
+				end
+				if ( rx_end2 == 1'b1 )
+					mst_status <= MST_IDLE;
+			end
+		endcase
+	end
+end
+
 assign tx_data = tx1_data;
 assign tx_end = tx1_tlpd_done;
 
 //assign led = 8'b11111111;
 //assign led = ~(btn ? rx_addr[31:24] : rx_addr[23:16]);
 assign led = ~(btn ? rx_length[7:0] : {rx_lastbe[3:0], rx_firstbe[3:0]} );
-assign segled = 14'b11111111111111;
+assign segled = ~{12'b000000000000, rx_length[9:8] };
 
 endmodule
 `default_nettype wire
