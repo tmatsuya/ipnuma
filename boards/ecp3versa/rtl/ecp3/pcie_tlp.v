@@ -17,7 +17,7 @@ module pcie_tlp (
 	input tx_rdy,
 	output reg tx_st = 1'b0,
 	output tx_end,
-	output [15:0] tx_data,
+	output reg [15:0] tx_data,
 	// Receive credits
 	output reg [7:0] pd_num = 8'h0,
 	output reg ph_cr = 1'b0,
@@ -237,7 +237,7 @@ parameter [3:0]
 reg [3:0]  tx_status = TX_IDLE;
 reg        tx_tlpd_ready = 1'b0;
 
-reg [15:0] tx1_data, tx1_datad;
+reg [15:0] tx1_data;
 reg        tx1_tlph_valid = 1'b0;
 reg        tx1_tlpd_done  = 1'b0;
 reg [1:0]  tx1_fmt = 2'b00;
@@ -254,7 +254,7 @@ reg [7:0]  tx1_tag = 8'h0;
 reg [7:0]  tx1_lowaddr = 8'h0;
 reg [3:0]  tx1_lastbe = 4'h0, tx1_firstbe = 4'h0;
 
-reg [15:0] tx2_data, tx2_datad;
+reg [15:0] tx2_data;
 reg        tx2_tlph_valid = 1'b0;
 reg        tx2_tlpd_done  = 1'b0;
 reg [1:0]  tx2_fmt = 2'b00;
@@ -274,6 +274,7 @@ reg [3:0]  tx2_lastbe = 4'h0, tx2_firstbe = 4'h0;
 always @(posedge pcie_clk) begin
 	if (sys_rst) begin
 		tx_status <= TX_IDLE;
+		tx_data[15:0] <= 16'h0;
 		tx_req <= 1'b0;
 		tx_st <= 1'b0;
 	        tx_tlpd_ready <= 1'b0;
@@ -293,36 +294,36 @@ always @(posedge pcie_clk) begin
 				end
 			end
 			TX_HEAD0: begin
-				tx1_data[15:0] <= {1'b0, tx1_fmt[1:0], tx1_type[4:0], 1'b0, tx1_tc[2:0], 4'b000};
+				tx_data[15:0] <= {1'b0, tx1_fmt[1:0], tx1_type[4:0], 1'b0, tx1_tc[2:0], 4'b000};
 				tx_st <= 1'b1;
 				tx_status <= TX_HEAD1;
 			end
 			TX_HEAD1: begin
-				tx1_data[15:0] <= {tx1_td, tx1_ep, tx1_attr[1:0], 2'b00, tx1_length[10:1]};
+				tx_data[15:0] <= {tx1_td, tx1_ep, tx1_attr[1:0], 2'b00, tx1_length[10:1]};
 				if ( tx1_type[3] == 1'b0 )
 					tx_status <= TX_REQ2;
 				else
 					tx_status <= TX_COMP2;
 			end
 			TX_COMP2: begin
-				tx1_data[15:0] <= {bus_num, dev_num, func_num};	// CplID
+				tx_data[15:0] <= {bus_num, dev_num, func_num};	// CplID
 				tx_tlpd_ready <= 1'b1;
 				tx_status <= TX_COMP3;
 			end
 			TX_COMP3: begin
-				tx1_data[15:0] <= { tx1_cplst[2:0], tx1_bcm, tx1_bcount[11:0] };
+				tx_data[15:0] <= { tx1_cplst[2:0], tx1_bcm, tx1_bcount[11:0] };
 				tx_status <= TX_COMP4;
 			end
 			TX_COMP4: begin
-				tx1_data[15:0] <= tx1_reqid[15:0];
+				tx_data[15:0] <= tx1_reqid[15:0];
 				tx_status <= TX_COMP5;
 			end
 			TX_COMP5: begin
-				tx1_data[15:0] <= { tx1_tag[7:0], 1'b0, tx1_lowaddr[6:0] };
+				tx_data[15:0] <= { tx1_tag[7:0], 1'b0, tx1_lowaddr[6:0] };
 				tx_status <= TX_DATA;
 			end
 			TX_DATA: begin
-				tx1_data[15:0] <= tx1_datad[15:0];
+				tx_data[15:0] <= tx1_data[15:0];
 				if (tx1_tlpd_done == 1'b1) begin
 					tx_status <= TX_IDLE;
 	        			tx_tlpd_ready <= 1'b0;
@@ -422,7 +423,7 @@ always @(posedge pcie_clk) begin
 						tx1_tlpd_done  <= 1'b1;
 					end else
 						slv_ce_i <= 1'b1;
-					tx1_datad[15:0] <= slv_dat_o[15:0];
+					tx1_data[15:0] <= slv_dat_o[15:0];
 				end
 			end
 			SLV_MWRITEH: begin
@@ -546,7 +547,7 @@ always @(posedge pcie_clk) begin
 						tx2_tlpd_done  <= 1'b1;
 					end else
 						mst_ce_i <= 1'b1;
-					tx2_datad[15:0] <= mst_dat_o[15:0];
+					tx2_data[15:0] <= mst_dat_o[15:0];
 				end
 			end
 			MST_MWRITEH: begin
@@ -582,7 +583,6 @@ always @(posedge pcie_clk) begin
 	end
 end
 
-assign tx_data = tx1_data;
 assign tx_end = tx1_tlpd_done;
 
 //assign led = 8'b11111111;
