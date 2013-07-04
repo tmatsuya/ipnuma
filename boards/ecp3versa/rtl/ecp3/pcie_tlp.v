@@ -434,7 +434,7 @@ always @(posedge pcie_clk) begin
 				end
 			end
 			SLV_MREADH: begin
-				tx1_fmt[1:0] <= 2'b10;
+				tx1_fmt[1:0] <= 2'b10;		// 3DW with data
 				tx1_type[4:0] <= 5'b01010;	// Cpl with data
 				tx1_tc[2:0] <= 3'b000;
 				tx1_td <= 1'b0;
@@ -442,13 +442,42 @@ always @(posedge pcie_clk) begin
 				tx1_attr[1:0] <= 2'b00;
 				tx1_cplst[2:0] <= 3'b000;
 				tx1_bcm <= 1'b0;
-				tx1_bcount[11:0] <= 12'h1;
+				casex( {rx_firstbe[3:0], rx_lastbe[3:0]} )
+					8'b1xx10000: tx1_bcount[11:0] <= 12'h004;
+					8'b01x10000: tx1_bcount[11:0] <= 12'h003;
+					8'b1x100000: tx1_bcount[11:0] <= 12'h003;
+					8'b00110000: tx1_bcount[11:0] <= 12'h002;
+					8'b01100000: tx1_bcount[11:0] <= 12'h002;
+					8'b11000000: tx1_bcount[11:0] <= 12'h002;
+					8'b00010000: tx1_bcount[11:0] <= 12'h001;
+					8'b00100000: tx1_bcount[11:0] <= 12'h001;
+					8'b01000000: tx1_bcount[11:0] <= 12'h001;
+					8'b10000000: tx1_bcount[11:0] <= 12'h001;
+					8'b00000000: tx1_bcount[11:0] <= 12'h001;
+					8'bxxx11xxx: tx1_bcount[11:0] <= (rx_length*4);
+					8'bxxx101xx: tx1_bcount[11:0] <= (rx_length*4) - 1;
+					8'bxxx1001x: tx1_bcount[11:0] <= (rx_length*4) - 2;
+					8'bxxx10001: tx1_bcount[11:0] <= (rx_length*4) - 3;
+					8'bxx101xxx: tx1_bcount[11:0] <= (rx_length*4) - 1;
+					8'bxx1001xx: tx1_bcount[11:0] <= (rx_length*4) - 2;
+					8'bxx10001x: tx1_bcount[11:0] <= (rx_length*4) - 3;
+					8'bxx100001: tx1_bcount[11:0] <= (rx_length*4) - 4;
+					8'bx1001xxx: tx1_bcount[11:0] <= (rx_length*4) - 2;
+					8'bx10001xx: tx1_bcount[11:0] <= (rx_length*4) - 3;
+					8'bx100001x: tx1_bcount[11:0] <= (rx_length*4) - 4;
+					8'bx1000001: tx1_bcount[11:0] <= (rx_length*4) - 5;
+					8'b10001xxx: tx1_bcount[11:0] <= (rx_length*4) - 3;
+					8'b100001xx: tx1_bcount[11:0] <= (rx_length*4) - 4;
+					8'b1000001x: tx1_bcount[11:0] <= (rx_length*4) - 5;
+					8'b10000001: tx1_bcount[11:0] <= (rx_length*4) - 6;
+				endcase
 				tx1_reqid[15:0] <= rx_reqid[15:0];
 				tx1_tag[7:0] <= rx_tag[7:0];
-				case (rx_firstbe[3:0])
-					4'b0001: tx1_lowaddr[7:0] <= {rx_addr[7:2], 2'b00};
-					4'b0010: tx1_lowaddr[7:0] <= {rx_addr[7:2], 2'b01};
-					4'b0100: tx1_lowaddr[7:0] <= {rx_addr[7:2], 2'b10};
+				casex (rx_firstbe[3:0])
+					4'b0000: tx1_lowaddr[7:0] <= {rx_addr[7:2], 2'b00};
+					4'bxxx1: tx1_lowaddr[7:0] <= {rx_addr[7:2], 2'b00};
+					4'bxx10: tx1_lowaddr[7:0] <= {rx_addr[7:2], 2'b01};
+					4'bx100: tx1_lowaddr[7:0] <= {rx_addr[7:2], 2'b10};
 					4'b1000: tx1_lowaddr[7:0] <= {rx_addr[7:2], 2'b11};
 				endcase
 				tx1_length[10:0] <= {rx_length[9:0], 1'b1};
@@ -528,33 +557,22 @@ always @(posedge pcie_clk) begin
 	end else begin
 		tx2_tlph_valid <= 1'b0;
 		tx2_tlpd_done  <= 1'b0;
+		mst_rdy_i<= 1'b0;
+		mst_st_i <= 1'b0;
 		mst_ce_i <= 1'b0;
+//input  [15:0] mst_dat_o,
+//output reg [15:0] mst_dat_i,
+//output reg [1:0] mst_sel_i,
 		case ( mst_status )
 			MST_IDLE: begin
-				if ( rx_tlph_valid == 1'b1 ) begin
-					case ( rx_comm )
-						TLP_MR: begin
-						end
-						TLP_MRdLk: begin
-						end
-						TLP_IO: begin
-						end
-						TLP_Cfg0: begin
-						end
-						TLP_Cfg1: begin
-						end
-						TLP_Msg: begin
-						end
-						TLP_Cpl: begin
-						end
-						TLP_CplLk: begin
-						end
-					endcase
+				if ( mst_req_o == 1'b1 ) begin
+					tx2_length[10:0] <= { mst_dat_o[10:0] };
+					mst_status <= MST_MREADH;
 				end
 			end
 			MST_MREADH: begin
-				tx2_fmt[1:0] <= 2'b10;
-				tx2_type[4:0] <= 5'b01010;	// Cpl with data
+				tx2_fmt[1:0] <= 2'b11;		// 4DW, with DATA
+				tx2_type[4:0] <= 5'b00000;	// Memory write request
 				tx2_tc[2:0] <= 3'b000;
 				tx2_td <= 1'b0;
 				tx2_ep <= 1'b0;
@@ -570,7 +588,6 @@ always @(posedge pcie_clk) begin
 					4'b0100: tx2_lowaddr[7:0] <= {rx_addr[7:2], 2'b10};
 					4'b1000: tx2_lowaddr[7:0] <= {rx_addr[7:2], 2'b11};
 				endcase
-				tx2_length[10:0] <= {rx_length[9:0], 1'b1};
 				mst_adr[19:1] <= ({rx_addr[19:2],1'b0} - 19'h1);
 				tx2_tlph_valid <= 1'b1;
 				mst_status <= MST_MREADD;
