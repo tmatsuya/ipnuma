@@ -223,24 +223,26 @@ end
 //-----------------------------------------------------------------
 // TLP transmit
 //-----------------------------------------------------------------
-parameter [3:0]
-	TX_IDLE  = 4'h0,
-	TX_WAIT  = 4'h1,
-	TX1_HEAD0= 4'h2,
-	TX1_HEAD1= 4'h3,
-	TX1_COMP2= 4'h4,
-	TX1_COMP3= 4'h5,
-	TX1_COMP4= 4'h6,
-	TX1_COMP5= 4'h7,
-	TX1_DATA = 4'h8,
-	TX2_HEAD0= 4'h9,
-	TX2_HEAD1= 4'hA,
-	TX2_COMP2= 4'hB,
-	TX2_COMP3= 4'hC,
-	TX2_COMP4= 4'hD,
-	TX2_COMP5= 4'hE,
-	TX2_DATA = 4'hF;
-reg [3:0]  tx_status = TX_IDLE;
+parameter [4:0]
+	TX_IDLE  = 5'h0,
+	TX_WAIT  = 5'h1,
+	TX1_HEAD0= 5'h2,
+	TX1_HEAD1= 5'h3,
+	TX1_COMP2= 5'h4,
+	TX1_COMP3= 5'h5,
+	TX1_COMP4= 5'h6,
+	TX1_COMP5= 5'h7,
+	TX1_DATA = 5'h8,
+	TX2_HEAD0= 5'h9,
+	TX2_HEAD1= 5'hA,
+	TX2_COMP2= 5'hB,
+	TX2_COMP3= 5'hC,
+	TX2_COMP4= 5'hD,
+	TX2_COMP5= 5'hE,
+	TX2_COMP6= 5'hF,
+	TX2_COMP7= 5'h10,
+	TX2_DATA = 5'h11;
+reg [4:0]  tx_status = TX_IDLE;
 reg        tx_lastch = 1'b0;
 
 reg [15:0] tx1_data;
@@ -271,13 +273,12 @@ reg [2:0]  tx2_tc = 2'b00;
 reg        tx2_td = 1'b0, tx2_ep = 1'b0;
 reg [1:0]  tx2_attr = 2'b00;
 reg [10:0] tx2_length = 11'h0;
-reg [2:0]  tx2_cplst = 3'h0;
-reg        tx2_bcm = 1'b0;
 reg [11:0] tx2_bcount = 12'h0;
 reg [15:0] tx2_reqid = 16'h0;
 reg [7:0]  tx2_tag = 8'h0;
 reg [7:0]  tx2_lowaddr = 8'h0;
 reg [3:0]  tx2_lastbe = 4'h0, tx2_firstbe = 4'h0;
+reg [63:2] tx2_addr = 62'h0000000000000000;
 
 always @(posedge pcie_clk) begin
 	if (sys_rst) begin
@@ -287,12 +288,13 @@ always @(posedge pcie_clk) begin
 		tx_st <= 1'b0;
 	        tx1_tlpd_ready <= 1'b0;
 	        tx2_tlpd_ready <= 1'b0;
-		tx_lastch <= 1'b1;
+		tx_lastch <= 1'b0;
 	end else begin
 		tx_st <= 1'b0;
 		case ( tx_status )
 			TX_IDLE: begin
 				if ( tx1_tlph_valid == 1'b1 || tx2_tlph_valid == 1'b1 ) begin
+					tx_lastch <= tx2_tlph_valid;
 					tx_req <= 1'b1;
 					tx_status <= TX_WAIT;
 				end
@@ -300,7 +302,7 @@ always @(posedge pcie_clk) begin
 			TX_WAIT: begin
 				if ( tx_rdy == 1'b1 ) begin
 					tx_req <= 1'b0;
-					if ( tx_lastch == 1'b1 && tx2_tlph_valid == 1'b1 )
+					if ( tx_lastch == 1'b1 )
 						tx_status <= TX2_HEAD0;
 					else
 						tx_status <= TX1_HEAD0;
@@ -339,8 +341,8 @@ always @(posedge pcie_clk) begin
 	        			tx1_tlpd_ready <= 1'b0;
 				end
 			end
-			TX1_HEAD0: begin
-				tx_data[15:0] <= {1'b0, tx1_fmt[1:0], tx1_type[4:0], 1'b0, tx1_tc[2:0], 4'b000};
+			TX2_HEAD0: begin
+				tx_data[15:0] <= {1'b0, tx2_fmt[1:0], tx2_type[4:0], 1'b0, tx2_tc[2:0], 4'b000};
 				tx_st <= 1'b1;
 				tx_status <= TX2_HEAD1;
 			end
@@ -349,20 +351,33 @@ always @(posedge pcie_clk) begin
 				tx_status <= TX2_COMP2;
 			end
 			TX2_COMP2: begin
-				tx_data[15:0] <= {bus_num, dev_num, func_num};	// CplID
-				tx2_tlpd_ready <= 1'b1;
+				tx_data[15:0] <= {bus_num, dev_num, func_num};	// Request ID
 				tx_status <= TX2_COMP3;
 			end
 			TX2_COMP3: begin
-				tx_data[15:0] <= { tx2_cplst[2:0], tx2_bcm, tx2_bcount[11:0] };
-				tx_status <= TX2_COMP4;
+				tx_data[15:0] <= { tx2_tag[7:0], tx2_lastbe[3:0], tx2_firstbe[3:0] };
+
+				if ( tx2_fmt[0] == 1'b0 ) begin // 64 or 32bit ??
+					tx2_tlpd_ready <= 1'b1;
+					tx_status <= TX2_COMP6;
+				end else
+					tx_status <= TX2_COMP4;
 			end
 			TX2_COMP4: begin
-				tx_data[15:0] <= tx2_reqid[15:0];
+				tx_data[15:0] <= tx2_addr[63:48];
 				tx_status <= TX2_COMP5;
 			end
 			TX2_COMP5: begin
-				tx_data[15:0] <= { tx2_tag[7:0], 1'b0, tx2_lowaddr[6:0] };
+				tx2_tlpd_ready <= 1'b1;
+				tx_data[15:0] <= tx2_addr[47:32];
+				tx_status <= TX2_COMP6;
+			end
+			TX2_COMP6: begin
+				tx_data[15:0] <= tx2_addr[31:16];
+				tx_status <= TX2_COMP7;
+			end
+			TX2_COMP7: begin
+				tx_data[15:0] <= { tx2_addr[15: 2], 2'b00 };
 				tx_status <= TX2_DATA;
 			end
 			TX2_DATA: begin
@@ -399,12 +414,12 @@ always @(posedge pcie_clk) begin
 		slv_dat_i <= 16'b0;
 		slv_sel_i <= 2'b00;
 	end else begin
-		tx1_tlph_valid <= 1'b0;
 		tx1_tlpd_done  <= 1'b0;
 		slv_ce_i <= 1'b0;
 		slv_we_i <= 1'b0;
 		case ( slv_status )
 			SLV_IDLE: begin
+				tx1_tlph_valid <= 1'b0;
 				slv_bar_i <= 7'h0;
 				if ( rx_tlph_valid == 1'b1 ) begin
 					case ( rx_comm )
@@ -487,6 +502,7 @@ always @(posedge pcie_clk) begin
 			end
 			SLV_MREADD: begin
 				if ( tx1_tlpd_ready == 1'b1 ) begin
+					tx1_tlph_valid <= 1'b0;
 					tx1_length <= tx1_length - 11'h1;
 					if ( tx1_length[10:1] != 10'h000)
 						slv_adr_i[19:1] <= slv_adr_i[19:1] + 19'h1;
@@ -555,7 +571,6 @@ always @(posedge pcie_clk) begin
 		mst_dat_i <= 16'b0;
 		mst_sel_i <= 2'b00;
 	end else begin
-		tx2_tlph_valid <= 1'b0;
 		tx2_tlpd_done  <= 1'b0;
 		mst_rdy_i<= 1'b0;
 		mst_st_i <= 1'b0;
@@ -565,6 +580,7 @@ always @(posedge pcie_clk) begin
 //output reg [1:0] mst_sel_i,
 		case ( mst_status )
 			MST_IDLE: begin
+				tx2_tlph_valid <= 1'b0;
 				if ( mst_req_o == 1'b1 ) begin
 					tx2_length[10:0] <= { mst_dat_o[10:0] };
 					mst_status <= MST_MREADH;
@@ -577,23 +593,18 @@ always @(posedge pcie_clk) begin
 				tx2_td <= 1'b0;
 				tx2_ep <= 1'b0;
 				tx2_attr[1:0] <= 2'b00;
-				tx2_cplst[2:0] <= 3'b000;
-				tx2_bcm <= 1'b0;
-				tx2_bcount[11:0] <= 12'h1;
-				tx2_reqid[15:0] <= rx_reqid[15:0];
-				tx2_tag[7:0] <= rx_tag[7:0];
-				case (rx_firstbe[3:0])
-					4'b0001: tx2_lowaddr[7:0] <= {rx_addr[7:2], 2'b00};
-					4'b0010: tx2_lowaddr[7:0] <= {rx_addr[7:2], 2'b01};
-					4'b0100: tx2_lowaddr[7:0] <= {rx_addr[7:2], 2'b10};
-					4'b1000: tx2_lowaddr[7:0] <= {rx_addr[7:2], 2'b11};
-				endcase
+				tx2_tag[7:0] <= 8'h01;
+				tx2_lastbe <= 4'b1111;
+				tx2_firstbe <= 4'b1111;
+tx2_addr[63:2] <= (64'hd0000000 >> 2); 
 				mst_adr[19:1] <= ({rx_addr[19:2],1'b0} - 19'h1);
 				tx2_tlph_valid <= 1'b1;
+tx2_length[10:0] <= (11'h04 >> 1);
 				mst_status <= MST_MREADD;
 			end
 			MST_MREADD: begin
 				if ( tx2_tlpd_ready == 1'b1 ) begin
+					tx2_tlph_valid <= 1'b0;
 					tx2_length <= tx2_length - 11'h1;
 					if ( tx2_length[10:1] != 10'h000)
 						mst_adr[19:1] <= mst_adr[19:1] + 19'h1;
@@ -602,7 +613,7 @@ always @(posedge pcie_clk) begin
 						tx2_tlpd_done  <= 1'b1;
 					end else
 						mst_ce_i <= 1'b1;
-					tx2_data[15:0] <= mst_dat_o[15:0];
+					tx2_data[15:0] <= 16'h3132;
 				end
 			end
 			MST_MWRITEH: begin
@@ -638,12 +649,13 @@ always @(posedge pcie_clk) begin
 	end
 end
 
-assign tx_end = tx1_tlpd_done;
+assign tx_end = tx1_tlpd_done | tx2_tlpd_done;
+//assign tx_end = tx1_tlpd_done;
 
 //assign led = 8'b11111111;
 //assign led = ~(btn ? rx_addr[31:24] : rx_addr[23:16]);
 assign led = ~(btn ? rx_length[7:0] : {rx_lastbe[3:0], rx_firstbe[3:0]} );
-assign segled = ~{12'b000000000000, rx_length[9:8] };
+//assign segled = ~{12'b000000000000, rx_length[9:8] };
 
 endmodule
 `default_nettype wire

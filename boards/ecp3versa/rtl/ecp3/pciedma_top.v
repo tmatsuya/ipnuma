@@ -140,6 +140,15 @@ pcie_top pcie(
 	.func_num			( func_num )
 );
 
+// Master bus
+reg  mst_req_o = 1'b0;
+wire mst_rdy_i;
+reg  [15:0] mst_dat_o;
+wire mst_st_i;
+wire mst_ce_i;
+wire [15:0] mst_dat_i;
+wire [1:0] mst_sel_i;
+// Slave bus
 wire [6:0] slv_bar_i;
 wire slv_ce_i;
 wire slv_we_i;
@@ -174,6 +183,14 @@ pcie_tlp inst_pcie_tlp (
 	.pd_cr(pd_cr),
 	.nph_cr(nph_cr),
 	.npd_cr(npd_cr),
+	// Master bus
+	.mst_req_o(mst_req_o),
+	.mst_rdy_i(mst_rdy_i),
+	.mst_dat_o(mst_dat_o),
+	.mst_st_i(mst_st_i),
+	.mst_ce_i(mst_ce_i),
+	.mst_dat_i(mst_dat_i),
+	.mst_sel_i(mst_sel_i),
 	// Slave bus
 	.slv_bar_i(slv_bar_i),
 	.slv_ce_i(slv_ce_i),
@@ -185,16 +202,18 @@ pcie_tlp inst_pcie_tlp (
 	// LED and Switches
 	.dipsw(dip_switch),
 	.led(led),
-	.segled(led_out),
+	.segled(),
 	.btn(reset_n)
 );
 
 reg [13:0] segled;
 always @(posedge clk_125) begin
 	if (sys_rst == 1'b1) begin
+		mst_req_o <= 1'b0;
 		slv_dat0_o <= 16'h0;
 		segled[13:0] <= 14'h3fff;
 	end else begin
+		mst_req_o <= 1'b0;
 		if (slv_bar_i[0] & slv_ce_i) begin
 			case (slv_adr_i[9:1])
 				9'h000: begin
@@ -205,6 +224,12 @@ always @(posedge clk_125) begin
 							segled[13:8] <= slv_dat_i[13:8];
 					end else
 						slv_dat0_o <= {2'b0, segled[13:0]};
+				end
+				9'h001: begin
+					if (slv_we_i)
+						mst_req_o <= 1'b1;
+					else
+						slv_dat0_o <= 16'hFFFF;
 				end
 				default: begin
 					slv_dat0_o <= slv_adr_i[16:1];
@@ -226,6 +251,7 @@ ram_dq ram_dq_inst1 (
 );
 
 assign slv_dat_o = ( {16{slv_bar_i[0]}} & slv_dat0_o ) | ( {16{slv_bar_i[2]}} & slv_dat1_o );
+assign led_out = segled;
 
 endmodule
 `default_nettype wire

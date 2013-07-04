@@ -31,6 +31,14 @@ wire ph_cr;
 wire pd_cr;
 wire nph_cr;
 wire npd_cr;
+// Master bus
+reg  mst_req_o;
+wire mst_rdy_i;
+reg  [15:0] mst_dat_o;
+wire mst_st_i;
+wire mst_ce_i;
+wire [15:0] mst_dat_i;
+wire [1:0] mst_sel_i;
 // Slave bus
 wire slv_ce_i;
 wire slv_we_i;
@@ -68,6 +76,14 @@ pcie_tlp pcie_tlp_inst (
 	.pd_cr(),
 	.nph_cr(),
 	.npd_cr(),
+	// Master bus
+	.mst_req_o(mst_req_o),
+	.mst_rdy_i(mst_rdy_i),
+	.mst_dat_o(mst_dat_o),
+	.mst_st_i(mst_st_i),
+	.mst_ce_i(mst_ce_i),
+	.mst_dat_i(mst_dat_i),
+	.mst_sel_i(mst_sel_i),
 	// Slave bus
 	.slv_ce_i(),
 	.slv_we_i(),
@@ -113,6 +129,7 @@ initial begin
 	/* Reset / Initialize our logic */
 	sys_rst = 1'b1;
 	counter = 0;
+	mst_req_o = 1'b0;
 
 	waitclock;
 	waitclock;
@@ -121,6 +138,9 @@ initial begin
 
 	waitclock;
 
+	#(500*16) mst_req_o = 1'b1;
+
+	#(8*2) mst_req_o = 1'b0;
 
 	#30000;
 
