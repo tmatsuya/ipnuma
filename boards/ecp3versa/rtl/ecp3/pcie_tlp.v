@@ -226,19 +226,26 @@ end
 parameter [3:0]
 	TX_IDLE  = 4'h0,
 	TX_WAIT  = 4'h1,
-	TX_HEAD0 = 4'h2,
-	TX_HEAD1 = 4'h3,
-	TX_COMP2 = 4'h4,
-	TX_COMP3 = 4'h5,
-	TX_COMP4 = 4'h6,
-	TX_COMP5 = 4'h7,
-	TX_REQ2  = 4'h8,
-	TX_DATA  = 4'h9;
+	TX1_HEAD0= 4'h2,
+	TX1_HEAD1= 4'h3,
+	TX1_COMP2= 4'h4,
+	TX1_COMP3= 4'h5,
+	TX1_COMP4= 4'h6,
+	TX1_COMP5= 4'h7,
+	TX1_DATA = 4'h8,
+	TX2_HEAD0= 4'h9,
+	TX2_HEAD1= 4'hA,
+	TX2_COMP2= 4'hB,
+	TX2_COMP3= 4'hC,
+	TX2_COMP4= 4'hD,
+	TX2_COMP5= 4'hE,
+	TX2_DATA = 4'hF;
 reg [3:0]  tx_status = TX_IDLE;
-reg        tx_tlpd_ready = 1'b0;
+reg        tx_lastch = 1'b0;
 
 reg [15:0] tx1_data;
 reg        tx1_tlph_valid = 1'b0;
+reg        tx1_tlpd_ready = 1'b0;
 reg        tx1_tlpd_done  = 1'b0;
 reg [1:0]  tx1_fmt = 2'b00;
 reg [4:0]  tx1_type = 5'b00000;
@@ -256,6 +263,7 @@ reg [3:0]  tx1_lastbe = 4'h0, tx1_firstbe = 4'h0;
 
 reg [15:0] tx2_data;
 reg        tx2_tlph_valid = 1'b0;
+reg        tx2_tlpd_ready = 1'b0;
 reg        tx2_tlpd_done  = 1'b0;
 reg [1:0]  tx2_fmt = 2'b00;
 reg [4:0]  tx2_type = 5'b00000;
@@ -277,12 +285,14 @@ always @(posedge pcie_clk) begin
 		tx_data[15:0] <= 16'h0;
 		tx_req <= 1'b0;
 		tx_st <= 1'b0;
-	        tx_tlpd_ready <= 1'b0;
+	        tx1_tlpd_ready <= 1'b0;
+	        tx2_tlpd_ready <= 1'b0;
+		tx_lastch <= 1'b1;
 	end else begin
 		tx_st <= 1'b0;
 		case ( tx_status )
 			TX_IDLE: begin
-				if ( tx1_tlph_valid == 1'b1 ) begin
+				if ( tx1_tlph_valid == 1'b1 || tx2_tlph_valid == 1'b1 ) begin
 					tx_req <= 1'b1;
 					tx_status <= TX_WAIT;
 				end
@@ -290,43 +300,76 @@ always @(posedge pcie_clk) begin
 			TX_WAIT: begin
 				if ( tx_rdy == 1'b1 ) begin
 					tx_req <= 1'b0;
-					tx_status <= TX_HEAD0;
+					if ( tx_lastch == 1'b1 && tx2_tlph_valid == 1'b1 )
+						tx_status <= TX2_HEAD0;
+					else
+						tx_status <= TX1_HEAD0;
 				end
 			end
-			TX_HEAD0: begin
+			TX1_HEAD0: begin
 				tx_data[15:0] <= {1'b0, tx1_fmt[1:0], tx1_type[4:0], 1'b0, tx1_tc[2:0], 4'b000};
 				tx_st <= 1'b1;
-				tx_status <= TX_HEAD1;
+				tx_status <= TX1_HEAD1;
 			end
-			TX_HEAD1: begin
+			TX1_HEAD1: begin
 				tx_data[15:0] <= {tx1_td, tx1_ep, tx1_attr[1:0], 2'b00, tx1_length[10:1]};
-				if ( tx1_type[3] == 1'b0 )
-					tx_status <= TX_REQ2;
-				else
-					tx_status <= TX_COMP2;
+				tx_status <= TX1_COMP2;
 			end
-			TX_COMP2: begin
+			TX1_COMP2: begin
 				tx_data[15:0] <= {bus_num, dev_num, func_num};	// CplID
-				tx_tlpd_ready <= 1'b1;
-				tx_status <= TX_COMP3;
+				tx1_tlpd_ready <= 1'b1;
+				tx_status <= TX1_COMP3;
 			end
-			TX_COMP3: begin
+			TX1_COMP3: begin
 				tx_data[15:0] <= { tx1_cplst[2:0], tx1_bcm, tx1_bcount[11:0] };
-				tx_status <= TX_COMP4;
+				tx_status <= TX1_COMP4;
 			end
-			TX_COMP4: begin
+			TX1_COMP4: begin
 				tx_data[15:0] <= tx1_reqid[15:0];
-				tx_status <= TX_COMP5;
+				tx_status <= TX1_COMP5;
 			end
-			TX_COMP5: begin
+			TX1_COMP5: begin
 				tx_data[15:0] <= { tx1_tag[7:0], 1'b0, tx1_lowaddr[6:0] };
-				tx_status <= TX_DATA;
+				tx_status <= TX1_DATA;
 			end
-			TX_DATA: begin
+			TX1_DATA: begin
 				tx_data[15:0] <= tx1_data[15:0];
 				if (tx1_tlpd_done == 1'b1) begin
 					tx_status <= TX_IDLE;
-	        			tx_tlpd_ready <= 1'b0;
+	        			tx1_tlpd_ready <= 1'b0;
+				end
+			end
+			TX1_HEAD0: begin
+				tx_data[15:0] <= {1'b0, tx1_fmt[1:0], tx1_type[4:0], 1'b0, tx1_tc[2:0], 4'b000};
+				tx_st <= 1'b1;
+				tx_status <= TX2_HEAD1;
+			end
+			TX2_HEAD1: begin
+				tx_data[15:0] <= {tx2_td, tx2_ep, tx2_attr[1:0], 2'b00, tx2_length[10:1]};
+				tx_status <= TX2_COMP2;
+			end
+			TX2_COMP2: begin
+				tx_data[15:0] <= {bus_num, dev_num, func_num};	// CplID
+				tx2_tlpd_ready <= 1'b1;
+				tx_status <= TX2_COMP3;
+			end
+			TX2_COMP3: begin
+				tx_data[15:0] <= { tx2_cplst[2:0], tx2_bcm, tx2_bcount[11:0] };
+				tx_status <= TX2_COMP4;
+			end
+			TX2_COMP4: begin
+				tx_data[15:0] <= tx2_reqid[15:0];
+				tx_status <= TX2_COMP5;
+			end
+			TX2_COMP5: begin
+				tx_data[15:0] <= { tx2_tag[7:0], 1'b0, tx2_lowaddr[6:0] };
+				tx_status <= TX2_DATA;
+			end
+			TX2_DATA: begin
+				tx_data[15:0] <= tx2_data[15:0];
+				if (tx2_tlpd_done == 1'b1) begin
+					tx_status <= TX_IDLE;
+	        			tx2_tlpd_ready <= 1'b0;
 				end
 			end
 		endcase
@@ -414,7 +457,7 @@ always @(posedge pcie_clk) begin
 				slv_status <= SLV_MREADD;
 			end
 			SLV_MREADD: begin
-				if ( tx_tlpd_ready == 1'b1 ) begin
+				if ( tx1_tlpd_ready == 1'b1 ) begin
 					tx1_length <= tx1_length - 11'h1;
 					if ( tx1_length[10:1] != 10'h000)
 						slv_adr_i[19:1] <= slv_adr_i[19:1] + 19'h1;
@@ -491,11 +534,6 @@ always @(posedge pcie_clk) begin
 				if ( rx_tlph_valid == 1'b1 ) begin
 					case ( rx_comm )
 						TLP_MR: begin
-							if ( rx_fmt[1] == 1'b0 ) begin
-								mst_status <= MST_MREADH;
-							end else begin
-								mst_status <= MST_MWRITEH;
-							end
 						end
 						TLP_MRdLk: begin
 						end
@@ -538,7 +576,7 @@ always @(posedge pcie_clk) begin
 				mst_status <= MST_MREADD;
 			end
 			MST_MREADD: begin
-				if ( tx_tlpd_ready == 1'b1 ) begin
+				if ( tx2_tlpd_ready == 1'b1 ) begin
 					tx2_length <= tx2_length - 11'h1;
 					if ( tx2_length[10:1] != 10'h000)
 						mst_adr[19:1] <= mst_adr[19:1] + 19'h1;
