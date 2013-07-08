@@ -31,28 +31,13 @@ wire ph_cr;
 wire pd_cr;
 wire nph_cr;
 wire npd_cr;
-// Master bus
-reg  mst_req_o;
-wire mst_rdy_i;
-reg  [15:0] mst_dat_o;
-wire mst_st_i;
-wire mst_ce_i;
-wire [15:0] mst_dat_i;
-wire [1:0] mst_sel_i;
-// Slave bus
-wire slv_ce_i;
-wire slv_we_i;
-wire [31:2] slv_adr_i;
-wire [15:0] slv_dat_i;
-wire [1:0] slv_sel_i;
-reg  [15:0] slv_dat_o;
 // LED and Switches
 reg [7:0] dipsw;
 wire [7:0] led;
 wire [13:0] segled;
 reg btn;
 
-pcie_tlp pcie_tlp_inst (
+pciedma pciedma_inst (
 	.pcie_clk(sys_clk),
 	.sys_rst(sys_rst),
 	// Management
@@ -76,21 +61,6 @@ pcie_tlp pcie_tlp_inst (
 	.pd_cr(),
 	.nph_cr(),
 	.npd_cr(),
-	// Master bus
-	.mst_req_o(mst_req_o),
-	.mst_rdy_i(mst_rdy_i),
-	.mst_dat_o(mst_dat_o),
-	.mst_st_i(mst_st_i),
-	.mst_ce_i(mst_ce_i),
-	.mst_dat_i(mst_dat_i),
-	.mst_sel_i(mst_sel_i),
-	// Slave bus
-	.slv_ce_i(),
-	.slv_we_i(),
-	.slv_adr_i(),
-	.slv_dat_i(),
-	.slv_sel_i(),
-	.slv_dat_o(),
 	// LED and Switches
 	.dipsw(),
 	.led(),
@@ -112,24 +82,23 @@ always @(posedge Wclk) begin
 end
 */
 
-reg [23:0] rom [0:4095];
-reg [11:0] counter;
+reg [23:0] tlp_rom [0:4095];
+reg [11:0] tlp_counter;
 
 always @(posedge sys_clk) begin
-	rx_st   <= rom[ counter ][20];
-	rx_end  <= rom[ counter ][16];
-	rx_data <= rom[ counter ][15:0];
-	counter <= counter + 1;
+	rx_st   <= tlp_rom[ tlp_counter ][20];
+	rx_end  <= tlp_rom[ tlp_counter ][16];
+	rx_data <= tlp_rom[ tlp_counter ][15:0];
+	tlp_counter <= tlp_counter + 1;
 end
 
 initial begin
         $dumpfile("./test.vcd");
 	$dumpvars(0, tb_system); 
-	$readmemh("./tlp_data.hex", rom);
+	$readmemh("./tlp_data.hex", tlp_rom);
 	/* Reset / Initialize our logic */
 	sys_rst = 1'b1;
-	counter = 0;
-	mst_req_o = 1'b0;
+	tlp_counter = 0;
 
 	waitclock;
 	waitclock;
@@ -138,11 +107,11 @@ initial begin
 
 	waitclock;
 
-	#(500*16) mst_req_o = 1'b1;
+//	#(500*16) mst_req_o = 1'b1;
 
-	#(8*2) mst_req_o = 1'b0;
+//	#(8*2) mst_req_o = 1'b0;
 
-	#30000;
+	#3000;
 
 	$finish;
 end
