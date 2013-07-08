@@ -120,8 +120,7 @@ always @(posedge pcie_clk) begin
 	end
 end
 
-// Dual port RAM
-`ifndef SIMULATION
+// Simple RAM
 ram_dq ram_dq_inst1 (
 	.Clock(pcie_clk),
 	.ClockEn(slv_ce_i & slv_bar_i[2]),
@@ -132,21 +131,18 @@ ram_dq ram_dq_inst1 (
 	.Data(slv_dat_i),
 	.Q(slv_dat1_o)
 );
-`endif
 
 // FIFO
-`ifndef SIMULATION
 fifo fifo_inst1 (
-	.Data( ),
+	.Data(),
 	.Clock(pcie_clk),
-	.WrEn( ),
-	.RdEn( ),
+	.WrEn(),
+	.RdEn(),
 	.Reset(sys_rst),
-	.Q( ),
-	.Empty( ),
-	.Full( )
+	.Q(),
+	.Empty(),
+	.Full()
 );
-`endif
 
 assign slv_dat_o = ( {16{slv_bar_i[0]}} & slv_dat0_o ) | ( {16{slv_bar_i[2]}} & slv_dat1_o );
 

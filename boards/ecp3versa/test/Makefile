@@ -1,4 +1,5 @@
-SOURCES=tb_system.v \
+SOURCES=$(wildcard *.v) \
+	$(wildcard ../../../cores/sfifo/rtl/*.v) \
 	$(wildcard ../rtl/ecp3/pciedma.v) \
 	$(wildcard ../rtl/ecp3/pcie_tlp.v)
 
