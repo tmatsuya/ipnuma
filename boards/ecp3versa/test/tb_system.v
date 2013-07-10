@@ -6,7 +6,11 @@ module tb_system();
 /* 125MHz system clock */
 reg sys_clk;
 initial sys_clk = 1'b0;
+initial gmii_tx_clk = 1'b0;
+initial gmii_rx_clk = 1'b0;
 always #8 sys_clk = ~sys_clk;
+always #8 gmii_tx_clk = ~gmii_tx_clk;
+always #8 gmii_rx_clk = ~gmii_rx_clk;
 
 // System
 reg sys_rst;
@@ -31,6 +35,13 @@ wire ph_cr;
 wire pd_cr;
 wire nph_cr;
 wire npd_cr;
+// Phy
+reg gmii_tx_clk;
+wire [7:0] gmii_txd;
+wire gmii_tx_en;
+reg [7:0] gmii_rxd;
+reg gmii_rx_dv;
+reg gmii_rx_clk;
 // LED and Switches
 reg [7:0] dipsw;
 wire [7:0] led;
@@ -61,6 +72,13 @@ pciedma pciedma_inst (
 	.pd_cr(),
 	.nph_cr(),
 	.npd_cr(),
+	// Phy
+	.gmii_tx_clk(gmii_tx_clk),
+	.gmii_txd(gmii_txd),
+	.gmii_tx_en(gmii_tx_en),
+	.gmii_rxd(gmii_rxd),
+	.gmii_rx_dv(gmii_rx_dv),
+	.gmii_rx_clk(gmii_rx_clk),
 	// LED and Switches
 	.dipsw(),
 	.led(),
@@ -83,7 +101,8 @@ end
 */
 
 reg [23:0] tlp_rom [0:4095];
-reg [11:0] tlp_counter;
+reg [11:0] phy_rom [0:4095];
+reg [11:0] tlp_counter, phy_counter;
 
 always @(posedge sys_clk) begin
 	rx_st   <= tlp_rom[ tlp_counter ][20];
@@ -92,13 +111,21 @@ always @(posedge sys_clk) begin
 	tlp_counter <= tlp_counter + 1;
 end
 
+always @(posedge sys_clk) begin
+	gmii_rx_dv  <= phy_rom[ phy_counter ][8];
+	gmii_rxd <= phy_rom[ phy_counter ][7:0];
+	phy_counter <= phy_counter + 1;
+end
+
 initial begin
         $dumpfile("./test.vcd");
 	$dumpvars(0, tb_system); 
 	$readmemh("./tlp_data.hex", tlp_rom);
+	$readmemh("./phy_data.hex", phy_rom);
 	/* Reset / Initialize our logic */
 	sys_rst = 1'b1;
 	tlp_counter = 0;
+	phy_counter = 0;
 
 	waitclock;
 	waitclock;

@@ -86,13 +86,6 @@ gmii2fifo9 # (
 	.wr_clk()
 );
 
-// Master bus
-wire mst_rd_en;
-wire mst_empty;
-wire [17:0] mst_dout;
-wire mst_wr_en;
-wire mst_full;
-wire [17:0] mst_din;
 // Slave bus
 wire [6:0] slv_bar_i;
 wire slv_ce_i;
@@ -129,12 +122,12 @@ pcie_tlp inst_pcie_tlp (
 	.nph_cr(nph_cr),
 	.npd_cr(npd_cr),
 	// Master bus
-	.mst_rd_en(mst_rd_en),
-	.mst_empty(mst_empty),
-	.mst_dout(mst_dout),
-	.mst_wr_en(mst_wr_en),
-	.mst_full(mst_full),
-	.mst_din(mst_din),
+	.mst_rd_en(wr_mstq_rd_en),
+	.mst_empty(wr_mstq_empty),
+	.mst_dout(wr_mstq_dout),
+	.mst_wr_en(),
+	.mst_full(),
+	.mst_din(),
 	// Slave bus
 	.slv_bar_i(slv_bar_i),
 	.slv_ce_i(slv_ce_i),
@@ -145,7 +138,7 @@ pcie_tlp inst_pcie_tlp (
 	.slv_dat_o(slv_dat_o),
 	// LED and Switches
 	.dipsw(dipsw),
-	.led(led),
+	.led(),
 	.segled(),
 	.btn(btn)
 );
@@ -174,6 +167,32 @@ always @(posedge pcie_clk) begin
 		end
 	end
 end
+
+server server_inst (
+	// System
+	.pcie_clk(pcie_clk),
+	.sys_rst(sys_rst),
+	// Phy FIFO
+	.phy_din(),
+	.phy_full(),
+	.phy_wr_en(),
+	.phy_dout(rx_phyq_dout),
+	.phy_empty(rx_phyq_empty),
+	.phy_rd_en(rx_phyq_rd_en),
+	// Master BUS FIFO
+	.mst_din(wr_mstq_din),
+	.mst_full(wr_mstq_full),
+	.mst_wr_en(wr_mstq_wr_en),
+	.mst_dout(),
+	.mst_empty(),
+	.mst_rd_en(),
+	// LED and Switches
+	.dipsw(dipsw),
+	.led(led),
+	.segled(),
+	.btn(btn)
+);
+
 
 // Simple RAM
 ram_dq ram_dq_inst1 (
