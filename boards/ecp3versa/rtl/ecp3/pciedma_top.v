@@ -1,5 +1,6 @@
 `default_nettype none
 module top (
+	// PCI Express
 	input rstn,
 	input FLIP_LANES,
 	input refclkp,
@@ -8,6 +9,22 @@ module top (
 	input hdinn,
 	output hdoutp,
 	output hdoutn,
+	// Ethernet PHY#1
+	output phy1_rst_n,
+	input phy1_125M_clk,
+	input phy1_tx_clk,
+	output phy1_gtx_clk,
+	output phy1_tx_en,
+	output [7:0] phy1_tx_data,
+	input phy1_rx_clk,
+	input phy1_rx_dv,
+	input phy1_rx_er,
+	input [7:0] phy1_rx_data,
+	input phy1_col,
+	input phy1_crs,
+	output phy1_mii_clk,
+	inout phy1_mii_data,
+	// GPIO
 	input [7:0] dip_switch,
 	output [7:0] led,
 	output [13:0] led_out,
@@ -165,12 +182,24 @@ pciedma pciedma_inst (
 	.pd_cr(pd_cr),
 	.nph_cr(nph_cr),
 	.npd_cr(npd_cr),
+	// Phy
+	.gmii_tx_clk(phy1_125M_clk),
+	.gmii_txd(phy1_tx_data),
+	.gmii_tx_en(phy1_tx_en),
+	.gmii_rxd(phy1_rx_data),
+	.gmii_rx_dv(phy1_rx_dv),
+	.gmii_rx_clk(phy1_rx_clk),
 	// LED and Switches
 	.dipsw(dip_switch),
 	.led(led),
 	.segled(led_out),
 	.btn(reset_n)
 );
+
+assign phy1_mii_clk = 1'b0;
+assign phy1_mii_data = 1'b0;
+assign phy1_gtx_clk = phy1_125M_clk;
+assign phy1_rst_n = sys_rst_n & reset_n;
 
 endmodule
 `default_nettype wire

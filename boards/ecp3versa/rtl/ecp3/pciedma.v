@@ -24,11 +24,66 @@ module pciedma (
 	output pd_cr,
 	output nph_cr,
 	output npd_cr,
+	// Phy
+	input gmii_tx_clk,
+	output [7:0] gmii_txd,
+	output gmii_tx_en,
+	input [7:0] gmii_rxd,
+	input gmii_rx_dv,
+	input gmii_rx_clk,
 	// LED and Switches
 	input [7:0] dipsw,
 	output [7:0] led,
 	output [13:0] segled,
 	input btn
+);
+
+// FIFO
+wire [17:0] wr_mstq_din, wr_mstq_dout;
+wire wr_mstq_full, wr_mstq_wr_en;
+wire wr_mstq_empty, wr_mstq_rd_en;
+
+fifo fifo_wr_mstq (
+	.Data(wr_mstq_din),
+	.Clock(pcie_clk),
+	.WrEn(wr_mstq_wr_en),
+	.RdEn(wr_mstq_rd_en),
+	.Reset(sys_rst),
+	.Q(wr_mstq_dout),
+	.Empty(wr_mstq_empty),
+	.Full(wr_mstq_full)
+);
+
+// AFIFO9
+wire [8:0] rx_phyq_din, rx_phyq_dout;
+wire rx_phyq_full, rx_phyq_wr_en;
+wire rx_phyq_empty, rx_phyq_rd_en;
+
+afifo9 afifo9_rx_phyq (
+	.Data(rx_phyq_din),
+	.WrClock(gmii_rx_clk),
+	.RdClock(pcie_clk),
+	.WrEn(rx_phyq_wr_en),
+	.RdEn(rx_phyq_rd_en),
+	.Reset(sys_rst),
+	.RPReset(sys_rst),
+	.Q(rx_phyq_dout),
+	.Empty(rx_phyq_empty),
+	.Full(rx_phyq_full)
+);
+
+// GMII2FIFO9 module
+gmii2fifo9 # (
+	.Gap(4'h8)
+) rx0gmii2fifo (
+	.sys_rst(sys_rst),
+	.gmii_rx_clk(gmii_rx_clk),
+	.gmii_rx_dv(gmii_rx_dv),
+	.gmii_rxd(gmii_rxd),
+	.din(rx_phyq_din),
+	.full(rx_phyq_full),
+	.wr_en(rx_phyq_wr_en),
+	.wr_clk()
 );
 
 // Master bus
@@ -132,17 +187,6 @@ ram_dq ram_dq_inst1 (
 	.Q(slv_dat1_o)
 );
 
-// FIFO
-fifo fifo_inst1 (
-	.Data(),
-	.Clock(pcie_clk),
-	.WrEn(),
-	.RdEn(),
-	.Reset(sys_rst),
-	.Q(),
-	.Empty(),
-	.Full()
-);
 
 assign slv_dat_o = ( {16{slv_bar_i[0]}} & slv_dat0_o ) | ( {16{slv_bar_i[2]}} & slv_dat1_o );
 

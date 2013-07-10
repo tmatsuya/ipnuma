@@ -1,5 +1,5 @@
 SOURCES=$(wildcard *.v) \
-	$(wildcard ../../../cores/sfifo/rtl/*.v) \
+	$(wildcard ../../../cores/gmii2fifo9/rtl/*.v) \
 	$(wildcard ../rtl/ecp3/pciedma.v) \
 	$(wildcard ../rtl/ecp3/pcie_tlp.v)
 
