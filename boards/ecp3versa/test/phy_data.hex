@@ -61,15 +61,15 @@
 1_00
 1_15
 1_01
-1_84	// Source port=33872 (0xc8450
+1_84	// Source port=33872 (0xc8450)
 1_50
 1_0d	// Dest port=3422 (0x0d5e)
 1_5e
-1_00
+1_00	// UDP len (08)+data length
 1_16
-1_3e
+1_3e	// UDP sum
 1_8d
-1_a1
+1_a1	// payload
 1_11
 1_00
 1_00

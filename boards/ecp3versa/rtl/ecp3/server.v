@@ -99,7 +99,7 @@ always @(posedge pcie_clk) begin
 					12'h23: ipv4_src_port[ 7: 0]  <= phy_dout[7:0];
 					12'h24: ipv4_dest_port[15: 8] <= phy_dout[7:0];
 					12'h25: ipv4_dest_port[ 7: 0] <= phy_dout[7:0];
-					12'h26: ipv4_udp_len[15: 8]   <= phy_dout[7:0]; // UDP header(0c)+data_length
+					12'h26: ipv4_udp_len[15: 8]   <= phy_dout[7:0]; // UDP header(08)+data_length
 					12'h27: ipv4_udp_len[ 7: 0]   <= phy_dout[7:0];
 					12'h28: ipv4_udp_sum[15: 8]   <= phy_dout[7:0];
 					12'h29: ipv4_udp_sum[ 7: 0]   <= phy_dout[7:0];
