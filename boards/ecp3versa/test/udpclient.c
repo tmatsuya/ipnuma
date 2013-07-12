@@ -11,7 +11,7 @@
 #define		SERV_PORT	3422		// USB over IP
 #define		BUFSIZE		1024
 
-// sudo arp -s 10.0.21.101 00:30:1b:a0:a4:8e
+// sudo arp -s 10.0.21.99 00:37:65:00:00:01
 
 int main(int argc, char **argv)
 {
@@ -75,7 +75,7 @@ int main(int argc, char **argv)
 			sdata[ 16+(i+dwlen)*4+2 ] = ((i+j+1)&0xf)*0x10+2;
 			sdata[ 16+(i+dwlen)*4+3 ] = ((i+j+1)&0xf)*0x10+3;
 		}
-write(1,sdata,18+(4*dwlen*2)+1);
+//write(1,sdata,18+(4*dwlen*2)+1);
 		if (sendto(sockfd, sdata, 16+(4*dwlen*2)+1, 0, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0){
 			perror("sendto()");
 		}
