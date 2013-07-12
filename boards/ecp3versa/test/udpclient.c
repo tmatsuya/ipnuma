@@ -1,6 +1,7 @@
 #include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <memory.h>
 
 #include <sys/socket.h>
@@ -16,8 +17,8 @@ int main(int argc, char **argv)
 {
 	int sockfd;
 	struct sockaddr_in servaddr;
-	int i, j, dwlen;
-	char sendline[BUFSIZE], dest_ip[256];
+	int i, j, dwlen, dwlen2;
+	char sdata[BUFSIZE], dest_ip[256];
 
 	if ( argc != 2) {
 		fprintf( stderr, "usage: %s [dest IP]\n", argv[0] );
@@ -39,28 +40,43 @@ int main(int argc, char **argv)
 
 	dwlen = 16;
 
-	sendline[ 0] = 0xa1;
-	sendline[ 1] = 0x11;
-	sendline[ 2] = 0x00;
-	sendline[ 3] = 0x00;
+	bzero( sdata, sizeof(sdata) );
 
-	sendline[ 4] = 0x80|dwlen;// write command(b7), 32bit(b6), length(b5-b0)=4DW
-	sendline[ 5] = 0xff;	// LBE(b8-4), FBE(b3-0)
+	sdata[ 0] = 0xa1;
+	sdata[ 1] = 0x11;
+	sdata[ 2] = 0x00;
+	sdata[ 3] = 0x00;
 
-	sendline[ 6] = 0xd0;	// ADDR=0xD0000000
-	sendline[ 7] = 0x00;
-	sendline[ 8] = 0x00;
-	sendline[ 9] = 0x00;
+	sdata[ 4] = 0x80|dwlen;// write command(b7), 32bit(b6), length(b5-b0)=4DW
+	sdata[ 5] = 0xff;	// LBE(b8-4), FBE(b3-0)
+
+	sdata[ 6] = 0xd0;	// ADDR=0xD0000000
+	sdata[ 7] = 0x00;
+	sdata[ 8] = 0x00;
+	sdata[ 9] = 0x00;
+
+	sdata[dwlen*4+10] = 0x80|dwlen;// write command(b7), 32bit(b6), length(b5-b0)=4DW
+	sdata[dwlen*4+11] = 0xff;	// LBE(b8-4), FBE(b3-0)
+
+	sdata[dwlen*4+12] = 0xd0;	// ADDR=0xD0000000
+	sdata[dwlen*4+13] = 0x00;
+	sdata[dwlen*4+14] = 0x02;
+	sdata[dwlen*4+15] = 0x80;
+
 
 	for ( j=1 ; ; ++j) {
 		for (i=0; i<dwlen; ++i) {
-			sendline[ 10+i*4+0 ] = ((i+j)&0xf)*0x10+0;
-			sendline[ 10+i*4+1 ] = ((i+j)&0xf)*0x10+1;
-			sendline[ 10+i*4+2 ] = ((i+j)&0xf)*0x10+2;
-			sendline[ 10+i*4+3 ] = ((i+j)&0xf)*0x10+3;
+			sdata[ 10+i*4+0 ] = ((i+j)&0xf)*0x10+0;
+			sdata[ 10+i*4+1 ] = ((i+j)&0xf)*0x10+1;
+			sdata[ 10+i*4+2 ] = ((i+j)&0xf)*0x10+2;
+			sdata[ 10+i*4+3 ] = ((i+j)&0xf)*0x10+3;
+			sdata[ 16+(i+dwlen)*4+0 ] = ((i+j+1)&0xf)*0x10+0;
+			sdata[ 16+(i+dwlen)*4+1 ] = ((i+j+1)&0xf)*0x10+1;
+			sdata[ 16+(i+dwlen)*4+2 ] = ((i+j+1)&0xf)*0x10+2;
+			sdata[ 16+(i+dwlen)*4+3 ] = ((i+j+1)&0xf)*0x10+3;
 		}
-		sendline[ 10+i*4+0 ] = 0;
-		if (sendto(sockfd, sendline, 10+(4*dwlen)+1, 0, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0){
+write(1,sdata,18+(4*dwlen*2)+1);
+		if (sendto(sockfd, sdata, 16+(4*dwlen*2)+1, 0, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0){
 			perror("sendto()");
 		}
 		usleep(1);

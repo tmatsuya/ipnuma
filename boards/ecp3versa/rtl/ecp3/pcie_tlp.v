@@ -621,6 +621,9 @@ always @(posedge pcie_clk) begin
 						tx2_length <= tx2_length - 11'h1;
 						if ( tx2_length[10:1] != 10'h000)
 							mst_adr[31:1] <= mst_adr[31:1] + 19'h1;
+						if ( tx2_length == 11'h7ff || tx2_length == 11'h7fe ) begin
+							mst_rd_en <= 1'b0;
+						end
 						if ( tx2_length == 11'h7fe ) begin
 							tx2_tlpd_done  <= 1'b1;
 							mst_status <= MST_IDLE;
