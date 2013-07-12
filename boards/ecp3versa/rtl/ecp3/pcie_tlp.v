@@ -364,10 +364,10 @@ always @(posedge pcie_clk) begin
 			end
 			TX2_COMP4: begin
 				tx_data[15:0] <= tx2_addr[63:48];
+				tx2_tlpd_ready <= 1'b1;
 				tx_status <= TX2_COMP5;
 			end
 			TX2_COMP5: begin
-				tx2_tlpd_ready <= 1'b1;
 				tx_data[15:0] <= tx2_addr[47:32];
 				tx_status <= TX2_COMP6;
 			end
@@ -561,50 +561,46 @@ parameter [3:0]
 	MST_COMP    = 3'h7;
 reg [3:0] mst_status = MST_IDLE;
 reg [31:1] mst_adr;
+reg mst_rd_wait;
 always @(posedge pcie_clk) begin
 	if (sys_rst) begin
 		tx2_tlph_valid <= 1'b0;
 		tx2_tlpd_done  <= 1'b0;
 		mst_status <= MST_IDLE;
 		mst_rd_en <= 1'b0;
+		mst_rd_wait <= 1'b0;
 	end else begin
 		tx2_tlpd_done  <= 1'b0;
-		mst_rd_en <= ~mst_empty;
-		case ( mst_status )
-			MST_IDLE: begin
-				tx2_tlph_valid <= 1'b0;
-				if ( mst_rd_en == 1'b1 && mst_dout[17] == 1'b1 ) begin
-					tx2_addr[63:32] <= 30'h0;
-					tx2_length[10:0] <= {4'b0000, mst_dout[13:8], 1'b0};
-					{tx2_lastbe[3:0], tx2_firstbe[3:0]} <= mst_dout[7:0];
-					case ( mst_dout[15:14] )
-						2'b00: mst_status <= MST_MWRITE32;
-						2'b01: mst_status <= MST_MWRITE64;
-						2'b10: mst_status <= MST_MWRITE32;
-						2'b11: mst_status <= MST_MWRITE64;
-					endcase
+		mst_rd_en <= ~mst_empty & ~mst_rd_wait;
+		if ( ( mst_rd_en == 1'b1 && mst_empty == 1'b0 ) || ( mst_status == MST_MWRITED )  ) begin
+			case ( mst_status )
+				MST_IDLE: begin
+					tx2_tlph_valid <= 1'b0;
+					if ( mst_dout[17] == 1'b1 ) begin
+						tx2_addr[63:32] <= 30'h0;
+						tx2_length[10:0] <= {4'b0000, mst_dout[13:8], 1'b0};
+						{tx2_lastbe[3:0], tx2_firstbe[3:0]} <= mst_dout[7:0];
+						case ( mst_dout[15:14] )
+							2'b00: mst_status <= MST_MWRITE32;
+							2'b01: mst_status <= MST_MWRITE64;
+							2'b10: mst_status <= MST_MWRITE32;
+							2'b11: mst_status <= MST_MWRITE64;
+						endcase
+					end
 				end
-			end
-			MST_MWRITE64: begin
-				if ( mst_rd_en ==1'b1 ) begin
+				MST_MWRITE64: begin
 					tx2_addr[63:48] <= mst_dout[15:0];
 					mst_status <= MST_MWRITE48;
 				end
-			end
-			MST_MWRITE48: begin
-				if ( mst_rd_en ==1'b1 ) begin
+				MST_MWRITE48: begin
 					tx2_addr[47:32] <= mst_dout[15:0];
 					mst_status <= MST_MWRITE32;
 				end
-			end
-			MST_MWRITE32: begin
-				if ( mst_rd_en ==1'b1 ) begin
+				MST_MWRITE32: begin
 					tx2_addr[31:16] <= mst_dout[15:0];
 					mst_status <= MST_MWRITE16;
 				end
-			end
-			MST_MWRITE16: begin
-				if ( mst_rd_en ==1'b1 ) begin
+				MST_MWRITE16: begin
 					tx2_addr[15: 2] <= mst_dout[15:2];
 					tx2_fmt[1:0] <= 2'b11;		// 4DW, with DATA
 					tx2_type[4:0] <= 5'b00000;	// Memory write request
@@ -616,44 +612,43 @@ always @(posedge pcie_clk) begin
 					mst_adr[31:1] <= {tx2_addr[31:16], mst_dout[15:2], 1'b0};
 					tx2_tlph_valid <= 1'b1;
 					mst_rd_en <= 1'b0;
+					mst_rd_wait <= 1'b1;
 					mst_status <= MST_MWRITED;
 				end
-			end
-			MST_MWRITED: begin
-				if ( tx2_tlpd_ready == 1'b1 ) begin
-					tx2_tlph_valid <= 1'b0;
-					tx2_length <= tx2_length - 11'h1;
-					if ( tx2_length[10:1] != 10'h000)
-						mst_adr[31:1] <= mst_adr[31:1] + 19'h1;
-					if ( tx2_length == 11'h7ff ) begin
-						mst_status <= MST_IDLE;
-						tx2_tlpd_done  <= 1'b1;
+				MST_MWRITED: begin
+					if ( tx2_tlpd_ready == 1'b1 ) begin
+						tx2_tlph_valid <= 1'b0;
+						tx2_length <= tx2_length - 11'h1;
+						if ( tx2_length[10:1] != 10'h000)
+							mst_adr[31:1] <= mst_adr[31:1] + 19'h1;
+						if ( tx2_length == 11'h7fe ) begin
+							tx2_tlpd_done  <= 1'b1;
+							mst_status <= MST_IDLE;
+						end
+						tx2_data[15:0] <= mst_dout[15:0];
+						mst_rd_wait <= 1'b0;
 					end
-//					end else
-//						mst_ce_i <= 1'b1;
-					tx2_data[15:0] <= 16'h3132;
-				end else
-					mst_rd_en <= 1'b0;
-			end
+				end
 `ifdef NO
-			MST_MWRITEH: begin
-				tx2_length[10:0] <= 11'h0;
-				mst_adr[19:1] <= ({rx_addr[19:2],1'b0} - 19'h1);
-				mst_status <= MST_MWRITED;
-			end
-			MST_MWRITED: begin
-				tx2_length <= tx2_length + 11'h1;
-				mst_adr[19:1] <= mst_adr[19:1] + 19'h1;
-				mst_din <= rx_data2[15:0];
-				if ( tx2_length[10:1] == (rx_length[9:0] - 10'h1) )
-					if ( tx2_length[0] == 1'b1 ) begin
+				MST_MWRITEH: begin
+					tx2_length[10:0] <= 11'h0;
+					mst_adr[19:1] <= ({rx_addr[19:2],1'b0} - 19'h1);
+					mst_status <= MST_MWRITED;
+				end
+				MST_MWRITED: begin
+					tx2_length <= tx2_length + 11'h1;
+					mst_adr[19:1] <= mst_adr[19:1] + 19'h1;
+					mst_din <= rx_data2[15:0];
+					if ( tx2_length[10:1] == (rx_length[9:0] - 10'h1) )
+						if ( tx2_length[0] == 1'b1 ) begin
+							mst_status <= MST_IDLE;
+						end
+					if ( rx_end2 == 1'b1 )
 						mst_status <= MST_IDLE;
-					end
-				if ( rx_end2 == 1'b1 )
-					mst_status <= MST_IDLE;
-			end
+				end
 `endif
-		endcase
+			endcase
+		end
 	end
 end
 

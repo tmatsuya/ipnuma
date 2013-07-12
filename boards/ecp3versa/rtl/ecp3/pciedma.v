@@ -143,22 +143,22 @@ pcie_tlp inst_pcie_tlp (
 	.btn(btn)
 );
 
-reg [13:0] segled;
+reg [13:0] segledr;
 always @(posedge pcie_clk) begin
 	if (sys_rst == 1'b1) begin
 		slv_dat0_o <= 16'h0;
-		segled[13:0] <= 14'h3fff;
+		segledr[13:0] <= 14'h3fff;
 	end else begin
 		if (slv_bar_i[0] & slv_ce_i) begin
 			case (slv_adr_i[9:1])
 				9'h000: begin
 					if (slv_we_i) begin
 						if (slv_sel_i[0])
-							segled[7:0] <= slv_dat_i[7:0];
+							segledr[7:0] <= slv_dat_i[7:0];
 						if (slv_sel_i[1])
-							segled[13:8] <= slv_dat_i[13:8];
+							segledr[13:8] <= slv_dat_i[13:8];
 					end else
-						slv_dat0_o <= {2'b0, segled[13:0]};
+						slv_dat0_o <= {2'b0, segledr[13:0]};
 				end
 				default: begin
 					slv_dat0_o <= slv_adr_i[16:1];
@@ -208,6 +208,7 @@ ram_dq ram_dq_inst1 (
 
 
 assign slv_dat_o = ( {16{slv_bar_i[0]}} & slv_dat0_o ) | ( {16{slv_bar_i[2]}} & slv_dat1_o );
+assign segled = segledr;
 
 endmodule
 `default_nettype wire

@@ -10,21 +10,19 @@ module fifo (
 	output Full
 );
 
-sfifo # (
-	.DATA_WIDTH(18),
-	.ADDR_WIDTH(10)
+FIFO # (
+	.width(18),
+	.widthad(10),
+	.numwords(1024)
 ) sfifo_inst (
-	.clk(Clock) , // Clock input
-	.rst(1'b0)  , // Active high reset
-	.wr_cs(WrEn), // Write chip select
-	.rd_cs(RdEn), // Read chipe select
-	.din(Data)  , // Data input
-	.rd_en(RdEn), // Read enable
-	.wr_en(WrEn), // Write Enable
-	.dout(Q)    , // Data Output
-	.empty(Empty),// FIFO empty
-	.full(Full) , // FIFO full
-	.data_count() // DATA count
+	.CLK(Clock),     //in      System Clock
+	.nRST(~Reset),   //in      Reset
+	.D(Data),        //in      Data
+	.Q(Q),           //out     Data
+	.WR(WrEn),       //in      Write Request
+	.RD(RdEn),       //in      Read Request
+	.FULL(Full),     //out     Full Flag
+	.EMPTY(Empty)    //out     Empty Flag
 );
 
 endmodule

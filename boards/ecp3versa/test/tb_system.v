@@ -103,17 +103,21 @@ end
 reg [23:0] tlp_rom [0:4095];
 reg [11:0] phy_rom [0:4095];
 reg [11:0] tlp_counter, phy_counter;
+wire [11:0] tlp_cur;
+wire [11:0] phy_cur;
+assign tlp_cur = tlp_rom[ tlp_counter ];
+assign phy_cur = phy_rom[ phy_counter ];
 
 always @(posedge sys_clk) begin
-	rx_st   <= tlp_rom[ tlp_counter ][20];
-	rx_end  <= tlp_rom[ tlp_counter ][16];
-	rx_data <= tlp_rom[ tlp_counter ][15:0];
+	rx_st   <= tlp_cur[20];
+	rx_end  <= tlp_cur[16];
+	rx_data <= tlp_cur[15:0];
 	tlp_counter <= tlp_counter + 1;
 end
 
 always @(posedge sys_clk) begin
-	gmii_rx_dv  <= phy_rom[ phy_counter ][8];
-	gmii_rxd <= phy_rom[ phy_counter ][7:0];
+	gmii_rx_dv  <= phy_cur[8];
+	gmii_rxd <= phy_cur[7:0];
 	phy_counter <= phy_counter + 1;
 end
 
@@ -138,7 +142,7 @@ initial begin
 
 //	#(8*2) mst_req_o = 1'b0;
 
-	#3000;
+	#4000;
 
 	$finish;
 end

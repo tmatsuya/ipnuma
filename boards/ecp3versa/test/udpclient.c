@@ -10,11 +10,13 @@
 #define		SERV_PORT	3422		// USB over IP
 #define		BUFSIZE		1024
 
+// sudo arp -s 10.0.21.101 00:30:1b:a0:a4:8e
+
 int main(int argc, char **argv)
 {
 	int sockfd;
 	struct sockaddr_in servaddr;
-	int i, dwlen;
+	int i, j, dwlen;
 	char sendline[BUFSIZE], dest_ip[256];
 
 	if ( argc != 2) {
@@ -35,7 +37,7 @@ int main(int argc, char **argv)
 		exit(EXIT_FAILURE);
 	}
 
-	dwlen = 4;
+	dwlen = 16;
 
 	sendline[ 0] = 0xa1;
 	sendline[ 1] = 0x11;
@@ -50,15 +52,15 @@ int main(int argc, char **argv)
 	sendline[ 8] = 0x00;
 	sendline[ 9] = 0x00;
 
-	for (i=0; i<dwlen; ++i) {
-		sendline[ 10+i*4+0 ] = 0xa0+i*0x10+0;
-		sendline[ 10+i*4+1 ] = 0xa0+i*0x10+1;
-		sendline[ 10+i*4+2 ] = 0xa0+i*0x10+2;
-		sendline[ 10+i*4+3 ] = 0xa0+i*0x10+3;
-	}
-
-	for ( i=1 ; ; ++i) {
-		if (sendto(sockfd, sendline, 10+(4*dwlen), 0, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0){
+	for ( j=1 ; ; ++j) {
+		for (i=0; i<dwlen; ++i) {
+			sendline[ 10+i*4+0 ] = ((i+j)&0xf)*0x10+0;
+			sendline[ 10+i*4+1 ] = ((i+j)&0xf)*0x10+1;
+			sendline[ 10+i*4+2 ] = ((i+j)&0xf)*0x10+2;
+			sendline[ 10+i*4+3 ] = ((i+j)&0xf)*0x10+3;
+		}
+		sendline[ 10+i*4+0 ] = 0;
+		if (sendto(sockfd, sendline, 10+(4*dwlen)+1, 0, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0){
 			perror("sendto()");
 		}
 		usleep(1);
