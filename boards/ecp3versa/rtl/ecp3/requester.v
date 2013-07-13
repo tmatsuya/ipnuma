@@ -67,24 +67,22 @@ parameter [2:0]
 reg [2:0] req_status = REQ_IDLE;
 	
 wire [31:0] magic_code       = 32'ha1110000;
-reg [16:0] ipv4_id           = 16'h0;
-reg [7:0]  ipv4_ttl          = 8'h40;      // IPv4: default TTL value (default: 64)
-reg [23:0] ip_sum;
-reg [31:0] tx_ipv4_srcip     = {8'd10, 8'd0, 8'd21, 8'd101};
-reg [47:0] tx_src_mac        = 48'h003776_000001;
-reg [47:0] tx_dst_mac        = 48'hffffff_ffffff;
-
-reg [31:0] gap_count;
-
+wire [15:0] ipv4_id           = 16'h1;
+wire [7:0]  ipv4_ttl          = 8'h40;      // IPv4: default TTL value (default: 64)
+wire [31:0] tx_ipv4_srcip     = {8'd10, 8'd0, 8'd21, 8'd101};
+wire [47:0] tx_src_mac        = 48'h003776_000001;
+wire [47:0] tx_dst_mac        = 48'hffffff_ffffff;
 wire [31:0] ipv4_dstip = {8'd10, 8'd0, 8'd21, 8'd254};  // IPv4: Destination Address
 wire [15:0] tx_frame_len = 16'd128;
 wire [15:0] tx_udp_len = tx_frame_len - 16'h26;  // UDP Length
 wire [15:0] tx_ip_len  = tx_frame_len - 16'd18;  // IP Length (Frame Len - FCS Len - EtherFrame Len)
 
+reg [31:0] gap_count;
+reg [23:0] ip_sum;
+
 always @(posedge pcie_clk) begin
 	if (sys_rst) begin
 		tx_count       <= 16'h0;
-		ipv4_id        <= 16'h0;
 		tx_en          <= 1'b0;
 		crc_rd         <= 1'b0;
 		req_status       <= REQ_IDLE;
