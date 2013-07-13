@@ -152,10 +152,16 @@ always @(posedge pcie_clk) begin
 			16'h2b: tx_data <= magic_code[23:16];
 			16'h2c: tx_data <= magic_code[15:8];
 			16'h2d: tx_data <= magic_code[7:0];
-			16'h2e: tx_data <= 8'h00;         // Data
-			16'h2f: tx_data <= 8'h00;
-			16'h30: tx_data <= 8'h00;
+			16'h2e: tx_data <= 8'h81;         // Data
+			16'h2f: tx_data <= 8'hff;
+			16'h30: tx_data <= 8'hd0;
 			16'h31: tx_data <= 8'h00;
+			16'h32: tx_data <= 8'h00;
+			16'h33: tx_data <= 8'h00;
+			16'h34: tx_data <= 8'ha1;
+			16'h35: tx_data <= 8'ha2;
+			16'h36: tx_data <= 8'ha3;
+			16'h37: tx_data <= 8'ha4;
 			default: begin
 				tx_data <= 8'h00;
 				req_status <= REQ_FCS1;
