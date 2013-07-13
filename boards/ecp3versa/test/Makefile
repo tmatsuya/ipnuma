@@ -1,7 +1,9 @@
 SOURCES=$(wildcard *.v) \
 	$(wildcard ../../../cores/gmii2fifo9/rtl/*.v) \
+	$(wildcard ../../../cores/fifo9togmii/rtl/*.v) \
 	$(wildcard ../rtl/ecp3/pciedma.v) \
 	$(wildcard ../rtl/ecp3/server.v) \
+	$(wildcard ../rtl/ecp3/requester.v) \
 	$(wildcard ../rtl/ecp3/pcie_tlp.v)
 
 #all: cversim

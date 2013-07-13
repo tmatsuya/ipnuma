@@ -54,6 +54,21 @@ fifo fifo_wr_mstq (
 	.Full(wr_mstq_full)
 );
 
+wire [17:0] rd_slvq_din, rd_slvq_dout;
+wire rd_slvq_full, rd_slvq_wr_en;
+wire rd_slvq_empty, rd_slvq_rd_en;
+
+fifo fifo_rd_slvq (
+	.Data(rd_slvq_din),
+	.Clock(pcie_clk),
+	.WrEn(rd_slvq_wr_en),
+	.RdEn(rd_slvq_rd_en),
+	.Reset(sys_rst),
+	.Q(rd_slvq_dout),
+	.Empty(rd_slvq_empty),
+	.Full(rd_slvq_full)
+);
+
 // AFIFO9
 wire [8:0] rx_phyq_din, rx_phyq_dout;
 wire rx_phyq_full, rx_phyq_wr_en;
@@ -72,6 +87,23 @@ afifo9 afifo9_rx_phyq (
 	.Full(rx_phyq_full)
 );
 
+wire [8:0] tx_phyq_din, tx_phyq_dout;
+wire tx_phyq_full, tx_phyq_wr_en;
+wire tx_phyq_empty, tx_phyq_rd_en;
+
+afifo9 afifo9_tx_phyq (
+	.Data(tx_phyq_din),
+	.WrClock(pcie_clk),
+	.RdClock(gmii_tx_clk),
+	.WrEn(tx_phyq_wr_en),
+	.RdEn(tx_phyq_rd_en),
+	.Reset(sys_rst),
+	.RPReset(sys_rst),
+	.Q(tx_phyq_dout),
+	.Empty(tx_phyq_empty),
+	.Full(tx_phyq_full)
+);
+
 // GMII2FIFO9 module
 gmii2fifo9 # (
 	.Gap(4'h8)
@@ -84,6 +116,18 @@ gmii2fifo9 # (
 	.full(rx_phyq_full),
 	.wr_en(rx_phyq_wr_en),
 	.wr_clk()
+);
+
+// FIFO9TOGMII module
+fifo9togmii tx0fifo2gmii (
+	.sys_rst(sys_rst),
+	.dout(tx_phyq_dout),
+	.empty(tx_phyq_empty),
+	.rd_en(tx_phyq_rd_en),
+	.rd_clk(),
+	.gmii_tx_clk(gmii_tx_clk),
+	.gmii_tx_en(gmii_tx_en),
+	.gmii_txd(gmii_txd)
 );
 
 // Slave bus
@@ -121,14 +165,14 @@ pcie_tlp inst_pcie_tlp (
 	.pd_cr(pd_cr),
 	.nph_cr(nph_cr),
 	.npd_cr(npd_cr),
-	// Master bus
+	// Master FIFO
 	.mst_rd_en(wr_mstq_rd_en),
 	.mst_empty(wr_mstq_empty),
 	.mst_dout(wr_mstq_dout),
 	.mst_wr_en(),
 	.mst_full(),
 	.mst_din(),
-	// Slave bus
+	// Slave BUS
 	.slv_bar_i(slv_bar_i),
 	.slv_ce_i(slv_ce_i),
 	.slv_we_i(slv_we_i),
@@ -136,6 +180,13 @@ pcie_tlp inst_pcie_tlp (
 	.slv_dat_i(slv_dat_i),
 	.slv_sel_i(slv_sel_i),
 	.slv_dat_o(slv_dat_o),
+	// Slave FIFO
+	.slv_rd_en(),
+	.slv_empty(),
+	.slv_dout(),
+	.slv_wr_en(),
+	.slv_full(),
+	.slv_din(),
 	// LED and Switches
 	.dipsw(dipsw),
 	.led(),
@@ -168,6 +219,7 @@ always @(posedge pcie_clk) begin
 	end
 end
 
+// Server
 server server_inst (
 	// System
 	.pcie_clk(pcie_clk),
@@ -179,7 +231,7 @@ server server_inst (
 	.phy_dout(rx_phyq_dout),
 	.phy_empty(rx_phyq_empty),
 	.phy_rd_en(rx_phyq_rd_en),
-	// Master BUS FIFO
+	// Master FIFO
 	.mst_din(wr_mstq_din),
 	.mst_full(wr_mstq_full),
 	.mst_wr_en(wr_mstq_wr_en),
@@ -188,11 +240,36 @@ server server_inst (
 	.mst_rd_en(),
 	// LED and Switches
 	.dipsw(dipsw),
-	.led(led),
+	.led(),
 	.segled(),
 	.btn(btn)
 );
 
+// Requester
+requester requester_inst (
+	// System
+	.pcie_clk(pcie_clk),
+	.sys_rst(sys_rst),
+	// Phy FIFO
+	.phy_din(tx_phyq_din),
+	.phy_full(tx_phyq_full),
+	.phy_wr_en(tx_phyq_wr_en),
+	.phy_dout(),
+	.phy_empty(),
+	.phy_rd_en(),
+	// Slave FIFO
+	.slv_din(),
+	.slv_full(),
+	.slv_wr_en(),
+	.slv_dout(rd_slvq_dout),
+	.slv_empty(rd_slvq_empty),
+	.slv_rd_en(rd_slvq_rd_en),
+	// LED and Switches
+	.dipsw(dipsw),
+	.led(led),
+	.segled(),
+	.btn(btn)
+);
 
 // Simple RAM
 ram_dq ram_dq_inst1 (

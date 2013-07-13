@@ -24,14 +24,14 @@ module pcie_tlp (
 	output reg pd_cr = 1'b0,
 	output reg nph_cr = 1'b0,
 	output reg npd_cr = 1'b0,
-	// Master bus
+	// Master FIFO
 	output reg mst_rd_en,
 	input  mst_empty,
 	input  [17:0] mst_dout,
 	output reg mst_wr_en,
 	input  mst_full,
 	output reg [17:0] mst_din,
-	// Slave bus
+	// Slave BUS
 	output reg [6:0] slv_bar_i,
 	output reg slv_ce_i,
 	output reg slv_we_i,
@@ -39,6 +39,13 @@ module pcie_tlp (
 	output reg [15:0] slv_dat_i,
 	output reg [1:0] slv_sel_i,
 	input  [15:0] slv_dat_o,
+	// Slave FIFO
+	output reg slv_rd_en,
+	input  slv_empty,
+	input  [17:0] slv_dout,
+	output reg slv_wr_en,
+	input  slv_full,
+	output reg [17:0] slv_din,
 	// LED and Switches
 	input [7:0] dipsw,
 	output [7:0] led,

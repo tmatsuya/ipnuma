@@ -10,7 +10,7 @@ module server (
 	input [8:0] phy_dout,
 	input phy_empty,
 	output reg phy_rd_en,
-	// Master BUS FIFO
+	// Master FIFO
 	output reg [17:0] mst_din,
 	input mst_full,
 	output reg  mst_wr_en,

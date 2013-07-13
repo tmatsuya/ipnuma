@@ -4,7 +4,7 @@
     <Implementation title="impl1" dir="impl1" description="impl1" default_strategy="Strategy1">
         <Options>
             <Option name="HDL type" value="Verilog"/>
-            <Option name="def_top" value="gmii2fifo9"/>
+            <Option name="def_top" value="fifo9togmii"/>
             <Option name="top" value="top"/>
         </Options>
         <Source name="../rtl/ecp3/pciedma_top.v" type="Verilog" type_short="Verilog">
@@ -17,6 +17,9 @@
             <Options/>
         </Source>
         <Source name="../rtl/ecp3/server.v" type="Verilog" type_short="Verilog">
+            <Options/>
+        </Source>
+        <Source name="../rtl/ecp3/requester.v" type="Verilog" type_short="Verilog">
             <Options/>
         </Source>
         <Source name="../rtl/ecp3/pcie_top.v" type="Verilog" type_short="Verilog">
@@ -35,6 +38,12 @@
             <Options/>
         </Source>
         <Source name="../../../cores/gmii2fifo9/rtl/gmii2fifo9.v" type="Verilog" type_short="Verilog">
+            <Options/>
+        </Source>
+        <Source name="../../../cores/fifo9togmii/rtl/fifo9togmii.v" type="Verilog" type_short="Verilog">
+            <Options/>
+        </Source>
+        <Source name="../../../cores/fifo9togmii/rtl/crc.v" type="Verilog" type_short="Verilog">
             <Options/>
         </Source>
         <Source name="impl1/impl1.xcf" type="Programming Project File" type_short="Programming">
