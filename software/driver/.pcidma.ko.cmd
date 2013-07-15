@@ -1,1 +1,0 @@
-cmd_/home/tmatsuya/Dropbox/fpga/pciedma/software/driver/pcidma.ko := ld -r -m elf_x86_64 -T /usr/src/kernels/3.9.6-200.fc18.x86_64/scripts/module-common.lds --build-id  -o /home/tmatsuya/Dropbox/fpga/pciedma/software/driver/pcidma.ko /home/tmatsuya/Dropbox/fpga/pciedma/software/driver/pcidma.o /home/tmatsuya/Dropbox/fpga/pciedma/software/driver/pcidma.mod.o
