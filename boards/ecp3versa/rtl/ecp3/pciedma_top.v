@@ -24,6 +24,21 @@ module top (
 	input phy1_crs,
 	output phy1_mii_clk,
 	inout phy1_mii_data,
+	// Ethernet PHY#2
+	output phy2_rst_n,
+	input phy2_125M_clk,
+	input phy2_tx_clk,
+	output phy2_gtx_clk,
+	output phy2_tx_en,
+	output [7:0] phy2_tx_data,
+	input phy2_rx_clk,
+	input phy2_rx_dv,
+	input phy2_rx_er,
+	input [7:0] phy2_rx_data,
+	input phy2_col,
+	input phy2_crs,
+	output phy2_mii_clk,
+	inout phy2_mii_data,
 	// GPIO
 	input [7:0] dip_switch,
 	output [7:0] led,
@@ -183,12 +198,21 @@ pciedma pciedma_inst (
 	.nph_cr(nph_cr),
 	.npd_cr(npd_cr),
 	// Phy
+`ifndef USE_PHY2
 	.gmii_tx_clk(phy1_125M_clk),
 	.gmii_txd(phy1_tx_data),
 	.gmii_tx_en(phy1_tx_en),
 	.gmii_rxd(phy1_rx_data),
 	.gmii_rx_dv(phy1_rx_dv),
 	.gmii_rx_clk(phy1_rx_clk),
+`else
+	.gmii_tx_clk(phy2_125M_clk),
+	.gmii_txd(phy2_tx_data),
+	.gmii_tx_en(phy2_tx_en),
+	.gmii_rxd(phy2_rx_data),
+	.gmii_rx_dv(phy2_rx_dv),
+	.gmii_rx_clk(phy2_rx_clk),
+`endif
 	// LED and Switches
 	.dipsw(dip_switch),
 	.led(led),
@@ -196,10 +220,17 @@ pciedma pciedma_inst (
 	.btn(reset_n)
 );
 
+`ifndef USE_PHY2
 assign phy1_mii_clk = 1'b0;
 assign phy1_mii_data = 1'b0;
 assign phy1_gtx_clk = phy1_125M_clk;
 assign phy1_rst_n = sys_rst_n & reset_n;
+`else
+assign phy2_mii_clk = 1'b0;
+assign phy2_mii_data = 1'b0;
+assign phy2_gtx_clk = phy2_125M_clk;
+assign phy2_rst_n = sys_rst_n & reset_n;
+`endif
 
 endmodule
 `default_nettype wire

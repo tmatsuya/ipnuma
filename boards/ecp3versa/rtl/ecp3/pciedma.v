@@ -1,4 +1,6 @@
 `default_nettype none
+`include "setup.v"
+
 module pciedma (
 	// System
 	input pcie_clk,
@@ -219,6 +221,7 @@ always @(posedge pcie_clk) begin
 	end
 end
 
+`ifdef ENABLE_SERVER
 // Server
 server server_inst (
 	// System
@@ -244,7 +247,9 @@ server server_inst (
 	.segled(),
 	.btn(btn)
 );
+`endif
 
+`ifdef ENABLE_REQUESTOR
 // Requester
 requester requester_inst (
 	// System
@@ -270,6 +275,7 @@ requester requester_inst (
 	.segled(),
 	.btn(btn)
 );
+`endif
 
 // Simple RAM
 ram_dq ram_dq_inst1 (
