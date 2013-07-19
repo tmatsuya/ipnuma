@@ -1,5 +1,5 @@
 ifneq ($(KERNELRELEASE),)
-obj-m		:= pcidma.o
+obj-m		:= ipnuma.o
 else
 KDIR		:= /lib/modules/$(shell uname -r)/build/
 PWD		:= $(shell pwd)
