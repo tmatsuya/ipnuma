@@ -220,7 +220,7 @@ static int __devinit ipnuma_init_one (struct pci_dev *pdev,
 	pcidev = pdev;
 
 	/* reset board */
-	*mmio0_ptr = 0x02;	/* Request receiving PHY#1 */
+//	*mmio0_ptr = 0x02;	/* Request receiving PHY#1 */
 
 	return 0;
 
