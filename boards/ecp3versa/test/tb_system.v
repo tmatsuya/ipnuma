@@ -103,8 +103,8 @@ end
 reg [23:0] tlp_rom [0:4095];
 reg [11:0] phy_rom [0:4095];
 reg [11:0] tlp_counter, phy_counter;
-wire [11:0] tlp_cur;
-wire [11:0] phy_cur;
+wire [23:0] tlp_cur;
+wire [23:0] phy_cur;
 assign tlp_cur = tlp_rom[ tlp_counter ];
 assign phy_cur = phy_rom[ phy_counter ];
 
