@@ -1,7 +1,7 @@
 `default_nettype none
 `include "setup.v"
 
-module pciedma (
+module ipnuma (
 	// System
 	input pcie_clk,
 	input sys_rst,

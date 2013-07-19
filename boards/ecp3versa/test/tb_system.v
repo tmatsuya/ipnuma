@@ -48,7 +48,7 @@ wire [7:0] led;
 wire [13:0] segled;
 reg btn;
 
-pciedma pciedma_inst (
+ipnuma ipnuma_inst (
 	.pcie_clk(sys_clk),
 	.sys_rst(sys_rst),
 	// Management

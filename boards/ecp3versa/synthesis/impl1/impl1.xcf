@@ -19,7 +19,7 @@
 				<BScanLen>1</BScanLen>
 				<BScanVal>0</BScanVal>
 			</Bypass>
-			<File>Z:/tmatsuya/Dropbox/fpga/pciedma/boards/ecp3versa/synthesis/impl1/top_impl1.bit</File>
+			<File>Z:/tmatsuya/Dropbox/fpga/ipnuma/boards/ecp3versa/synthesis/impl1/top_impl1.bit</File>
 			<FileTime>06/22/13 23:01:54</FileTime>
 			<Operation>Fast Program</Operation>
 			<Option>

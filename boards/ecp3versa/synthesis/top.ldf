@@ -7,10 +7,10 @@
             <Option name="def_top" value="fifo9togmii"/>
             <Option name="top" value="top"/>
         </Options>
-        <Source name="../rtl/ecp3/pciedma_top.v" type="Verilog" type_short="Verilog">
+        <Source name="../rtl/ecp3/ipnuma_top.v" type="Verilog" type_short="Verilog">
             <Options top_module="top"/>
         </Source>
-        <Source name="../rtl/ecp3/pciedma.v" type="Verilog" type_short="Verilog">
+        <Source name="../rtl/ecp3/ipnuma.v" type="Verilog" type_short="Verilog">
             <Options/>
         </Source>
         <Source name="../rtl/ecp3/pcie_tlp.v" type="Verilog" type_short="Verilog">

@@ -172,7 +172,7 @@ pcie_top pcie(
 	.func_num			( func_num )
 );
 
-pciedma pciedma_inst (
+ipnuma ipnuma_inst (
 	// System
 	.pcie_clk(clk_125),
 	.sys_rst(sys_rst),
