@@ -28,7 +28,7 @@ module requester (
 //-----------------------------------
 // Transmitte logic
 //-----------------------------------
-reg [15:0] tx_count = 16'h0;
+reg [10:0] tx_count = 16'h0;
 reg [7:0] tx_data;
 reg tx_en = 1'b0;
 
@@ -36,7 +36,7 @@ reg tx_en = 1'b0;
 // CRC
 //-----------------------------------
 wire crc_init, crc_data_en;
-assign crc_init = (tx_count ==  16'h08);
+assign crc_init = (tx_count ==  11'h08);
 wire [31:0] crc_out;
 reg crc_rd;
 assign crc_data_en = ~crc_rd;
@@ -82,7 +82,7 @@ reg [23:0] ip_sum;
 
 always @(posedge pcie_clk) begin
 	if (sys_rst) begin
-		tx_count       <= 16'h0;
+		tx_count       <= 11'h0;
 		tx_en          <= 1'b0;
 		crc_rd         <= 1'b0;
 		req_status       <= REQ_IDLE;
@@ -91,7 +91,7 @@ always @(posedge pcie_clk) begin
 	end else begin
 		case (req_status)
 		REQ_IDLE: begin
-			tx_count  <= 16'h0;
+			tx_count  <= 11'h0;
 			phy_wr_en <= 1'b0;
 //			if ( slv_empty == 1'b0 )
 				req_status <= REQ_V4_SEND;
@@ -99,75 +99,75 @@ always @(posedge pcie_clk) begin
 		REQ_V4_SEND: begin
 			phy_wr_en <= 1'b1;
 			case (tx_count)
-			16'h00: begin
+			11'h00: begin
 				tx_data <= tx_dst_mac[47:40];     // Destination MAC
 				ip_sum <= 16'h4500 + {4'h0,tx_ip_len[11:0]} + ipv4_id[15:0] + {ipv4_ttl[7:0],8'h11} + tx_ipv4_srcip[31:16] + tx_ipv4_srcip[15:0] + ipv4_dstip[31:16] + ipv4_dstip[15:0];
 				tx_en <= 1'b1;
 			end
-			16'h01: begin
+			11'h01: begin
 				tx_data <= tx_dst_mac[39:32];
 				ip_sum <= ~(ip_sum[15:0] + ip_sum[23:16]);
 			end
-			16'h02: tx_data <= tx_dst_mac[31:24];
-			16'h03: tx_data <= tx_dst_mac[23:16];
-			16'h04: tx_data <= tx_dst_mac[15:8];
-			16'h05: tx_data <= tx_dst_mac[7:0];
-			16'h06: tx_data <= tx_src_mac[47:40];     // Source MAC
-			16'h07: tx_data <= tx_src_mac[39:32];
-			16'h08: tx_data <= tx_src_mac[31:24];
-			16'h09: tx_data <= tx_src_mac[23:16];
-			16'h0a: tx_data <= tx_src_mac[15:8];
-			16'h0b: tx_data <= tx_src_mac[7:0];
-			16'h0c: tx_data <= 8'h08;                  // Protocol type: IPv4
-			16'h0d: tx_data <= 8'h00;
-			16'h0e: tx_data <= 8'h45;                  // IPv4: Version, Header length, ToS
-			16'h0f: tx_data <= 8'h00;
-			16'h10: tx_data <= {4'h0,tx_ip_len[11:8]};// IPv4: Total length (not fixed)
-			16'h11: tx_data <= tx_ip_len[7:0];
-			16'h12: tx_data <= ipv4_id[15:8];          // IPv4: Identification
-			16'h13: tx_data <= ipv4_id[7:0];
-			16'h14: tx_data <= 8'h00;                  // IPv4: Flag, Fragment offset
-			16'h15: tx_data <= 8'h00;
-			16'h16: tx_data <= ipv4_ttl[7:0];          // IPv4: TTL
-			16'h17: tx_data <= 8'h11;                  // IPv4: Protocol (testing: fake UDP)
-			16'h18: tx_data <= ip_sum[15:8];                  // IPv4: Checksum (not fixed)
-			16'h19: tx_data <= ip_sum[7:0];
-			16'h1a: tx_data <= tx_ipv4_srcip[31:24];  // IPv4: Source Address
-			16'h1b: tx_data <= tx_ipv4_srcip[23:16];
-			16'h1c: tx_data <= tx_ipv4_srcip[15:8];
-			16'h1d: tx_data <= tx_ipv4_srcip[7:0];
-			16'h1e: tx_data <= ipv4_dstip[31:24];      // IPv4: Destination Address
-			16'h1f: tx_data <= ipv4_dstip[23:16];
-			16'h20: tx_data <= ipv4_dstip[15:8];
-			16'h21: tx_data <= ipv4_dstip[7:0];
-			16'h22: tx_data <= 8'h0d;                  // Src  Port=3422 (USB over IP)
-			16'h23: tx_data <= 8'h5e;
-			16'h24: tx_data <= 8'h0d;                  // Dst  Port,
-			16'h25: tx_data <= 8'h5e;
-			16'h26: tx_data <= {4'h0,tx_udp_len[11:8]}; // UDP Length(udp header(0c)+data length)
-			16'h27: tx_data <= tx_udp_len[7:0];
-			16'h28: tx_data <= 8'h00;                  // Check Sum
-			16'h29: tx_data <= 8'h00;
-			16'h2a: tx_data <= magic_code[31:24];      // Data: Magic code (32 bit)
-			16'h2b: tx_data <= magic_code[23:16];
-			16'h2c: tx_data <= magic_code[15:8];
-			16'h2d: tx_data <= magic_code[7:0];
-			16'h2e: tx_data <= 8'h81;         // Data
-			16'h2f: tx_data <= 8'hff;
-			16'h30: tx_data <= 8'hd0;
-			16'h31: tx_data <= 8'h00;
-			16'h32: tx_data <= 8'h00;
-			16'h33: tx_data <= 8'h00;
-			16'h34: tx_data <= 8'ha1;
-			16'h35: tx_data <= 8'ha2;
-			16'h36: tx_data <= 8'ha3;
-			16'h37: tx_data <= 8'ha4;
+			11'h02: tx_data <= tx_dst_mac[31:24];
+			11'h03: tx_data <= tx_dst_mac[23:16];
+			11'h04: tx_data <= tx_dst_mac[15:8];
+			11'h05: tx_data <= tx_dst_mac[7:0];
+			11'h06: tx_data <= tx_src_mac[47:40];     // Source MAC
+			11'h07: tx_data <= tx_src_mac[39:32];
+			11'h08: tx_data <= tx_src_mac[31:24];
+			11'h09: tx_data <= tx_src_mac[23:16];
+			11'h0a: tx_data <= tx_src_mac[15:8];
+			11'h0b: tx_data <= tx_src_mac[7:0];
+			11'h0c: tx_data <= 8'h08;                  // Protocol type: IPv4
+			11'h0d: tx_data <= 8'h00;
+			11'h0e: tx_data <= 8'h45;                  // IPv4: Version, Header length, ToS
+			11'h0f: tx_data <= 8'h00;
+			11'h10: tx_data <= {4'h0,tx_ip_len[11:8]};// IPv4: Total length (not fixed)
+			11'h11: tx_data <= tx_ip_len[7:0];
+			11'h12: tx_data <= ipv4_id[15:8];          // IPv4: Identification
+			11'h13: tx_data <= ipv4_id[7:0];
+			11'h14: tx_data <= 8'h00;                  // IPv4: Flag, Fragment offset
+			11'h15: tx_data <= 8'h00;
+			11'h16: tx_data <= ipv4_ttl[7:0];          // IPv4: TTL
+			11'h17: tx_data <= 8'h11;                  // IPv4: Protocol (testing: fake UDP)
+			11'h18: tx_data <= ip_sum[15:8];                  // IPv4: Checksum (not fixed)
+			11'h19: tx_data <= ip_sum[7:0];
+			11'h1a: tx_data <= tx_ipv4_srcip[31:24];  // IPv4: Source Address
+			11'h1b: tx_data <= tx_ipv4_srcip[23:16];
+			11'h1c: tx_data <= tx_ipv4_srcip[15:8];
+			11'h1d: tx_data <= tx_ipv4_srcip[7:0];
+			11'h1e: tx_data <= ipv4_dstip[31:24];      // IPv4: Destination Address
+			11'h1f: tx_data <= ipv4_dstip[23:16];
+			11'h20: tx_data <= ipv4_dstip[15:8];
+			11'h21: tx_data <= ipv4_dstip[7:0];
+			11'h22: tx_data <= 8'h0d;                  // Src  Port=3422 (USB over IP)
+			11'h23: tx_data <= 8'h5e;
+			11'h24: tx_data <= 8'h0d;                  // Dst  Port,
+			11'h25: tx_data <= 8'h5e;
+			11'h26: tx_data <= {4'h0,tx_udp_len[11:8]}; // UDP Length(udp header(0c)+data length)
+			11'h27: tx_data <= tx_udp_len[7:0];
+			11'h28: tx_data <= 8'h00;                  // Check Sum
+			11'h29: tx_data <= 8'h00;
+			11'h2a: tx_data <= magic_code[31:24];      // Data: Magic code (32 bit)
+			11'h2b: tx_data <= magic_code[23:16];
+			11'h2c: tx_data <= magic_code[15:8];
+			11'h2d: tx_data <= magic_code[7:0];
+			11'h2e: tx_data <= 8'h81;         // Data
+			11'h2f: tx_data <= 8'hff;
+			11'h30: tx_data <= 8'hd0;
+			11'h31: tx_data <= 8'h00;
+			11'h32: tx_data <= 8'h00;
+			11'h33: tx_data <= 8'h00;
+			11'h34: tx_data <= 8'ha1;
+			11'h35: tx_data <= 8'ha2;
+			11'h36: tx_data <= 8'ha3;
+			11'h37: tx_data <= 8'ha4;
 			default: begin
 				tx_data <= 8'h00;
 				req_status <= REQ_FCS1;
 			end
 			endcase
-			tx_count <= tx_count + 16'h1;
+			tx_count <= tx_count + 11'h1;
 		end
 		REQ_FCS1: begin
 			crc_rd  <= 1'b1;
