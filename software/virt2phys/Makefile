@@ -12,5 +12,8 @@ clean:
 
 install:
 	install -m 644 $(PWD)/*.ko /lib/modules/`uname -r`/kernel/drivers/misc
+	if [ -d /etc/udev/rules.d -a ! -f /etc/udev/rules.d/99-virt2phys.rules ] ; then \
+		install -m 644 99-virt2phys.rules /etc/udev/rules.d ; \
+	fi
 	depmod -a
 endif
