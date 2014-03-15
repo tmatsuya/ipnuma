@@ -46,10 +46,11 @@ int main(int argc, char **argv)
 	count_s = (int *)&buf_s[BUFSIZE-4];
 	count_r = (int *)&buf_r[BUFSIZE-4];
 
-	*count_s = 1;
+	*count_s = 0;
+	*count_r = 0;
+	i = 0;
 
-	for (i=1; i<100000; ++i) {
-		printf("%d ", i);
+	while (*count_s < 200000) {
 		if (sendto(sock_s, buf_s, BUFSIZE, 0, (struct sockaddr *)&addr_s, sizeof(addr_s)) < 0){
 			perror("sendto()");
 		}
@@ -58,7 +59,9 @@ int main(int argc, char **argv)
 			perror("sendto()");
 		}
 		*count_s = *count_r + 1;
+		++i;
 	}
+	printf("%d,%d,%d\n", i, *count_s, *count_r);
 
 	exit(EXIT_SUCCESS);
 }
