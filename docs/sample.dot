@@ -1,0 +1,10 @@
+digraph sample {
+   graph [rankdir = LR];
+   node [shape = record, height = 0.01,
+         fontname = "Helvetica", fontsize = 10];
+   a [label = "{<sys_clk> sys_clk|module A|{<sys_clk> sys_clk|<sys_rst> sys_rst|<p_right> right}}"];
+   b [label = "{{<sys_clk> sys_clk|<sys_rst> sys_rst|right}|module B|}"];
+   c [label = "{{<sys_clk> sys_clk|<sys_rst> sys_rst|right}|module C|c2}"];
+   a:sys_rst -> b:sys_rst;
+   a:sys_rst -> c:sys_rst;
+}
