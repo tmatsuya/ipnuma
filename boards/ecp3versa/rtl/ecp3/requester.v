@@ -3,6 +3,15 @@ module requester (
 	// System
 	input pcie_clk,
 	input sys_rst,
+	// Management
+	input [6:0] rx_bar_hit,
+	input [7:0] bus_num,
+	input [4:0] dev_num,
+	input [2:0] func_num,
+	// Receive
+	input rx_st,
+	input rx_end,
+	input [15:0] rx_data,
 	// Phy FIFO
 	output [8:0]  phy_din,
 	input phy_full,
@@ -10,13 +19,6 @@ module requester (
 	input [8:0] phy_dout,
 	input phy_empty,
 	output reg phy_rd_en,
-	// Slave FIFO
-	output reg [17:0] slv_din,
-	input slv_full,
-	output reg  slv_wr_en,
-	input [17:0] slv_dout,
-	input slv_empty,
-	output reg slv_rd_en,
 	// LED and Switches
 	input [7:0] dipsw,
 	output [7:0] led,

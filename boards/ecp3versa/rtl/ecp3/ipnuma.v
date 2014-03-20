@@ -255,6 +255,15 @@ requester requester_inst (
 	// System
 	.pcie_clk(pcie_clk),
 	.sys_rst(sys_rst),
+	// Management
+	.rx_bar_hit(rx_bar_hit),
+	.bus_num(bus_num),
+	.dev_num(dev_num),
+	.func_num(func_num),
+	// Receive
+	.rx_st(rx_st),
+	.rx_end(rx_end),
+	.rx_data(rx_data),
 	// Phy FIFO
 	.phy_din(tx_phyq_din),
 	.phy_full(tx_phyq_full),
@@ -262,13 +271,6 @@ requester requester_inst (
 	.phy_dout(),
 	.phy_empty(),
 	.phy_rd_en(),
-	// Slave FIFO
-	.slv_din(),
-	.slv_full(),
-	.slv_wr_en(),
-	.slv_dout(rd_slvq_dout),
-	.slv_empty(rd_slvq_empty),
-	.slv_rd_en(rd_slvq_rd_en),
 	// LED and Switches
 	.dipsw(dipsw),
 	.led(led),
