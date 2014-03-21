@@ -113,7 +113,7 @@ int main(int argc, char **argv)
 		sdata[16] = (write_data >> 16) & 0xff;
 		sdata[17] = (write_data >> 24) & 0xff;
 
-		if (sendto(sockfd, sdata, 14+(4*dwlen)+1, 0, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0){
+		if (sendto(sockfd, sdata, 14+4, 0, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0){
 			perror("sendto()");
 		}
 
