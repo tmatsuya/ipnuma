@@ -12,6 +12,7 @@
 #define		BUFSIZE		1024
 
 // sudo arp -s 10.0.21.99 00:37:76:00:00:01
+// sudo arp -s 203.178.143.85 00:37:76:00:00:01
 // sudo arp -s 203.178.139.139 00:37:76:00:00:01
 
 int main(int argc, char **argv)
