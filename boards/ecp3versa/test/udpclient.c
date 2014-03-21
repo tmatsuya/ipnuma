@@ -31,7 +31,7 @@ int main(int argc, char **argv)
 
 	if ( argc >= 3 ) {
 		write_addr = strtol( argv[2], NULL, 0);
-		printf("write_addr=%08x\n", write_addr);
+		printf("write_addr=%012lx\n", write_addr);
 	}
 
 	if ( argc >= 4 ) {
