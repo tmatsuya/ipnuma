@@ -31,7 +31,7 @@ int main(int argc,char **argv)
 
 	i = 123;
 	while (1) {
-		printf ("i=%d, &i=%p, Physical Address=%012x\n", i, &i, pa);
+		printf ("i=%d, &i=%p, Physical Address=%012lx\n", i, &i, pa);
 		usleep(10000);
 	}
 }
