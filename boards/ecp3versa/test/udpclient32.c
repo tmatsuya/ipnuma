@@ -61,7 +61,7 @@ int main(int argc, char **argv)
 
 	if ( argc == 2 ) {
 
-		sdata[ 4] = 0x80|dwlen;// write command(b7), 32bit(b6), length(b5-b0)=4DW
+		sdata[ 4] = 0x80|dwlen;// write command(b7), 64bit(b6), length(b5-b0)=4DW
 		sdata[ 5] = 0xff;	// LBE(b8-4), FBE(b3-0)
 
 		sdata[ 6] = 0xc0;	// ADDR=0xD0000000
@@ -69,7 +69,7 @@ int main(int argc, char **argv)
 		sdata[ 8] = 0x00;
 		sdata[ 9] = 0x00;
 
-		sdata[dwlen*4+10] = 0x80|dwlen;// write command(b7), 32bit(b6), length(b5-b0)=4DW
+		sdata[dwlen*4+10] = 0x80|dwlen;// write command(b7), 64bit(b6), length(b5-b0)=4DW
 		sdata[dwlen*4+11] = 0xff;	// LBE(b8-4), FBE(b3-0)
 
 		sdata[dwlen*4+12] = 0xc0;	// ADDR=0xD0000000
@@ -95,7 +95,7 @@ int main(int argc, char **argv)
 			usleep(1);
 		}
 	} else {
-		sdata[ 4] = 0x81;// write command(b7), 32bit(b6), length(b5-b0)=4DW
+		sdata[ 4] = 0x81;// write command(b7), 64bit(b6), length(b5-b0)=4DW
 		sdata[ 5] = 0xff;	// LBE(b8-4), FBE(b3-0)
 
 		sdata[ 6] = (write_addr >> 24) & 0xff;	// ADDR=0xD0000000
