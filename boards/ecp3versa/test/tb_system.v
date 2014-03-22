@@ -15,7 +15,7 @@ always #8 gmii_rx_clk = ~gmii_rx_clk;
 // System
 reg sys_rst;
 // Management
-reg [6:0] rx_bar_hit = 6'b000011;
+reg [6:0] rx_bar_hit = 6'b000101;
 reg [7:0] bus_num = 8'h12;
 reg [4:0] dev_num = 5'h1;
 reg [2:0] func_num = 3'h1;
