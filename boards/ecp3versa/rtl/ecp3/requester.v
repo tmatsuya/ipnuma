@@ -19,6 +19,13 @@ module requester (
 	input [8:0] phy_dout,
 	input phy_empty,
 	output reg phy_rd_en,
+	// Interface Information
+	input [31:0] if_v4addr,
+	input [47:0] if_macaddr,
+	input [31:0] dest_v4addr,
+	input [47:0] dest_macaddr,
+	// Page Table
+	input [47:0] mem0_paddr,
 	// LED and Switches
 	input [7:0] dipsw,
 	output [7:0] led,
@@ -26,6 +33,24 @@ module requester (
 	input btn
 );
 
+// FIFO
+reg dataq_wr_en;
+reg [17:0] dataq_din;
+wire dataq_full;
+reg dataq_rd_en;
+wire [17:0] dataq_dout;
+wire dataq_empty;
+
+fifo fifo_dataq (
+        .Data(dataq_din),
+        .Clock(pcie_clk),
+        .WrEn(dataq_wr_en),
+        .RdEn(dataq_rd_en),
+        .Reset(sys_rst),
+        .Q(dataq_dout),
+        .Empty(dataq_empty),
+        .Full(dataq_full)
+);
 
 //-----------------------------------
 // Transmitte logic
@@ -38,99 +63,170 @@ reg tx_en = 1'b0;
 // scenario parameter
 //-----------------------------------
 parameter [3:0]
-	REQ_IDLE     = 4'h0,
-	REQ_HEAD1    = 4'h1,
-	REQ_HEAD2    = 4'h2,
-	REQ_HEAD3    = 4'h3,
-	REQ_ADDR64   = 4'h4,
-	REQ_ADDR48   = 4'h5,
-	REQ_ADDR32   = 4'h6,
-	REQ_ADDR16   = 4'h7,
-	REQ_V4_SEND  = 4'hd,
-	REQ_FIN      = 4'he,
-	REQ_GAP      = 4'hf;
-reg [3:0] req_status = REQ_IDLE;
+	TLP_IDLE     = 4'h0,
+	TLP_HEAD1    = 4'h1,
+	TLP_HEAD2    = 4'h2,
+	TLP_HEAD3    = 4'h3,
+	TLP_ADDR64   = 4'h4,
+	TLP_ADDR48   = 4'h5,
+	TLP_ADDR32   = 4'h6,
+	TLP_ADDR16   = 4'h7,
+	TLP_DATA0    = 4'h8,
+	TLP_DATA1    = 4'h9,
+	TLP_DATA2    = 4'ha,
+	TLP_DATA3    = 4'hb,
+	TLP_FIN      = 4'hf;
+reg [3:0] tlp_status = TLP_IDLE;
+parameter [1:0]
+	PHY_IDLE     = 2'h0,
+	PHY_V4_SEND  = 2'h1,
+	PHY_FIN      = 2'h2,
+	PHY_GAP      = 2'h3;
+reg [1:0] phy_status = PHY_IDLE;
 	
-wire [31:0] magic_code       = 32'ha1110000;
-wire [15:0] ipv4_id           = 16'h1;
-wire [7:0]  ipv4_ttl          = 8'h40;      // IPv4: default TTL value (default: 64)
-wire [31:0] tx_ipv4_srcip     = {8'd10, 8'd0, 8'd21, 8'd199};
-wire [47:0] tx_src_mac        = 48'h003776_000001;
-wire [47:0] tx_dst_mac        = 48'hffffff_ffffff;
-wire [31:0] ipv4_dstip = {8'd10, 8'd0, 8'd21, 8'd254};  // IPv4: Destination Address
-wire [15:0] tx_frame_len = 16'h3c;
-wire [15:0] tx_udp_len = tx_frame_len - 16'd34;  // UDP Length
-wire [15:0] tx_ip_len  = tx_frame_len - 16'd14;  // IP Length (Frame Len - EtherFrame Len)
+wire [31:0] magic_code    = 32'ha1110000;
+wire [15:0] ipv4_id       = 16'h1;
+wire [7:0]  ipv4_ttl      = 8'h40;      // IPv4: default TTL value (default: 64)
+wire [15:0] tx_frame_len  = 16'h3c;
+wire [15:0] tx_udp_len    = tx_frame_len - 16'd34;  // UDP Length
+wire [15:0] tx_ip_len     = tx_frame_len - 16'd14;  // IP Length (Frame Len - EtherFrame Len)
+
+reg [9:0] tlp_length;
 reg [47:2] tlp_addr;
+reg [7:0] tlp_lbefbe;
+reg [31:0] tlp_data;
 reg tlp_64bit;
 
 reg [15:0] gap_count;
 reg [23:0] ip_sum;
 
+//-----------------------------------
+// check TLP
+//-----------------------------------
 always @(posedge pcie_clk) begin
 	if (sys_rst) begin
-		tx_count       <= 11'h0;
-		tx_en          <= 1'b0;
-		req_status     <= REQ_IDLE;
-		gap_count      <= 16'h0;
-		phy_wr_en      <= 1'b0;
+//		dataq_wr_en <= 1'b0;
+//		dataq_din <= 18'h0;
+		tlp_status <= TLP_IDLE;
 	end else begin
-		case (req_status)
-		REQ_IDLE: begin
-			tx_count  <= 11'h0;
-			phy_wr_en <= 1'b0;
+		case (tlp_status)
+		TLP_IDLE: begin
 			// check write bit
 			if (rx_bar_hit[2] == 1'b1 && rx_st == 1'b1 && rx_data[14] == 1'b1) begin
 				tlp_64bit <= rx_data[13];
-				req_status <= REQ_HEAD1;
+				tlp_status <= TLP_HEAD1;
 			end
 		end
-		REQ_HEAD1: req_status <= REQ_HEAD2;
-		REQ_HEAD2: req_status <= REQ_HEAD3;
-		REQ_HEAD3: begin
+		TLP_HEAD1: begin
+			tlp_length <= rx_data[9:0];
+			tlp_status <= TLP_HEAD2;
+		end
+		TLP_HEAD2: begin
+			tlp_status <= TLP_HEAD3;
+		end
+		TLP_HEAD3: begin
+//			dataq_wr_en <= 1'b1;
+//			dataq_din <= {3'b10_1, tlp_64bit, tlp_length[5:0], rx_data[7:0]}; // start=1 write=1
+			tlp_lbefbe <= rx_data[7:0];
 			tlp_addr[47:31] <= 16'h0;
 			if (tlp_64bit == 1'b0)
-				req_status <= REQ_ADDR32;
+				tlp_status <= TLP_ADDR32;
 			else
-				req_status <= REQ_ADDR64;
+				tlp_status <= TLP_ADDR64;
 		end
-		REQ_ADDR64: begin
-			req_status <= REQ_ADDR48;
+		TLP_ADDR64: begin
+//			dataq_wr_en <= 1'b1;
+//			dataq_din <= 16'h0;
+			tlp_status <= TLP_ADDR48;
 		end
-		REQ_ADDR48: begin
+		TLP_ADDR48: begin
+//			dataq_wr_en <= 1'b1;
+//			dataq_din <= {2'b00, mem0_paddr[47:32]};
 			tlp_addr[47:32] <= rx_data[15:0];
-			req_status <= REQ_ADDR32;
+			tlp_status <= TLP_ADDR32;
 		end
-		REQ_ADDR32: begin
+		TLP_ADDR32: begin
+//			dataq_wr_en <= 1'b1;
+//			dataq_din <= {2'b00, mem0_paddr[31:16]};
 			tlp_addr[31:16] <= rx_data[15:0];
-			req_status <= REQ_ADDR16;
+			tlp_status <= TLP_ADDR16;
 		end
-		REQ_ADDR16: begin
+		TLP_ADDR16: begin
+//			dataq_wr_en <= 1'b1;
+//			dataq_din <= {2'b00, mem0_paddr[15: 2],2'b00};
 			tlp_addr[15: 2] <= rx_data[15:2];
-			req_status <= REQ_V4_SEND;
+			tlp_status <= TLP_DATA0;
 		end
-		REQ_V4_SEND: begin
+		TLP_DATA0: begin
+			tlp_status <= TLP_DATA1;
+			tlp_data[31:16] <= rx_data[15:0];
+//			dataq_wr_en <= 1'b1;
+//			dataq_din[17] <= 1'b0;
+//			dataq_din[15:0] <= rx_data[15:0];
+//			if (rx_end == 1'b1) begin
+//				dataq_din[16] <= 1'b1;	// end = 1
+//				tlp_status <= TLP_FIN;
+//			end else begin
+//				dataq_din[16] <= 1'b0;	// end = 0
+//			end
+		end
+		TLP_DATA1: begin
+			tlp_status <= TLP_FIN;
+			tlp_data[15: 0] <= rx_data[15:0];
+		end
+		TLP_FIN: begin
+//			dataq_wr_en <= 1'b0;
+//			dataq_din <= 18'h0;
+			tlp_status <= TLP_IDLE;
+		end
+		endcase
+	end
+end
+
+
+//-----------------------------------
+// Phy sequence
+//-----------------------------------
+always @(posedge pcie_clk) begin
+	if (sys_rst) begin
+//		dataq_rd_en    <= 1'b0;
+		tx_count       <= 11'h0;
+		tx_en          <= 1'b0;
+		phy_status     <= PHY_IDLE;
+		gap_count      <= 16'h0;
+		phy_wr_en      <= 1'b0;
+	end else begin
+		case (phy_status)
+		PHY_IDLE: begin
+			tx_count  <= 11'h0;
+			phy_wr_en <= 1'b0;
+//			if (dataq_empty == 1'b0) begin
+			if (tlp_status == TLP_HEAD1) begin
+				phy_status <= PHY_V4_SEND;
+			end
+		end
+		PHY_V4_SEND: begin
 			phy_wr_en <= 1'b1;
 			case (tx_count)
 			11'h00: begin
-				tx_data <= tx_dst_mac[47:40];     // Destination MAC
-				ip_sum <= 16'h4500 + {4'h0,tx_ip_len[11:0]} + ipv4_id[15:0] + {ipv4_ttl[7:0],8'h11} + tx_ipv4_srcip[31:16] + tx_ipv4_srcip[15:0] + ipv4_dstip[31:16] + ipv4_dstip[15:0];
+				tx_data <= dest_macaddr[47:40];     // Destination MAC
+				ip_sum <= 16'h4500 + {4'h0,tx_ip_len[11:0]} + ipv4_id[15:0] + {ipv4_ttl[7:0],8'h11} + if_v4addr[31:16] + if_v4addr[15:0] + dest_v4addr[31:16] + dest_v4addr[15:0];
 				tx_en <= 1'b1;
 			end
 			11'h01: begin
-				tx_data <= tx_dst_mac[39:32];
+				tx_data <= dest_macaddr[39:32];
 				ip_sum  <= ~(ip_sum[15:0] + ip_sum[23:16]);
 			end
-			11'h02: tx_data <= tx_dst_mac[31:24];
-			11'h03: tx_data <= tx_dst_mac[23:16];
-			11'h04: tx_data <= tx_dst_mac[15:8];
-			11'h05: tx_data <= tx_dst_mac[7:0];
-			11'h06: tx_data <= tx_src_mac[47:40];     // Source MAC
-			11'h07: tx_data <= tx_src_mac[39:32];
-			11'h08: tx_data <= tx_src_mac[31:24];
-			11'h09: tx_data <= tx_src_mac[23:16];
-			11'h0a: tx_data <= tx_src_mac[15:8];
-			11'h0b: tx_data <= tx_src_mac[7:0];
+			11'h02: tx_data <= dest_macaddr[31:24];
+			11'h03: tx_data <= dest_macaddr[23:16];
+			11'h04: tx_data <= dest_macaddr[15:8];
+			11'h05: tx_data <= dest_macaddr[7:0];
+			11'h06: tx_data <= if_macaddr[47:40];     // Source MAC
+			11'h07: tx_data <= if_macaddr[39:32];
+			11'h08: tx_data <= if_macaddr[31:24];
+			11'h09: tx_data <= if_macaddr[23:16];
+			11'h0a: tx_data <= if_macaddr[15:8];
+			11'h0b: tx_data <= if_macaddr[7:0];
 			11'h0c: tx_data <= 8'h08;                  // Protocol type: IPv4
 			11'h0d: tx_data <= 8'h00;
 			11'h0e: tx_data <= 8'h45;                  // IPv4: Version, Header length, ToS
@@ -145,14 +241,14 @@ always @(posedge pcie_clk) begin
 			11'h17: tx_data <= 8'h11;                  // IPv4: Protocol (testing: fake UDP)
 			11'h18: tx_data <= ip_sum[15:8];                  // IPv4: Checksum (not fixed)
 			11'h19: tx_data <= ip_sum[7:0];
-			11'h1a: tx_data <= tx_ipv4_srcip[31:24];  // IPv4: Source Address
-			11'h1b: tx_data <= tx_ipv4_srcip[23:16];
-			11'h1c: tx_data <= tx_ipv4_srcip[15:8];
-			11'h1d: tx_data <= tx_ipv4_srcip[7:0];
-			11'h1e: tx_data <= ipv4_dstip[31:24];      // IPv4: Destination Address
-			11'h1f: tx_data <= ipv4_dstip[23:16];
-			11'h20: tx_data <= ipv4_dstip[15:8];
-			11'h21: tx_data <= ipv4_dstip[7:0];
+			11'h1a: tx_data <= if_v4addr[31:24];  // IPv4: Source Address
+			11'h1b: tx_data <= if_v4addr[23:16];
+			11'h1c: tx_data <= if_v4addr[15:8];
+			11'h1d: tx_data <= if_v4addr[7:0];
+			11'h1e: tx_data <= dest_v4addr[31:24];      // IPv4: Destination Address
+			11'h1f: tx_data <= dest_v4addr[23:16];
+			11'h20: tx_data <= dest_v4addr[15:8];
+			11'h21: tx_data <= dest_v4addr[7:0];
 			11'h22: tx_data <= 8'h0d;                  // Src  Port=3422 (USB over IP)
 			11'h23: tx_data <= 8'h5e;
 			11'h24: tx_data <= 8'h0d;                  // Dst  Port,
@@ -169,33 +265,33 @@ always @(posedge pcie_clk) begin
 			11'h2f: tx_data <= 8'hff;
 			11'h30: tx_data <= 8'h00;
 			11'h31: tx_data <= 8'h00;
-			11'h32: tx_data <= 8'h00;
-			11'h33: tx_data <= 8'h00;
-			11'h34: tx_data <= 8'hd0;
-			11'h35: tx_data <= 8'h00;
-			11'h36: tx_data <= 8'h00;
-			11'h37: tx_data <= 8'h00;
-			11'h38: tx_data <= 8'ha1;
-			11'h39: tx_data <= 8'ha2;
-			11'h3a: tx_data <= 8'ha3;
+			11'h32: tx_data <= mem0_paddr[47:40];
+			11'h33: tx_data <= mem0_paddr[39:32];
+			11'h34: tx_data <= mem0_paddr[31:24];
+			11'h35: tx_data <= mem0_paddr[23:16];
+			11'h36: tx_data <= mem0_paddr[15: 8];
+			11'h37: tx_data <= mem0_paddr[ 7: 0];
+			11'h38: tx_data <= tlp_data[31:24];
+			11'h39: tx_data <= tlp_data[23:16];
+			11'h3a: tx_data <= tlp_data[15: 8];
 			default: begin
-				tx_data <= 8'ha4;
-				req_status <= REQ_FIN;
+				tx_data <= tlp_data[ 7: 0];
+				phy_status <= PHY_FIN;
 			end
 			endcase
 			tx_count <= tx_count + 11'h1;
 		end
-		REQ_FIN: begin
+		PHY_FIN: begin
 			tx_en   <= 1'b0;
 			tx_data <= 8'h0;
 			gap_count<= 16'd8;   // Inter Frame Gap = 14 (offset value -2)
-			req_status <= REQ_GAP;
+			phy_status <= PHY_GAP;
 		end
-		REQ_GAP: begin
+		PHY_GAP: begin
 			gap_count <= gap_count - 16'h1;
 			if (gap_count == 16'h0) begin
 				phy_wr_en <= 1'b0;
-				req_status <= REQ_IDLE;
+				phy_status <= PHY_IDLE;
 			end
 		end
 		endcase

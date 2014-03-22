@@ -196,25 +196,145 @@ pcie_tlp inst_pcie_tlp (
 	.btn(btn)
 );
 
+// Regs
+reg [31:0] if_v4addr = {8'd10, 8'd0, 8'd21, 8'd199};
+reg [47:0] if_macaddr = 48'h003776_000001;
+reg [31:0] dest_v4addr = {8'd10, 8'd0, 8'd21, 8'd255};
+reg [47:0] dest_macaddr = 48'hffffff_ffffff;
+reg [47:0] mem0_paddr = 48'h0000_d0000000;
+
 reg [13:0] segledr;
 always @(posedge pcie_clk) begin
 	if (sys_rst == 1'b1) begin
 		slv_dat0_o <= 16'h0;
 		segledr[13:0] <= 14'h3fff;
+		if_v4addr <= {8'd10, 8'd0, 8'd21, 8'd199};
+		if_macaddr <= 48'h003776_000001;
+		dest_v4addr <= {8'd10, 8'd0, 8'd21, 8'd255};
+		dest_macaddr <= 48'hffffff_ffffff;
+		mem0_paddr <= 48'h0000_d0000000;
 	end else begin
 		if (slv_bar_i[0] & slv_ce_i) begin
 			case (slv_adr_i[9:1])
-				9'h000: begin
+				9'h000: begin // I/F IPV4 addr
 					if (slv_we_i) begin
 						if (slv_sel_i[0])
-							segledr[7:0] <= slv_dat_i[7:0];
+							if_v4addr[23:16] <= slv_dat_i[ 7: 0];
 						if (slv_sel_i[1])
-							segledr[13:8] <= slv_dat_i[13:8];
+							if_v4addr[31:24] <= slv_dat_i[15: 8];
 					end else
-						slv_dat0_o <= {2'b0, segledr[13:0]};
+						slv_dat0_o <= if_v4addr[31:16];
+				end
+				9'h001: begin
+					if (slv_we_i) begin
+						if (slv_sel_i[0])
+							if_v4addr[ 7: 0] <= slv_dat_i[ 7: 0];
+						if (slv_sel_i[1])
+							if_v4addr[15: 8] <= slv_dat_i[15: 8];
+					end else
+						slv_dat0_o <= if_v4addr[15:0];
+				end
+				9'h002: begin // I/F MAC addr
+					if (slv_we_i) begin
+						if (slv_sel_i[0])
+							if_macaddr[39:32] <= slv_dat_i[ 7: 0];
+						if (slv_sel_i[1])
+							if_macaddr[47:40] <= slv_dat_i[15: 8];
+					end else
+						slv_dat0_o <= if_macaddr[47:32];
+				end
+				9'h003: begin
+					if (slv_we_i) begin
+						if (slv_sel_i[0])
+							if_macaddr[23:16] <= slv_dat_i[ 7: 0];
+						if (slv_sel_i[1])
+							if_macaddr[31:24] <= slv_dat_i[15: 8];
+					end else
+						slv_dat0_o <= if_macaddr[31:16];
+				end
+				9'h004: begin
+					if (slv_we_i) begin
+						if (slv_sel_i[0])
+							if_macaddr[ 7: 0] <= slv_dat_i[ 7: 0];
+						if (slv_sel_i[1])
+							if_macaddr[15: 8] <= slv_dat_i[15: 8];
+					end else
+						slv_dat0_o <= if_macaddr[15:0];
+				end
+				9'h008: begin // dest IPV4 addr
+					if (slv_we_i) begin
+						if (slv_sel_i[0])
+							dest_v4addr[23:16] <= slv_dat_i[ 7: 0];
+						if (slv_sel_i[1])
+							dest_v4addr[31:24] <= slv_dat_i[15: 8];
+					end else
+						slv_dat0_o <= dest_v4addr[31:16];
+				end
+				9'h009: begin
+					if (slv_we_i) begin
+						if (slv_sel_i[0])
+							dest_v4addr[ 7: 0] <= slv_dat_i[ 7: 0];
+						if (slv_sel_i[1])
+							dest_v4addr[15: 8] <= slv_dat_i[15: 8];
+					end else
+						slv_dat0_o <= dest_v4addr[15:0];
+				end
+				9'h00a: begin // dest MAC addr
+					if (slv_we_i) begin
+						if (slv_sel_i[0])
+							dest_macaddr[39:32] <= slv_dat_i[ 7: 0];
+						if (slv_sel_i[1])
+							dest_macaddr[47:40] <= slv_dat_i[15: 8];
+					end else
+						slv_dat0_o <= dest_macaddr[47:32];
+				end
+				9'h00b: begin
+					if (slv_we_i) begin
+						if (slv_sel_i[0])
+							dest_macaddr[23:16] <= slv_dat_i[ 7: 0];
+						if (slv_sel_i[1])
+							dest_macaddr[31:24] <= slv_dat_i[15: 8];
+					end else
+						slv_dat0_o <= dest_macaddr[31:16];
+				end
+				9'h00c: begin
+					if (slv_we_i) begin
+						if (slv_sel_i[0])
+							dest_macaddr[ 7: 0] <= slv_dat_i[ 7: 0];
+						if (slv_sel_i[1])
+							dest_macaddr[15: 8] <= slv_dat_i[15: 8];
+					end else
+						slv_dat0_o <= dest_macaddr[15:0];
+				end
+				9'h015: begin // mem0 Physical addr
+					if (slv_we_i) begin
+						if (slv_sel_i[0])
+							mem0_paddr[39:32] <= slv_dat_i[ 7: 0];
+						if (slv_sel_i[1])
+							mem0_paddr[47:40] <= slv_dat_i[15: 8];
+					end else
+						slv_dat0_o <= mem0_paddr[47:32];
+				end
+				9'h016: begin
+					if (slv_we_i) begin
+						if (slv_sel_i[0])
+							mem0_paddr[23:16] <= slv_dat_i[ 7: 0];
+						if (slv_sel_i[1])
+							mem0_paddr[31:24] <= slv_dat_i[15: 8];
+					end else
+						slv_dat0_o <= mem0_paddr[31:16];
+				end
+				9'h017: begin
+					if (slv_we_i) begin
+						if (slv_sel_i[0])
+							mem0_paddr[ 7: 0] <= slv_dat_i[ 7: 0];
+						if (slv_sel_i[1])
+							mem0_paddr[15: 8] <= slv_dat_i[15: 8];
+					end else
+						slv_dat0_o <= mem0_paddr[15:0];
 				end
 				default: begin
-					slv_dat0_o <= slv_adr_i[16:1];
+					slv_dat0_o <= 16'h00; // slv_adr_i[16:1];
 				end
 			endcase
 		end
@@ -271,6 +391,13 @@ requester requester_inst (
 	.phy_dout(),
 	.phy_empty(),
 	.phy_rd_en(),
+	// Interface Information
+	.if_v4addr(if_v4addr),
+	.if_macaddr(if_macaddr),
+	.dest_v4addr(dest_v4addr),
+	.dest_macaddr(dest_macaddr),
+	// Page Table
+	.mem0_paddr(mem0_paddr),
 	// LED and Switches
 	.dipsw(dipsw),
 	.led(led),
