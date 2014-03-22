@@ -37,12 +37,19 @@ reg tx_en = 1'b0;
 //-----------------------------------
 // scenario parameter
 //-----------------------------------
-parameter [2:0]
-	REQ_IDLE     = 3'h0,
-	REQ_V4_SEND  = 3'h1,
-	REQ_FIN      = 3'h2,
-	REQ_GAP      = 3'h3;
-reg [2:0] req_status = REQ_IDLE;
+parameter [3:0]
+	REQ_IDLE     = 4'h0,
+	REQ_HEAD1    = 4'h1,
+	REQ_HEAD2    = 4'h2,
+	REQ_HEAD3    = 4'h3,
+	REQ_ADDR64   = 4'h4,
+	REQ_ADDR48   = 4'h5,
+	REQ_ADDR32   = 4'h6,
+	REQ_ADDR16   = 4'h7,
+	REQ_V4_SEND  = 4'hd,
+	REQ_FIN      = 4'he,
+	REQ_GAP      = 4'hf;
+reg [3:0] req_status = REQ_IDLE;
 	
 wire [31:0] magic_code       = 32'ha1110000;
 wire [15:0] ipv4_id           = 16'h1;
@@ -54,8 +61,10 @@ wire [31:0] ipv4_dstip = {8'd10, 8'd0, 8'd21, 8'd254};  // IPv4: Destination Add
 wire [15:0] tx_frame_len = 16'h3c;
 wire [15:0] tx_udp_len = tx_frame_len - 16'd34;  // UDP Length
 wire [15:0] tx_ip_len  = tx_frame_len - 16'd14;  // IP Length (Frame Len - EtherFrame Len)
+reg [47:2] tlp_addr;
+reg tlp_64bit;
 
-reg [31:0] gap_count;
+reg [15:0] gap_count;
 reg [23:0] ip_sum;
 
 always @(posedge pcie_clk) begin
@@ -63,15 +72,42 @@ always @(posedge pcie_clk) begin
 		tx_count       <= 11'h0;
 		tx_en          <= 1'b0;
 		req_status     <= REQ_IDLE;
-		gap_count      <= 32'h0;
+		gap_count      <= 16'h0;
 		phy_wr_en      <= 1'b0;
 	end else begin
 		case (req_status)
 		REQ_IDLE: begin
 			tx_count  <= 11'h0;
 			phy_wr_en <= 1'b0;
-//			if ( slv_empty == 1'b0 )
-				req_status <= REQ_V4_SEND;
+			// check write bit
+			if (rx_bar_hit[2] == 1'b1 && rx_st == 1'b1 && rx_data[14] == 1'b1) begin
+				tlp_64bit <= rx_data[13];
+				req_status <= REQ_HEAD1;
+			end
+		end
+		REQ_HEAD1: req_status <= REQ_HEAD2;
+		REQ_HEAD2: req_status <= REQ_HEAD3;
+		REQ_HEAD3: begin
+			tlp_addr[47:31] <= 16'h0;
+			if (tlp_64bit == 1'b0)
+				req_status <= REQ_ADDR32;
+			else
+				req_status <= REQ_ADDR64;
+		end
+		REQ_ADDR64: begin
+			req_status <= REQ_ADDR48;
+		end
+		REQ_ADDR48: begin
+			tlp_addr[47:32] <= rx_data[15:0];
+			req_status <= REQ_ADDR32;
+		end
+		REQ_ADDR32: begin
+			tlp_addr[31:16] <= rx_data[15:0];
+			req_status <= REQ_ADDR16;
+		end
+		REQ_ADDR16: begin
+			tlp_addr[15: 2] <= rx_data[15:2];
+			req_status <= REQ_V4_SEND;
 		end
 		REQ_V4_SEND: begin
 			phy_wr_en <= 1'b1;
@@ -152,14 +188,13 @@ always @(posedge pcie_clk) begin
 		REQ_FIN: begin
 			tx_en   <= 1'b0;
 			tx_data <= 8'h0;
-			gap_count<= 32'd100000;   // Inter Frame Gap = 14 (offset value -2)
+			gap_count<= 16'd8;   // Inter Frame Gap = 14 (offset value -2)
 			req_status <= REQ_GAP;
 		end
 		REQ_GAP: begin
-			if (gap_count == 32'd99980)
+			gap_count <= gap_count - 16'h1;
+			if (gap_count == 16'h0) begin
 				phy_wr_en <= 1'b0;
-			gap_count <= gap_count - 32'h1;
-			if (gap_count == 32'h0) begin
 				req_status <= REQ_IDLE;
 			end
 		end
