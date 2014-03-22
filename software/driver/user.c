@@ -16,7 +16,7 @@
 
 int main(int argc,char **argv)
 {
-	unsigned long pa, mem0p;
+	unsigned long pa, mem0p, baraddr;
 	int fd, i;
 	unsigned char if_ipv4[4], if_mac[6];
 	if ((fd=open(MEM_DEVICE,O_RDONLY)) <0) {
@@ -43,6 +43,11 @@ int main(int argc,char **argv)
 		return 1;
 	}
 	printf("mem0paddr=%012lX\n", mem0p);
+	if ( ioctl( fd, IPNUMA_IOCTL_GETBARADDR, &baraddr) < 0 ) {
+		fprintf(stderr,"cannot IOCTL\n");
+		return 1;
+	}
+	printf("baraddr=%012lX\n", baraddr);
 	close(fd);
 
 	i = 123;

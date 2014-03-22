@@ -185,6 +185,10 @@ printk( "PA=%p\n", ret);
 		case IPNUMA_IOCTL_SETMEM0PADDR: ptr = (unsigned long *)arg;
 			memcpy(mmio0_ptr + 0x28, ptr, 8);
 			break;
+		// Get BAR2 Physical Address
+		case IPNUMA_IOCTL_GETBARADDR: ptr = (unsigned long *)arg;
+			*ptr = mmio1_start;
+			break;
 		default:
 			return -ENOTTY;
 	}
