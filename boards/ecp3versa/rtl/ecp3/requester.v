@@ -35,49 +35,25 @@ reg [7:0] tx_data;
 reg tx_en = 1'b0;
 
 //-----------------------------------
-// CRC
-//-----------------------------------
-wire crc_init, crc_data_en;
-assign crc_init = (tx_count ==  11'h08);
-wire [31:0] crc_out;
-reg crc_rd;
-assign crc_data_en = ~crc_rd;
-crc_gen crc_inst (
-  .Reset(sys_rst),
-  .Clk(pcie_clk),
-  .Init(crc_init),
-  .Frame_data(tx_data),
-  .Data_en(crc_data_en),
-  .CRC_rd(crc_rd),
-  .CRC_end(),
-  .CRC_out(crc_out)
-); 
-
-
-//-----------------------------------
 // scenario parameter
 //-----------------------------------
 parameter [2:0]
 	REQ_IDLE     = 3'h0,
 	REQ_V4_SEND  = 3'h1,
-	REQ_FCS1     = 3'h2,
-	REQ_FCS2     = 3'h3,
-	REQ_FCS3     = 3'h4,
-	REQ_FCS4     = 3'h5,
-	REQ_FIN      = 3'h6,
-	REQ_GAP      = 3'h7;
+	REQ_FIN      = 3'h2,
+	REQ_GAP      = 3'h3;
 reg [2:0] req_status = REQ_IDLE;
 	
 wire [31:0] magic_code       = 32'ha1110000;
 wire [15:0] ipv4_id           = 16'h1;
 wire [7:0]  ipv4_ttl          = 8'h40;      // IPv4: default TTL value (default: 64)
-wire [31:0] tx_ipv4_srcip     = {8'd10, 8'd0, 8'd21, 8'd101};
+wire [31:0] tx_ipv4_srcip     = {8'd10, 8'd0, 8'd21, 8'd199};
 wire [47:0] tx_src_mac        = 48'h003776_000001;
 wire [47:0] tx_dst_mac        = 48'hffffff_ffffff;
 wire [31:0] ipv4_dstip = {8'd10, 8'd0, 8'd21, 8'd254};  // IPv4: Destination Address
-wire [15:0] tx_frame_len = 16'd128;
-wire [15:0] tx_udp_len = tx_frame_len - 16'h26;  // UDP Length
-wire [15:0] tx_ip_len  = tx_frame_len - 16'd18;  // IP Length (Frame Len - FCS Len - EtherFrame Len)
+wire [15:0] tx_frame_len = 16'h3c;
+wire [15:0] tx_udp_len = tx_frame_len - 16'd34;  // UDP Length
+wire [15:0] tx_ip_len  = tx_frame_len - 16'd14;  // IP Length (Frame Len - EtherFrame Len)
 
 reg [31:0] gap_count;
 reg [23:0] ip_sum;
@@ -86,10 +62,9 @@ always @(posedge pcie_clk) begin
 	if (sys_rst) begin
 		tx_count       <= 11'h0;
 		tx_en          <= 1'b0;
-		crc_rd         <= 1'b0;
-		req_status       <= REQ_IDLE;
+		req_status     <= REQ_IDLE;
 		gap_count      <= 32'h0;
-		phy_wr_en <= 1'b0;
+		phy_wr_en      <= 1'b0;
 	end else begin
 		case (req_status)
 		REQ_IDLE: begin
@@ -108,7 +83,7 @@ always @(posedge pcie_clk) begin
 			end
 			11'h01: begin
 				tx_data <= tx_dst_mac[39:32];
-				ip_sum <= ~(ip_sum[15:0] + ip_sum[23:16]);
+				ip_sum  <= ~(ip_sum[15:0] + ip_sum[23:16]);
 			end
 			11'h02: tx_data <= tx_dst_mac[31:24];
 			11'h03: tx_data <= tx_dst_mac[23:16];
@@ -154,49 +129,35 @@ always @(posedge pcie_clk) begin
 			11'h2b: tx_data <= magic_code[23:16];
 			11'h2c: tx_data <= magic_code[15:8];
 			11'h2d: tx_data <= magic_code[7:0];
-			11'h2e: tx_data <= 8'h81;         // Data
+			11'h2e: tx_data <= 8'hc1;         // Data
 			11'h2f: tx_data <= 8'hff;
-			11'h30: tx_data <= 8'hd0;
+			11'h30: tx_data <= 8'h00;
 			11'h31: tx_data <= 8'h00;
 			11'h32: tx_data <= 8'h00;
 			11'h33: tx_data <= 8'h00;
-			11'h34: tx_data <= 8'ha1;
-			11'h35: tx_data <= 8'ha2;
-			11'h36: tx_data <= 8'ha3;
-			11'h37: tx_data <= 8'ha4;
+			11'h34: tx_data <= 8'hd0;
+			11'h35: tx_data <= 8'h00;
+			11'h36: tx_data <= 8'h00;
+			11'h37: tx_data <= 8'h00;
+			11'h38: tx_data <= 8'ha1;
+			11'h39: tx_data <= 8'ha2;
+			11'h3a: tx_data <= 8'ha3;
 			default: begin
-				tx_data <= 8'h00;
-				req_status <= REQ_FCS1;
+				tx_data <= 8'ha4;
+				req_status <= REQ_FIN;
 			end
 			endcase
 			tx_count <= tx_count + 11'h1;
 		end
-		REQ_FCS1: begin
-			crc_rd  <= 1'b1;
-			tx_data <= crc_out[31:24];
-			req_status <= REQ_FCS2;
-		end
-		REQ_FCS2: begin
-			tx_data <= crc_out[23:16];
-			req_status <= REQ_FCS3;
-		end
-		REQ_FCS3: begin
-			tx_data <= crc_out[15: 8];
-			req_status <= REQ_FCS4;
-		end
-		REQ_FCS4: begin
-			tx_data <= crc_out[ 7: 0];
-			req_status <= REQ_FIN;
-		end
 		REQ_FIN: begin
-			phy_wr_en <= 1'b0;
 			tx_en   <= 1'b0;
-			crc_rd  <= 1'b0;
 			tx_data <= 8'h0;
-			gap_count<= 32'd1000;   // Inter Frame Gap = 14 (offset value -2)
+			gap_count<= 32'd100000;   // Inter Frame Gap = 14 (offset value -2)
 			req_status <= REQ_GAP;
 		end
 		REQ_GAP: begin
+			if (gap_count == 32'd99980)
+				phy_wr_en <= 1'b0;
 			gap_count <= gap_count - 32'h1;
 			if (gap_count == 32'h0) begin
 				req_status <= REQ_IDLE;
