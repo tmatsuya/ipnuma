@@ -8,6 +8,8 @@
 #include <linux/sched.h>	/* wait_event_interruptible, wake_up_interruptible */
 #include <linux/interrupt.h>
 #include <linux/version.h>
+#include "ipnuma_ioctl.h"
+#include "virt2phys.h"
 
 #ifndef DRV_NAME
 #define DRV_NAME	"ipnuma"
@@ -36,6 +38,8 @@ static unsigned long mmio1_start, mmio1_end, mmio1_flags, mmio1_len;
 static struct pci_dev *pcidev = NULL;
 static wait_queue_head_t write_q;
 static wait_queue_head_t read_q;
+
+extern unsigned long any_v2p(unsigned long);
 
 
 static irqreturn_t ipnuma_interrupt(int irq, void *pdev)
@@ -131,8 +135,37 @@ static unsigned int ipnuma_poll(struct file *filp, poll_table *wait)
 static int ipnuma_ioctl(struct file *filp,
 			unsigned int cmd, unsigned long arg)
 {
-	printk("%s\n", __func__);
-	return  -ENOTTY;
+	unsigned long *ptr, ret;
+	printk("%s(cmd=%x)\n", __func__, cmd);
+	switch (cmd) {
+		// Get Physical addr
+		case IPNUMA_IOCTL_GETPADDR: ptr = (unsigned long *)arg;
+printk( "VA=%p\n", *ptr);
+			ret = any_v2p(*ptr);
+printk( "PA=%p\n", ret);
+			*ptr = ret;
+			break;
+		// Get I/F IPv4
+		case IPNUMA_IOCTL_GETIFV4ADDR: ptr = (unsigned long *)arg;
+			memcpy(ptr, mmio0_ptr + 0, 4);
+			break;
+		// Set I/F IPv4
+		case IPNUMA_IOCTL_SETIFV4ADDR: ptr = (unsigned long *)arg;
+			memcpy(mmio0_ptr + 0, ptr, 4);
+			break;
+		// Get I/F MAC
+		case IPNUMA_IOCTL_GETIFMACADDR: ptr = (unsigned long *)arg;
+			memcpy(ptr, mmio0_ptr + 4, 6);
+			break;
+		// Set I/F MAC
+		case IPNUMA_IOCTL_SETIFMACADDR: ptr = (unsigned long *)arg;
+			memcpy(mmio0_ptr + 4, ptr, 6);
+			break;
+		default:
+			return -ENOTTY;
+	}
+
+	return 0;
 }
 
 static struct file_operations ipnuma_fops = {

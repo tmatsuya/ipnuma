@@ -1,1 +1,1 @@
-KERNEL=="ionuma*"		MODE="0666"
+KERNEL=="ipnuma*"		MODE="0666"
