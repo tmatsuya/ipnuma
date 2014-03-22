@@ -161,6 +161,30 @@ printk( "PA=%p\n", ret);
 		case IPNUMA_IOCTL_SETIFMACADDR: ptr = (unsigned long *)arg;
 			memcpy(mmio0_ptr + 4, ptr, 6);
 			break;
+		// Get Dest IPv4
+		case IPNUMA_IOCTL_GETDESTV4ADDR: ptr = (unsigned long *)arg;
+			memcpy(ptr, mmio0_ptr + 0x10, 4);
+			break;
+		// Set Dest IPv4
+		case IPNUMA_IOCTL_SETDESTV4ADDR: ptr = (unsigned long *)arg;
+			memcpy(mmio0_ptr + 0x10, ptr, 4);
+			break;
+		// Get Dest MAC
+		case IPNUMA_IOCTL_GETDESTMACADDR: ptr = (unsigned long *)arg;
+			memcpy(ptr, mmio0_ptr + 0x14, 6);
+			break;
+		// Set Dest MAC
+		case IPNUMA_IOCTL_SETDESTMACADDR: ptr = (unsigned long *)arg;
+			memcpy(mmio0_ptr + 0x14, ptr, 6);
+			break;
+		// Get Mem0 Physical Address
+		case IPNUMA_IOCTL_GETMEM0PADDR: ptr = (unsigned long *)arg;
+			memcpy(ptr, mmio0_ptr + 0x28, 8);
+			break;
+		// Set Mem0 Physical Address
+		case IPNUMA_IOCTL_SETMEM0PADDR: ptr = (unsigned long *)arg;
+			memcpy(mmio0_ptr + 0x28, ptr, 8);
+			break;
 		default:
 			return -ENOTTY;
 	}
