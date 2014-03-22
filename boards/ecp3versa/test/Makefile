@@ -7,7 +7,7 @@ SOURCES=$(wildcard *.v) \
 	$(wildcard ../rtl/ecp3/pcie_tlp.v)
 
 #all: cversim
-all: tlp_data.hex phy_data.hex isim udpclient
+all: tlp_data.hex phy_data.hex isim
 
 gtk: all
 	gtkwave test.vcd
@@ -23,8 +23,5 @@ clean:
 
 tb_system: $(SOURCES)
 	iverilog -o tb_system $(SOURCES)
-
-udpclient: udpclient.c
-	gcc -o udpclient udpclient.c
 
 .PHONY: clean isim cversim gtk
