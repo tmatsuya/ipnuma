@@ -8,10 +8,14 @@
 #include <sys/mman.h>
 #include <arpa/inet.h>
 
+#include "util.h"
+
 #define	USE_MEMCPY
 //#define DEBUG
 
 #define	MEM_DEVICE	"/dev/mem"
+
+TimeWatcher tw;
 
 int main(int argc,char **argv)
 {
@@ -59,5 +63,9 @@ int main(int argc,char **argv)
 #endif
 	}
 	munmap(mmapped,len);
+	start(&tw);
+	end(&tw);
+	print_time_sec(&tw);
+
 	close(fd);
 }

@@ -7,8 +7,12 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include "util.h"
+
 #define		APP_PORT	3422		// USB over IP
 #define		BUFSIZE		4
+
+TimeWatcher tw;
 
 int main(int argc, char **argv)
 {
@@ -50,6 +54,7 @@ int main(int argc, char **argv)
 	*count_r = 0;
 	i = 0;
 
+	start(&tw);
 	while (*count_s < 200000) {
 		if (sendto(sock_s, buf_s, BUFSIZE, 0, (struct sockaddr *)&addr_s, sizeof(addr_s)) < 0){
 			perror("sendto()");
@@ -61,6 +66,8 @@ int main(int argc, char **argv)
 		*count_s = *count_r + 1;
 		++i;
 	}
+	end(&tw);
+	print_time_sec(&tw);
 	printf("%d,%d,%d\n", i, *count_s, *count_r);
 
 	exit(EXIT_SUCCESS);
