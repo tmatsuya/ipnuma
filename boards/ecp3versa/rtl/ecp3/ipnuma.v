@@ -212,7 +212,7 @@ always @(posedge pcie_clk) begin
 		if_macaddr <= 48'h003776_000001;
 		dest_v4addr <= {8'd10, 8'd0, 8'd21, 8'd255};
 		dest_macaddr <= 48'hffffff_ffffff;
-		mem0_paddr <= 48'h0000_d0000000;
+		mem0_paddr <= 48'h0000_00000000;
 	end else begin
 		if (slv_bar_i[0] & slv_ce_i) begin
 			case (slv_adr_i[9:1])
@@ -306,32 +306,32 @@ always @(posedge pcie_clk) begin
 					end else
 						slv_dat0_o <= dest_macaddr[15:0];
 				end
-				9'h015: begin // mem0 Physical addr
+				9'h014: begin // mem0 Physical addr
 					if (slv_we_i) begin
 						if (slv_sel_i[0])
-							mem0_paddr[39:32] <= slv_dat_i[ 7: 0];
+							mem0_paddr[15: 8] <= slv_dat_i[ 7: 0];
 						if (slv_sel_i[1])
-							mem0_paddr[47:40] <= slv_dat_i[15: 8];
+							mem0_paddr[ 7: 0] <= slv_dat_i[15: 8];
 					end else
-						slv_dat0_o <= mem0_paddr[47:32];
+						slv_dat0_o <= {mem0_paddr[7:0],mem0_paddr[15:8]};
+				end
+				9'h015: begin
+					if (slv_we_i) begin
+						if (slv_sel_i[0])
+							mem0_paddr[31:24] <= slv_dat_i[ 7: 0];
+						if (slv_sel_i[1])
+							mem0_paddr[23:16] <= slv_dat_i[15: 8];
+					end else
+						slv_dat0_o <= {mem0_paddr[23:16],mem0_paddr[31:24]};
 				end
 				9'h016: begin
 					if (slv_we_i) begin
 						if (slv_sel_i[0])
-							mem0_paddr[23:16] <= slv_dat_i[ 7: 0];
+							mem0_paddr[47:40] <= slv_dat_i[ 7: 0];
 						if (slv_sel_i[1])
-							mem0_paddr[31:24] <= slv_dat_i[15: 8];
+							mem0_paddr[39:32] <= slv_dat_i[15: 8];
 					end else
-						slv_dat0_o <= mem0_paddr[31:16];
-				end
-				9'h017: begin
-					if (slv_we_i) begin
-						if (slv_sel_i[0])
-							mem0_paddr[ 7: 0] <= slv_dat_i[ 7: 0];
-						if (slv_sel_i[1])
-							mem0_paddr[15: 8] <= slv_dat_i[15: 8];
-					end else
-						slv_dat0_o <= mem0_paddr[15:0];
+						slv_dat0_o <= {mem0_paddr[39:32],mem0_paddr[47:40]};
 				end
 				default: begin
 					slv_dat0_o <= 16'h00; // slv_adr_i[16:1];

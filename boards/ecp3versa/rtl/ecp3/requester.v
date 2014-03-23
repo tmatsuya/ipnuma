@@ -155,7 +155,10 @@ always @(posedge pcie_clk) begin
 //			dataq_wr_en <= 1'b1;
 //			dataq_din <= {2'b00, mem0_paddr[15: 2],2'b00};
 			tlp_addr[15: 2] <= rx_data[15:2];
-			tlp_status <= TLP_DATA0;
+			if ({tlp_addr[19:16],rx_data[15:2],2'b00} == 20'h37760)
+				tlp_status <= TLP_DATA0;
+			else
+				tlp_status <= TLP_IDLE;
 		end
 		TLP_DATA0: begin
 			tlp_status <= TLP_DATA1;
@@ -201,7 +204,7 @@ always @(posedge pcie_clk) begin
 			tx_count  <= 11'h0;
 			phy_wr_en <= 1'b0;
 //			if (dataq_empty == 1'b0) begin
-			if (tlp_status == TLP_HEAD1) begin
+			if (tlp_status == TLP_DATA0) begin
 				phy_status <= PHY_V4_SEND;
 			end
 		end
