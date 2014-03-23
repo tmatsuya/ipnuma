@@ -23,7 +23,6 @@ int main(int argc,char **argv)
 		fprintf(stderr,"cannot open %s\n",MEM_DEVICE);
 		return 1;
 	}
-	pa = (unsigned long)&i;
 	if ( ioctl( fd, IPNUMA_IOCTL_GETPADDR, &pa) < 0 ) {
 		fprintf(stderr,"cannot IOCTL\n");
 		return 1;
@@ -49,11 +48,11 @@ int main(int argc,char **argv)
 		return 1;
 	}
 	printf("baraddr=%012lX\n", baraddr);
+	close(fd);
 
 	i = 123;
-	while (1) {
+	while (0) {
 		printf ("i=%d, &i=%p, Physical Address=%012lx\n", i, &i, pa);
 		usleep(10000);
 	}
-	close(fd);
 }
