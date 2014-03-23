@@ -2,6 +2,7 @@
 module top (
 	// PCI Express
 	input rstn,
+	input board_clk,
 	input FLIP_LANES,
 	input refclkp,
 	input refclkn,
@@ -10,7 +11,7 @@ module top (
 	output hdoutp,
 	output hdoutn,
 	// Ethernet PHY#1
-	output phy1_rst_n,
+	output reg phy1_rst_n,
 	input phy1_125M_clk,
 	input phy1_tx_clk,
 	output phy1_gtx_clk,
@@ -25,7 +26,7 @@ module top (
 	output phy1_mii_clk,
 	inout phy1_mii_data,
 	// Ethernet PHY#2
-	output phy2_rst_n,
+	output reg phy2_rst_n,
 	input phy2_125M_clk,
 	input phy2_tx_clk,
 	output phy2_gtx_clk,
@@ -220,17 +221,33 @@ ipnuma ipnuma_inst (
 	.btn(reset_n)
 );
 
-`ifndef USE_PHY2
+//-------------------------------------
+// PYH cold reset
+//-------------------------------------
+reg [7:0] count_rst = 8'd0;
+always @(posedge board_clk) begin
+    if (reset_n == 1'b0) begin
+        phy1_rst_n <= 1'b0;
+        phy2_rst_n <= 1'b0;
+        count_rst <= 8'b0000_0000;
+    end else begin
+        if (count_rst[7:0] != 8'b1111_1101) begin
+            count_rst <= count_rst + 8'd1;
+            phy1_rst_n <= 1'b0;
+            phy2_rst_n <= 1'b0;
+        end else begin
+            phy1_rst_n <= reset_n;
+            phy2_rst_n <= reset_n;
+        end
+    end
+end
+
 assign phy1_mii_clk = 1'b0;
 assign phy1_mii_data = 1'b0;
 assign phy1_gtx_clk = phy1_125M_clk;
-assign phy1_rst_n = sys_rst_n & reset_n;
-`else
 assign phy2_mii_clk = 1'b0;
 assign phy2_mii_data = 1'b0;
 assign phy2_gtx_clk = phy2_125M_clk;
-assign phy2_rst_n = sys_rst_n & reset_n;
-`endif
 
 endmodule
 `default_nettype wire
