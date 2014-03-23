@@ -87,7 +87,7 @@ reg [1:0] phy_status = PHY_IDLE;
 wire [31:0] magic_code    = 32'ha1110000;
 wire [15:0] ipv4_id       = 16'h1;
 wire [7:0]  ipv4_ttl      = 8'h40;      // IPv4: default TTL value (default: 64)
-wire [15:0] tx_frame_len  = 16'h3c;
+wire [15:0] tx_frame_len  = 16'h3d;
 wire [15:0] tx_udp_len    = tx_frame_len - 16'd34;  // UDP Length
 wire [15:0] tx_ip_len     = tx_frame_len - 16'd14;  // IP Length (Frame Len - EtherFrame Len)
 
@@ -277,8 +277,9 @@ always @(posedge pcie_clk) begin
 			11'h38: tx_data <= tlp_data[31:24];
 			11'h39: tx_data <= tlp_data[23:16];
 			11'h3a: tx_data <= tlp_data[15: 8];
+			11'h3b: tx_data <= tlp_data[ 7: 0];
 			default: begin
-				tx_data <= tlp_data[ 7: 0];
+				tx_data <= 8'h00;
 				phy_status <= PHY_FIN;
 			end
 			endcase
