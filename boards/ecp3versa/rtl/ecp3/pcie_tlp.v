@@ -95,7 +95,7 @@ reg [9:0]  rx_length = 10'h0;
 reg [15:0] rx_reqid = 16'h0;
 reg [7:0]  rx_tag = 8'h0;
 reg [3:0]  rx_lastbe = 4'h0, rx_firstbe = 4'h0;
-reg [63:2] rx_addr = 62'h0000000000000000;
+reg [47:2] rx_addr = 46'h0000000000000000;
 reg        rx_tlph_valid = 1'b0;
 reg [15:0] rx_data2 = 16'h0;
 reg rx_end2 = 1'b0;
@@ -197,13 +197,12 @@ always @(posedge pcie_clk) begin
 				rx_lastbe[3:0]  <= rx_data[7:4];
 				rx_firstbe[3:0]  <= rx_data[3:0];
 				if ( rx_fmt[0] == 1'b0 ) begin	// 64 or 32bit ??
-					rx_addr[63:32] <= 32'h0;
+					rx_addr[47:32] <= 16'h0;
 					rx_status <= RX_REQ6;
 				end else
 					rx_status <= RX_REQ4;
 			end
 			RX_REQ4: begin
-				rx_addr[63:48] <= rx_data[15:0];
 				rx_status <= RX_REQ5;
 			end
 			RX_REQ5: begin
@@ -284,7 +283,7 @@ reg [15:0] tx2_reqid = 16'h0;
 reg [7:0]  tx2_tag = 8'h0;
 reg [7:0]  tx2_lowaddr = 8'h0;
 reg [3:0]  tx2_lastbe = 4'h0, tx2_firstbe = 4'h0;
-reg [63:2] tx2_addr = 62'h0000000000000000;
+reg [47:2] tx2_addr = 46'h0000000000000000;
 
 always @(posedge pcie_clk) begin
 	if (sys_rst) begin
@@ -370,7 +369,7 @@ always @(posedge pcie_clk) begin
 					tx_status <= TX2_COMP4;
 			end
 			TX2_COMP4: begin
-				tx_data[15:0] <= tx2_addr[63:48];
+				tx_data[15:0] <= 16'h0000;
 				tx2_tlpd_ready <= 1'b1;
 				tx_status <= TX2_COMP5;
 			end
@@ -567,7 +566,7 @@ parameter [3:0]
 	MST_MWRITED = 3'h5,
 	MST_COMP    = 3'h7;
 reg [3:0] mst_status = MST_IDLE;
-reg [31:1] mst_adr;
+reg [47:1] mst_adr;
 reg mst_rd_wait;
 always @(posedge pcie_clk) begin
 	if (sys_rst) begin
@@ -584,7 +583,7 @@ always @(posedge pcie_clk) begin
 				MST_IDLE: begin
 					tx2_tlph_valid <= 1'b0;
 					if ( mst_dout[17] == 1'b1 ) begin
-						tx2_addr[63:32] <= 30'h0;
+						tx2_addr[47:32] <= 14'h0;
 						tx2_length[10:0] <= {4'b0000, mst_dout[13:8], 1'b0};
 						{tx2_lastbe[3:0], tx2_firstbe[3:0]} <= mst_dout[7:0];
 						case ( mst_dout[15:14] )
@@ -596,7 +595,6 @@ always @(posedge pcie_clk) begin
 					end
 				end
 				MST_MWRITE64: begin
-					tx2_addr[63:48] <= mst_dout[15:0];
 					mst_status <= MST_MWRITE48;
 				end
 				MST_MWRITE48: begin
@@ -616,7 +614,7 @@ always @(posedge pcie_clk) begin
 					tx2_ep <= 1'b0;
 					tx2_attr[1:0] <= 2'b00;
 					tx2_tag[7:0] <= 8'h01;
-					mst_adr[31:1] <= {tx2_addr[31:16], mst_dout[15:2], 1'b0};
+					mst_adr[47:1] <= {tx2_addr[47:16], mst_dout[15:2], 1'b0};
 					tx2_tlph_valid <= 1'b1;
 					mst_rd_en <= 1'b0;
 					mst_rd_wait <= 1'b1;
@@ -627,7 +625,7 @@ always @(posedge pcie_clk) begin
 						tx2_tlph_valid <= 1'b0;
 						tx2_length <= tx2_length - 11'h1;
 						if ( tx2_length[10:1] != 10'h000)
-							mst_adr[31:1] <= mst_adr[31:1] + 19'h1;
+							mst_adr[47:1] <= mst_adr[47:1] + 19'h1;
 						if ( tx2_length == 11'h7ff || tx2_length == 11'h7fe ) begin
 							mst_rd_en <= 1'b0;
 						end
