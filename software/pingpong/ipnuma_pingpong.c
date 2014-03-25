@@ -22,16 +22,6 @@ int numa_fd = -1;
 unsigned long pa, mem0p, baraddr;
 unsigned char if_ipv4[4], if_mac[6];
 
-static inline void rep_nop(void)
-{
-//	asm volatile("rep; nop" ::: "memory");
-	asm volatile("rep; nop");
-}
-
-static inline void cpu_relax(void)
-{
-	rep_nop();
-}
 
 int init_numa()
 {
@@ -116,7 +106,7 @@ int main(int argc,char **argv)
 			rdata2 = rdata;
 			*(int *)(mmapped + 0x37760) = sdata;
 			while (rdata == rdata2)
-				cpu_relax();
+				asm volatile("rep; nop" ::: "memory");
 			sdata = rdata+1;
 		
 		}
@@ -129,7 +119,7 @@ int main(int argc,char **argv)
 			rdata2 = rdata;
 			*(int *)(mmapped + 0x37760) = sdata;
 			while (rdata == rdata2)
-				cpu_relax();
+				asm volatile("rep; nop" ::: "memory");
 			sdata = rdata+1;
 		}
 	}
