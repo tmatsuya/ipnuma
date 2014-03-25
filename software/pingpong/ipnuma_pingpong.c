@@ -61,7 +61,7 @@ int init_numa()
 int main(int argc,char **argv)
 {
 	unsigned char *mmapped;
-	int rdata = -1;
+	int rdata = -1, rdata2, sdata = 0;
 	int i, fd;
 	unsigned int st,len=0x40000,poff;
 
@@ -99,21 +99,28 @@ int main(int argc,char **argv)
 //	init_numa();
 
 	if ( !strcmp( argv[1], "s") ) {
-		for (i=0; ;++i) {
-			printf("rdata=%d\n", rdata);
-			usleep(10000);
+		while (rdata < 0);
+		start(&tw);
+		while (rdata < 20000) {
+			rdata2 = rdata;
+			*(int *)(mmapped + 0x37760) = sdata;
+			while (rdata == rdata);
+			sdata = rdata+1;
+		
 		}
+		end(&tw);
+		print_time_sec(&tw);
 	}
 	if ( !strcmp( argv[1], "c") ) {
-		for (i=0; ;++i) {
-			*(int *)(mmapped + 0x37760) = i;
-			usleep(10000);
+		sdata = 0;
+		while (1) {
+			rdata2 = rdata;
+			*(int *)(mmapped + 0x37760) = sdata;
+			while (rdata == rdata);
+			sdata = rdata+1;
 		}
 	}
 	munmap(mmapped,len);
-	start(&tw);
-	end(&tw);
-	print_time_sec(&tw);
 
 	close(fd);
 }
