@@ -99,13 +99,14 @@ int main(int argc,char **argv)
 //	init_numa();
 
 	if ( !strcmp( argv[1], "s") ) {
+		asm("prefetcht0 %0" : : "m" (rdata) : "memory");
 		while (rdata < 0);
 		start(&tw);
 		while (rdata < 20000) {
 			rdata2 = rdata;
 			*(int *)(mmapped + 0x37760) = sdata;
 			while (rdata == rdata2)
-				__asm__ volatile("invd");
+				asm("prefetcht0 %0" : : "m" (rdata) : "memory");
 			sdata = rdata+1;
 		
 		}
@@ -118,7 +119,7 @@ int main(int argc,char **argv)
 			rdata2 = rdata;
 			*(int *)(mmapped + 0x37760) = sdata;
 			while (rdata == rdata2)
-				__asm__ volatile("invd");
+				asm("prefetcht0 %0" : : "m" (rdata) : "memory");
 			sdata = rdata+1;
 		}
 	}
