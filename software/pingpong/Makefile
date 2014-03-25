@@ -2,7 +2,7 @@ SHELL = /bin/sh
 
 OBJS1 = socket_pingpong.o util.c
 OBJS2 = ipnuma_pingpong.o util.c
-CFLAG = -Wall -O
+CFLAGS = -Wall -O
 CC = gcc
 INCLUDE =
 LIBS =
