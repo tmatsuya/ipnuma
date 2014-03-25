@@ -61,18 +61,19 @@ int init_numa()
 int main(int argc,char **argv)
 {
 	unsigned char *mmapped;
-	int i, j, d, r, fd;
-	unsigned int st=0xe9000000,len=0x40000,poff;
+	int rdata = -1;
+	int i, fd;
+	unsigned int st,len=0x40000,poff;
 
 	if (argc!=2) {
 		fprintf(stderr,"%s [s|c]\n", argv[0]);
 		return 1;
 	}
 
+	pa = (unsigned long)&rdata;
 	init_numa();
 
 	st = baraddr;
-	printf("%X\n", st);
 	poff=st % 4096;
 	if ((fd=open(MEM_DEVICE,O_RDWR)) <0) {
 		fprintf(stderr,"cannot open %s\n",MEM_DEVICE);
@@ -86,6 +87,7 @@ int main(int argc,char **argv)
 		return 1;
 	}
 
+	printf("local physical address=%012lX\n", pa);
 	printf("remote physical address?");
 	scanf("%lx", &mem0p);
 
@@ -96,18 +98,18 @@ int main(int argc,char **argv)
 
 //	init_numa();
 
-//	if ( !strcmp( argv[1], "s") ) {
+	if ( !strcmp( argv[1], "s") ) {
+		for (i=0; ;++i) {
+			printf("rdata=%d\n", rdata);
+			usleep(10000);
+		}
+	}
+	if ( !strcmp( argv[1], "c") ) {
 		for (i=0; ;++i) {
 			*(int *)(mmapped + 0x37760) = i;
-			usleep(1000);
+			usleep(10000);
 		}
-//	}
-//	if ( !strcmp( argv[1], "c") ) {
-//		for (i=0; ;++i) {
-//			*(int *)(mmapped) = i;
-//			usleep(10000);
-//		}
-//	}
+	}
 	munmap(mmapped,len);
 	start(&tw);
 	end(&tw);
