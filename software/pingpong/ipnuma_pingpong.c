@@ -7,6 +7,7 @@
 #include <string.h>
 #include <sys/mman.h>
 #include <arpa/inet.h>
+#include <time.h>
 
 #include "util.h"
 #include "../driver/ipnuma_ioctl.h"
@@ -65,6 +66,7 @@ int main(int argc,char **argv)
 	int rdata = -1, rdata2, sdata = 0;
 	int i, j, fd;
 	unsigned int st,len=0x40000,poff;
+	struct timespec treq;
 
 	if (argc!=2) {
 		fprintf(stderr,"%s [s|c]\n", argv[0]);
@@ -98,6 +100,8 @@ int main(int argc,char **argv)
 	}
 
 //	init_numa();
+	treq.tv_sec = (time_t)0;
+	treq.tv_nsec = 10;
 
 	if ( !strcmp( argv[1], "s") ) {
 		while (rdata < 0);
@@ -106,7 +110,8 @@ int main(int argc,char **argv)
 			rdata2 = rdata;
 			*(int *)(mmapped + 0x37760) = sdata;
 			while (rdata == rdata2)
-				asm volatile("rep; nop" ::: "memory");
+				nanosleep(&treq, NULL);
+//				asm volatile("rep; nop" ::: "memory");
 			sdata = rdata+1;
 		
 		}
@@ -119,7 +124,8 @@ int main(int argc,char **argv)
 			rdata2 = rdata;
 			*(int *)(mmapped + 0x37760) = sdata;
 			while (rdata == rdata2)
-				asm volatile("rep; nop" ::: "memory");
+				nanosleep(&treq, NULL);
+//				asm volatile("rep; nop" ::: "memory");
 			sdata = rdata+1;
 		}
 	}
