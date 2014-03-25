@@ -114,6 +114,7 @@ int main(int argc,char **argv)
 			while (rdata == rdata2)
 //				usleep(1);
 				nanosleep(&treq, NULL);
+//				clock_nanosleep(CLOCK_REALTIME, 0, &treq, NULL);
 //				asm volatile("rep; nop" ::: "memory");
 			sdata = rdata+1;
 		
@@ -130,6 +131,7 @@ int main(int argc,char **argv)
 			while (rdata == rdata2)
 //				usleep(1);
 				nanosleep(&treq, NULL);
+//				clock_nanosleep(CLOCK_REALTIME, 0, &treq, NULL);
 //				asm volatile("rep; nop" ::: "memory");
 			sdata = rdata+1;
 		}
