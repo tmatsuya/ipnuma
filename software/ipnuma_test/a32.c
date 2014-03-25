@@ -65,7 +65,7 @@ int main(int argc, char **argv)
 		sdata[ 4] = 0x80|dwlen;// write command(b7), 64bit(b6), length(b5-b0)=4DW
 		sdata[ 5] = 0xff;	// LBE(b8-4), FBE(b3-0)
 
-		sdata[ 6] = 0xc0;	// ADDR=0xD0000000
+		sdata[ 6] = 0xd0;	// ADDR=0xD0000000
 		sdata[ 7] = 0x00;
 		sdata[ 8] = 0x00;
 		sdata[ 9] = 0x00;
@@ -96,25 +96,27 @@ int main(int argc, char **argv)
 			usleep(1);
 		}
 	} else {
-		sdata[ 4] = 0xc1;// write command(b7), 64bit(b6), length(b5-b0)=4DW
+		sdata[ 4] = 0x81;// write command(b7), 64bit(b6), length(b5-b0)=4DW
 		sdata[ 5] = 0xff;	// LBE(b8-4), FBE(b3-0)
 
-		sdata[ 6] = (write_addr >> 32) & 0xff;
+		sdata[ 6] = (write_addr >> 24) & 0xff;
+		sdata[ 7] = (write_addr >> 16) & 0xff;
+		sdata[ 8] = (write_addr >>  8) & 0xff;
+		sdata[ 9] = (write_addr >>  0) & 0xff;
 
-		sdata[ 7] = (write_addr >> 24) & 0xff;
-		sdata[ 8] = (write_addr >> 16) & 0xff;
-		sdata[ 9] = (write_addr >>  8) & 0xff;
-		sdata[10] = (write_addr >>  0) & 0xff;
+while (1) {
+		++write_data;
+		sdata[10] = (write_data >>  0) & 0xff;
+		sdata[11] = (write_data >>  8) & 0xff;
+		sdata[12] = (write_data >> 16) & 0xff;
+		sdata[13] = (write_data >> 24) & 0xff;
+		sdata[14] = 0x00; // delimiter
 
-		sdata[11] = (write_data >>  0) & 0xff;
-		sdata[12] = (write_data >>  8) & 0xff;
-		sdata[13] = (write_data >> 16) & 0xff;
-		sdata[14] = (write_data >> 24) & 0xff;
-		sdata[15] = 0x00; // delimiter
-
-		if (sendto(sockfd, sdata, 11+4+1, 0, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0){
+		if (sendto(sockfd, sdata, 10+4+1, 0, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0){
 			perror("sendto()");
 		}
+		usleep(1);
+}
 
 	}
 

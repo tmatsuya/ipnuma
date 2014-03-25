@@ -24,12 +24,18 @@ module server (
 	input btn
 );
 
-parameter [1:0]
-	SRV_IDLE     = 3'h0,
-	SRV_HEAD0    = 3'h1,
-	SRV_HEAD1    = 3'h2,
-	SRV_DATA     = 3'h3;
-reg [1:0] srv_status = SRV_IDLE;
+parameter [3:0]
+	SRV_IDLE     = 4'h0,
+	SRV_HEAD0    = 4'h1,
+	SRV_HEAD1    = 4'h2,
+	SRV_ADDR64   = 4'h3,
+	SRV_ADDR48   = 4'h4,
+	SRV_ADDR32   = 4'h5,
+	SRV_ADDR24   = 4'h6,
+	SRV_ADDR16   = 4'h7,
+	SRV_ADDR8    = 4'h8,
+	SRV_DATA     = 4'h9;
+reg [3:0] srv_status = SRV_IDLE;
 	
 reg [11:0] counter;
 reg [47:0] eth_dest;
@@ -45,8 +51,10 @@ reg [15:0] ipv4_src_port, ipv4_dest_port;
 reg [15:0] ipv4_udp_len;
 reg [15:0] ipv4_udp_sum;
 reg [31:0] magic_code;
+reg srv_64bit;
 reg [6:0] blen;
 reg [7:0] count;
+reg [7:0] phy_dout2;	// previous phy_dout
 always @(posedge pcie_clk) begin
 	if (sys_rst) begin
 		counter <= 12'h0;
@@ -68,8 +76,11 @@ always @(posedge pcie_clk) begin
 		phy_rd_en <= 1'b0;
 		srv_status <= SRV_IDLE;
 		mst_wr_en <= 1'b0;
+		srv_64bit <= 1'b0;
 		blen <= 7'h0;
+		phy_dout2 <= 8'h00;
 	end else begin
+		phy_dout2 <= phy_dout;
               	phy_rd_en  <= ~phy_empty;
 		mst_wr_en <= 1'b0;
 		if ( phy_rd_en == 1'b1 ) begin
@@ -125,7 +136,8 @@ always @(posedge pcie_clk) begin
 					SRV_HEAD0: begin
 count <= count + 8'h1;
 						mst_din[17:8] <= {2'b10, phy_dout[7:0]};
-						blen <= {(phy_dout[5:0] + (phy_dout[6] ? 6'h2 : 6'h1)) , 2'b00};
+						srv_64bit <= phy_dout[6];
+						blen <= {phy_dout[5:0] , 2'b00};
 						if ( phy_dout[7:0] == 8'h00 )
 							srv_status <= SRV_IDLE;
 						else
@@ -134,6 +146,45 @@ count <= count + 8'h1;
 					SRV_HEAD1: begin
 						mst_din[7:0] <= phy_dout[7:0];
 						mst_wr_en <= 1'b1;
+						if (srv_64bit == 1'b1)
+							srv_status <= SRV_ADDR64;
+						else
+							srv_status <= SRV_ADDR32;
+					end
+					SRV_ADDR64: begin
+						mst_wr_en <= 1'b1;
+						mst_din[17:0] <= 18'h00;
+						srv_status <= SRV_ADDR48;
+					end
+					SRV_ADDR48: begin
+						mst_wr_en <= 1'b1;
+						mst_din[7:0] <= phy_dout2[7:0];
+						srv_status <= SRV_ADDR32;
+					end
+					SRV_ADDR32: begin
+						if (srv_64bit == 1'b1) begin
+							mst_wr_en <= 1'b1;
+							mst_din[17:0] <= {2'b00, phy_dout2[7:0], phy_dout[7:0]};
+							srv_status <= SRV_ADDR16;
+						end else begin
+							mst_wr_en <= 1'b0;
+							mst_din[17:8] <= {2'b00, phy_dout[7:0]};
+							srv_status <= SRV_ADDR24;
+						end
+					end
+					SRV_ADDR24: begin
+						mst_wr_en <= 1'b1;
+						mst_din[7:0] <= srv_64bit ? phy_dout2[7:0] : phy_dout[7:0];
+						srv_status <= SRV_ADDR16;
+					end
+					SRV_ADDR16: begin
+						mst_wr_en <= 1'b0;
+						mst_din[15:8] <= phy_dout[7:0];
+						srv_status <= SRV_ADDR8;
+					end
+					SRV_ADDR8: begin
+						mst_wr_en <= 1'b1;
+						mst_din[7:0] <= phy_dout[7:0];
 						srv_status <= SRV_DATA;
 					end
 					SRV_DATA: begin
