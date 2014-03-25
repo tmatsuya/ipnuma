@@ -30,6 +30,14 @@ static inline void rep_nop(void)
 static inline void cpu_relax(void)
 {
 	rep_nop();
+	rep_nop();
+	rep_nop();
+	rep_nop();
+	rep_nop();
+	rep_nop();
+	rep_nop();
+	rep_nop();
+	rep_nop();
 }
 
 int init_numa()
@@ -72,7 +80,7 @@ int main(int argc,char **argv)
 {
 	unsigned char *mmapped;
 	int rdata = -1, rdata2, sdata = 0;
-	int i, fd;
+	int i, j, fd;
 	unsigned int st,len=0x40000,poff;
 
 	if (argc!=2) {
@@ -115,7 +123,7 @@ int main(int argc,char **argv)
 			rdata2 = rdata;
 			*(int *)(mmapped + 0x37760) = sdata;
 			while (rdata == rdata2)
-				cpu_relax();
+				for(j=1;j<100;++j);
 			sdata = rdata+1;
 		
 		}
@@ -128,7 +136,7 @@ int main(int argc,char **argv)
 			rdata2 = rdata;
 			*(int *)(mmapped + 0x37760) = sdata;
 			while (rdata == rdata2)
-				cpu_relax();
+				for(j=1;j<100;++j);
 			sdata = rdata+1;
 		}
 	}
