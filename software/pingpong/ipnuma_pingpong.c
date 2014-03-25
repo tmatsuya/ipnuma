@@ -101,7 +101,7 @@ int main(int argc,char **argv)
 
 //	init_numa();
 	treq.tv_sec = (time_t)0;
-	treq.tv_nsec = 10;
+	treq.tv_nsec = 1;
 
 	if ( !strcmp( argv[1], "s") ) {
 		while (rdata < 0);
@@ -110,6 +110,7 @@ int main(int argc,char **argv)
 			rdata2 = rdata;
 			*(int *)(mmapped + 0x37760) = sdata;
 			while (rdata == rdata2)
+//				usleep(1);
 				nanosleep(&treq, NULL);
 //				asm volatile("rep; nop" ::: "memory");
 			sdata = rdata+1;
@@ -124,6 +125,7 @@ int main(int argc,char **argv)
 			rdata2 = rdata;
 			*(int *)(mmapped + 0x37760) = sdata;
 			while (rdata == rdata2)
+//				usleep(1);
 				nanosleep(&treq, NULL);
 //				asm volatile("rep; nop" ::: "memory");
 			sdata = rdata+1;
