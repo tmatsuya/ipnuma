@@ -104,7 +104,8 @@ int main(int argc,char **argv)
 		while (rdata < 20000) {
 			rdata2 = rdata;
 			*(int *)(mmapped + 0x37760) = sdata;
-			while (rdata == rdata2);
+			while (rdata == rdata2)
+				__asm__ volatile("invd");
 			sdata = rdata+1;
 		
 		}
@@ -116,7 +117,8 @@ int main(int argc,char **argv)
 		while (1) {
 			rdata2 = rdata;
 			*(int *)(mmapped + 0x37760) = sdata;
-			while (rdata == rdata2);
+			while (rdata == rdata2)
+				__asm__ volatile("invd");
 			sdata = rdata+1;
 		}
 	}
