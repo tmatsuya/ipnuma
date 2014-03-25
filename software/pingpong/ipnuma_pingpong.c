@@ -1,5 +1,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/ioctl.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -64,7 +65,7 @@ int main(int argc,char **argv)
 {
 	unsigned char *mmapped;
 	int rdata = -1, rdata2, sdata = 0;
-	int i, j, fd;
+	int fd;
 	unsigned int st,len=0x40000,poff;
 	struct timespec treq;
 
@@ -109,6 +110,7 @@ int main(int argc,char **argv)
 		while (rdata < 20000) {
 			rdata2 = rdata;
 			*(int *)(mmapped + 0x37760) = sdata;
+			nanosleep(&treq, NULL);
 			while (rdata == rdata2)
 //				usleep(1);
 				nanosleep(&treq, NULL);
@@ -124,6 +126,7 @@ int main(int argc,char **argv)
 		while (1) {
 			rdata2 = rdata;
 			*(int *)(mmapped + 0x37760) = sdata;
+			nanosleep(&treq, NULL);
 			while (rdata == rdata2)
 //				usleep(1);
 				nanosleep(&treq, NULL);
@@ -134,4 +137,5 @@ int main(int argc,char **argv)
 	munmap(mmapped,len);
 
 	close(fd);
+	return (0);
 }
