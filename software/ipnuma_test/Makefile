@@ -2,7 +2,7 @@ SHELL = /bin/sh
 
 OBJS1 = ipnuma_client.o
 OBJS2 = ipnuma_server.o
-CFLAG = -Wall -g
+CFLAGS = -Wall -g
 CC = gcc
 INCLUDE =
 LIBS =
