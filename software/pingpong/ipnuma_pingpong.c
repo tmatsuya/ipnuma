@@ -24,19 +24,12 @@ unsigned char if_ipv4[4], if_mac[6];
 
 static inline void rep_nop(void)
 {
-	asm volatile("rep; nop" ::: "memory");
+//	asm volatile("rep; nop" ::: "memory");
+	asm volatile("rep; nop");
 }
 
 static inline void cpu_relax(void)
 {
-	rep_nop();
-	rep_nop();
-	rep_nop();
-	rep_nop();
-	rep_nop();
-	rep_nop();
-	rep_nop();
-	rep_nop();
 	rep_nop();
 }
 
@@ -119,11 +112,11 @@ int main(int argc,char **argv)
 	if ( !strcmp( argv[1], "s") ) {
 		while (rdata < 0);
 		start(&tw);
-		while (rdata < 200000) {
+		while (rdata < 20000) {
 			rdata2 = rdata;
 			*(int *)(mmapped + 0x37760) = sdata;
 			while (rdata == rdata2)
-				for(j=1;j<100;++j);
+				cpu_relax();
 			sdata = rdata+1;
 		
 		}
@@ -136,7 +129,7 @@ int main(int argc,char **argv)
 			rdata2 = rdata;
 			*(int *)(mmapped + 0x37760) = sdata;
 			while (rdata == rdata2)
-				for(j=1;j<100;++j);
+				cpu_relax();
 			sdata = rdata+1;
 		}
 	}
