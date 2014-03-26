@@ -110,12 +110,13 @@ int main(int argc,char **argv)
 		while (rdata < 20000) {
 			rdata2 = rdata;
 			*(int *)(mmapped + 0x37760) = sdata;
-			nanosleep(&treq, NULL);
-			while (rdata == rdata2)
+			do {
+				asm volatile ("clflush (%0)" :: "r"(&rdata));
 //				usleep(1);
-				nanosleep(&treq, NULL);
+//				nanosleep(&treq, NULL);
 //				clock_nanosleep(CLOCK_REALTIME, 0, &treq, NULL);
 //				asm volatile("rep; nop" ::: "memory");
+			} while (rdata == rdata2);
 			sdata = rdata+1;
 		
 		}
@@ -127,12 +128,13 @@ int main(int argc,char **argv)
 		while (1) {
 			rdata2 = rdata;
 			*(int *)(mmapped + 0x37760) = sdata;
-			nanosleep(&treq, NULL);
-			while (rdata == rdata2)
+			do {
+				asm volatile ("clflush (%0)" :: "r"(&rdata));
 //				usleep(1);
-				nanosleep(&treq, NULL);
+//				nanosleep(&treq, NULL);
 //				clock_nanosleep(CLOCK_REALTIME, 0, &treq, NULL);
 //				asm volatile("rep; nop" ::: "memory");
+			} while (rdata == rdata2);
 			sdata = rdata+1;
 		}
 	}
