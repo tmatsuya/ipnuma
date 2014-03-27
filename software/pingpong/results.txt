@@ -1,0 +1,27 @@
+2014/3/27 <BSD socket 10万往復 with logitec switch>
+
+[tmatsuya@jgn-tv3 pingpong]$ ./socket_pingpong 203.178.143.243
+12.8658461571(sec)
+100000,200000,199999
+
+128.65 us
+7,773 Hz
+
+--------------------------------------------------------
+2014/3/27 <IP NUMA 10万往復 with logitec switch>
+
+[tmatsuya@jgn-tv2 pingpong]$ sudo ./ipnuma_pingpong s
+physical address=0007DB65CDB8
+if_ipv4=192.168.1.1
+if_mac=00:37:76:10:00:01
+dest_ipv4=192.168.1.2
+dest_mac=00:37:76:10:00:02
+mem0paddr=0007E43AF2B8
+baraddr=0000EC000000
+mmap: start EC000000 len:00040000 Total=262MB
+local physical address=0007DB65CDB8
+remote physical address?0007E514D888
+1.2308170795(sec)
+
+12.308 us
+81,247 Hz
