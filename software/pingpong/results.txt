@@ -8,7 +8,7 @@
 7,773 Hz
 
 --------------------------------------------------------
-2014/3/27 <IP NUMA 10万往復 with logitec switch>
+2014/3/27 <IP NUMA 10万往復(clflush) with logitec switch>
 
 [tmatsuya@jgn-tv2 pingpong]$ sudo ./ipnuma_pingpong s
 physical address=0007DB65CDB8
@@ -23,5 +23,42 @@ local physical address=0007DB65CDB8
 remote physical address?0007E514D888
 1.2308170795(sec)
 
-12.308 us
-81,247 Hz
+12.31 us
+81,235 Hz
+--------------------------------------------------------
+2014/3/30 <IP NUMA 10万往復(rep; nop) with logitec switch>
+
+[tmatsuya@jgn-tv2 pingpong]$ sudo ./ipnuma_pingpong s
+physical address=0007D7F50CD8
+if_ipv4=192.168.1.1
+if_mac=00:37:76:10:00:01
+dest_ipv4=192.168.1.2
+dest_mac=00:37:76:10:00:02
+mem0paddr=0007D7011CC8
+baraddr=0000EC000000
+mmap: start EC000000 len:00040000 Total=262MB
+local physical address=0007D7F50CD8
+remote physical address?0000D723AB18
+99.9809560776(sec)
+
+999.81 us
+1,000 Hz
+
+--------------------------------------------------------
+2014/3/30 <IP NUMA 10万往復(nanosleep(1)) with logitec switch>
+
+[tmatsuya@jgn-tv2 pingpong]$ sudo ./ipnuma_pingpong s
+physical address=0007DABDE4A8
+if_ipv4=192.168.1.1
+if_mac=00:37:76:10:00:01
+dest_ipv4=192.168.1.2
+dest_mac=00:37:76:10:00:02
+mem0paddr=0007D576A518
+baraddr=0000EC000000
+mmap: start EC000000 len:00040000 Total=262MB
+local physical address=0007DABDE4A8
+remote physical address?0007D94DCC18
+5.5698788166(sec)
+
+55.70 us
+17,953 Hz
