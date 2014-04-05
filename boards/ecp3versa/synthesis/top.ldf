@@ -37,6 +37,9 @@
         <Source name="../rtl/ipexpress/ecp3/afifo9/afifo9.ipx" type="IPX_Module" type_short="IPX">
             <Options/>
         </Source>
+        <Source name="../rtl/ipexpress/ecp3/biosrom/biosrom.ipx" type="IPX_Module" type_short="IPX">
+            <Options/>
+        </Source>
         <Source name="../../../cores/gmii2fifo9/rtl/gmii2fifo9.v" type="Verilog" type_short="Verilog">
             <Options/>
         </Source>

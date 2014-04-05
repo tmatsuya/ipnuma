@@ -14,12 +14,21 @@ module ipnuma (
 	input rx_st,
 	input rx_end,
 	input [15:0] rx_data,
+	input rx_malf,
 	// Transmit
 	output tx_req,
 	input tx_rdy,
 	output tx_st,
 	output tx_end,
 	output [15:0] tx_data,
+	input [8:0] tx_ca_ph,
+	input [12:0] tx_ca_pd,
+	input [8:0] tx_ca_nph,
+	input [12:0] tx_ca_npd,
+	input [8:0] tx_ca_cplh,
+	input [12:0] tx_ca_cpld,
+	input tx_ca_p_recheck,
+	input tx_ca_cpl_recheck,
 	// Receive credits
 	output [7:0] pd_num,
 	output ph_cr,
@@ -155,12 +164,21 @@ pcie_tlp inst_pcie_tlp (
 	.rx_st(rx_st),
 	.rx_end(rx_end),
 	.rx_data(rx_data),
+	.rx_malf(rx_malf),
 	// Transmit
 	.tx_req(tx_req),
 	.tx_rdy(tx_rdy),
 	.tx_st(tx_st),
 	.tx_end(tx_end),
 	.tx_data(tx_data),
+	.tx_ca_ph(tx_ca_ph),
+	.tx_ca_pd(tx_ca_pd),
+	.tx_ca_nph(tx_ca_nph),
+	.tx_ca_npd(tx_ca_npd),
+	.tx_ca_cplh(tx_ca_cplh),
+	.tx_ca_cpld(tx_ca_cpld),
+	.tx_ca_p_recheck(tx_ca_p_recheck),
+	.tx_ca_cpl_recheck(tx_ca_cpl_recheck),
 	//Receive credits
 	.pd_num(pd_num),
 	.ph_cr(ph_cr),
@@ -418,8 +436,24 @@ ram_dq ram_dq_inst1 (
 	.Q(slv_dat1_o)
 );
 
+wire [15:0] rom_dat_o;
+// BIOS ROM
+`ifdef ENABLE_EXPROM
+biosrom biosrom_inst (
+	.Address(slv_adr_i[10:1]),
+	.OutClock(pcie_clk),
+	.OutClockEn(slv_ce_i & (slv_bar_i[6])),
+	.Reset(sys_rst),
+	.Q({rom_dat_o[7:0],rom_dat_o[15:8]})
+);
+`endif
 
+
+`ifdef ENABLE_EXPROM
+assign slv_dat_o = ( {16{slv_bar_i[0]}} & slv_dat0_o ) | ( {16{slv_bar_i[2]}} & slv_dat1_o ) | ( {16{slv_bar_i[6]}} & rom_dat_o );
+`else
 assign slv_dat_o = ( {16{slv_bar_i[0]}} & slv_dat0_o ) | ( {16{slv_bar_i[2]}} & slv_dat1_o );
+`endif
 assign segled = segledr;
 
 endmodule

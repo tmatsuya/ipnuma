@@ -1,3 +1,6 @@
+//
+//`define ENABLE_EXPROM
+
 `default_nettype none
 module pcie_tlp (
 	// System
@@ -12,12 +15,21 @@ module pcie_tlp (
 	input rx_st,
 	input rx_end,
 	input [15:0] rx_data,
+	input rx_malf,
 	// Transmit
 	output reg tx_req = 1'b0,
 	input tx_rdy,
 	output reg tx_st = 1'b0,
 	output tx_end,
 	output reg [15:0] tx_data,
+	input [8:0] tx_ca_ph,
+	input [12:0] tx_ca_pd,
+	input [8:0] tx_ca_nph,
+	input [12:0] tx_ca_npd,
+	input [8:0] tx_ca_cplh,
+	input [12:0] tx_ca_cpld,
+	input tx_ca_p_recheck,
+	input tx_ca_cpl_recheck,
 	// Receive credits
 	output reg [7:0] pd_num = 8'h0,
 	output reg ph_cr = 1'b0,
@@ -123,7 +135,9 @@ always @(posedge pcie_clk) begin
 		if ( rx_end == 1'b1 ) begin
 			case ( rx_comm )
 				TLP_MR, TLP_MRdLk: begin
+`ifndef ENABLE_EXPROM
 					if ( rx_bar_hit[6:0] != 7'b0000000 ) begin
+`endif
 						if ( rx_fmt[1] == 1'b0 ) begin
 							nph_cr  <= 1'b1;
 						end else begin
@@ -131,7 +145,9 @@ always @(posedge pcie_clk) begin
 							pd_cr <= rx_fmt[1];
 							pd_num <= rx_length[1:0] == 2'b00 ? rx_length[9:2] : (rx_length[9:2] + 8'h1);
 						end
+`ifndef ENABLE_EXPROM
 					end
+`endif
 				end
 				TLP_IO, TLP_Cfg0, TLP_Cfg1: begin
 					nph_cr <= 1'b1;
@@ -429,7 +445,11 @@ always @(posedge pcie_clk) begin
 				if ( rx_tlph_valid == 1'b1 ) begin
 					case ( rx_comm )
 						TLP_MR: begin
+`ifdef ENABLE_EXPROM
+							slv_bar_i <= rx_bar_hit == 7'h0 ? 7'b1000000 : rx_bar_hit;
+`else
 							slv_bar_i <= rx_bar_hit;
+`endif
 							if ( rx_fmt[1] == 1'b0 ) begin
 								slv_status <= SLV_MREADH;
 							end else begin
