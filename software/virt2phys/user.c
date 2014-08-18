@@ -15,23 +15,23 @@
 
 int main(int argc,char **argv)
 {
-	unsigned long pa;
+	unsigned long long pa;
 	int i, fd;
 	if ((fd=open(MEM_DEVICE,O_RDONLY)) <0) {
 		fprintf(stderr,"cannot open %s\n",MEM_DEVICE);
 		return 1;
 	}
-	pa = (unsigned long)&i;
+	pa = (unsigned long long)&i;
 	if ( ioctl( fd, 1, &pa) < 0 ) {
 		fprintf(stderr,"cannot IOCTL\n");
 		return 1;
 	}
-	printf("physical address=%08X\n", pa);
+	printf("physical address=%012llX\n", pa);
 	close(fd);
 
 	i = 123;
 	while (1) {
-		printf ("i=%d, &i=%p, Physical Address=%012lx\n", i, &i, pa);
+		printf ("i=%d, &i=%p, Physical Address=%012llx\n", i, &i, pa);
 		usleep(10000);
 	}
 }

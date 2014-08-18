@@ -26,6 +26,8 @@
 
 #include <linux/if_packet.h>
 
+#include <asm/pgtable_types.h>
+
 //#define	DEBUG
 
 #ifndef	DRV_NAME
@@ -50,7 +52,7 @@ static int bad_address(void *p)
  * map any virtual address of the current process to its
  * physical one.
  */
-static unsigned long any_v2p(unsigned long vaddr)
+static unsigned long long any_v2p(unsigned long long vaddr)
 {
 	pgd_t *pgd = pgd_offset(current->mm, vaddr);
 	pud_t *pud;
@@ -59,7 +61,7 @@ static unsigned long any_v2p(unsigned long vaddr)
 
 	/* to lock the page */
 	struct page *pg;
-	unsigned long paddr;
+	unsigned long long paddr;
 
 	if (bad_address(pgd)) {
 		printk(KERN_ALERT "[nskk] Alert: bad address of pgd %p\n", pgd);
@@ -101,7 +103,12 @@ static unsigned long any_v2p(unsigned long vaddr)
 	}
 
 	pg = pte_page(*pte);
+#if 1
 	paddr = (pte_val(*pte) & PHYSICAL_PAGE_MASK) | (vaddr&(PAGE_SIZE-1));
+#else
+	pte->pte |= _PAGE_RW; // | _PAGE_USER;
+	paddr = pte_val(*pte);
+#endif
 
 out:
 	return paddr;
@@ -169,10 +176,10 @@ static unsigned int virt2phys_poll( struct file* filp, poll_table* wait )
 static long virt2phys_ioctl(struct file *filp,
 			unsigned int cmd, unsigned long arg)
 {
-	unsigned long *ptr, ret;
+	unsigned long long *ptr, ret;
 	printk("%s\n", __func__);
 	if (cmd == 1) {
-		ptr = (unsigned long *)arg;
+		ptr = (unsigned long long *)arg;
 printk( "VA=%p\n", *ptr);
 		ret = any_v2p(*ptr);
 printk( "PA=%p\n", ret);
