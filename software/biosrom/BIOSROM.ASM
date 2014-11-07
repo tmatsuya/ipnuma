@@ -915,12 +915,12 @@ clearCursor PROC NEAR
 
 clearCursor ENDP
 
-TitleMsg DB 'Magukara Utility Version 0.00',13,10
-	DB 'Copyright 2012-2014, {macchan,sora}@sfc.wide.ad.jp',13,10,13,10
+TitleMsg DB 'IP-NUMA BIOS Version 0.00',13,10
+	DB 'Copyright 2011-2014, macchan@sfc.wide.ad.jp',13,10,13,10
 	DB 'Press any key to continue.',13,10,13,10
 	DB '(ALT-Z is start up the menu)',13,10,0
 
-MenuTitleMsg DB 'Magukara Utility',0
+MenuTitleMsg DB 'IP-NUMA Utility',0
 MenuKeyMsg	DB 18h,19h,':Select Items  Enter:Change Item',0
 
 QuitMsg	DB 'Save Parameters ?(Y/N)',0
