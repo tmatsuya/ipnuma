@@ -1046,7 +1046,7 @@ module PIO_RX_ENGINE  #(
     end // pio_rx_sm_128
   endgenerate
 
-assign    mem64_bar_hit_n = 1'b1; // ~(m_axis_rx_tuser[4]);
+assign    mem64_bar_hit_n = ~(m_axis_rx_tuser[4]);
 assign    io_bar_hit_n = 1'b1;
 assign    mem32_bar_hit_n = ~(m_axis_rx_tuser[2]);
 assign    erom_bar_hit_n  = ~(m_axis_rx_tuser[8]);

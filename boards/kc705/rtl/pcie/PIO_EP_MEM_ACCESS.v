@@ -303,7 +303,20 @@ always @(posedge clk) begin
 end
 
 //assign rd_data = read_data;
-assign rd_data = rd_addr[13:12] == 2'b11 ? bios_data : read_data;
+function [31:0] dec_data;
+	input [1:0] sel;
+	input [31:0] bar0;
+	input [31:0] bar2;
+	input [31:0] bios;
+	case (sel)
+		2'b00: dec_data = 32'h0;
+		2'b01: dec_data = bar0;
+		2'b10: dec_data = bar2;
+		2'b11: dec_data = bios;
+	endcase
+endfunction
+//assign rd_data = rd_addr[13:12] == 2'b11 ? bios_data : read_data;
+assign rd_data = dec_data(.sel(rd_addr[13:12]), .bar0(read_data), .bar2(32'h0), .bios(bios_data));
 assign wr_busy = 1'b0;
 
 endmodule
