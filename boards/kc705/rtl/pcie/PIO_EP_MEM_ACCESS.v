@@ -24,15 +24,7 @@ module PIO_EP_MEM_ACCESS  #(
 	output reg [31:0] if_v4addr = {8'd10, 8'd0, 8'd21, 8'd199},
 	output reg [47:0] if_macaddr = 48'h003776_000001,
 	output reg [31:0] dest_v4addr = {8'd10, 8'd0, 8'd21, 8'd255},
-	output reg [47:0] dest_macaddr = 48'hffffff_ffffff,
-
-	// XGMII
-	input xgmii_clk,
-	output [63:0] xgmii_0_txd,
-	output [ 7:0] xgmii_0_txc,
-	input  [63:0] xgmii_0_rxd,
-	input  [ 7:0] xgmii_0_rxc
-
+	output reg [47:0] dest_macaddr = 48'hffffff_ffffff
 );
 
 wire [31:0] bios_data;
@@ -144,8 +136,5 @@ endfunction
 //assign rd_data = rd_addr[13:12] == 2'b11 ? bios_data : read_data;
 assign rd_data = dec_data(rd_addr[13:12], read_data, 32'h0, bios_data);
 assign wr_busy = 1'b0;
-
-assign xgmii_0_txd = 64'h07_07_07_07_07_07_07_07;
-assign xgmii_0_txc = 8'hff;
 
 endmodule

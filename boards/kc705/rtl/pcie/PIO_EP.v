@@ -162,15 +162,7 @@ module PIO_EP #(
 	.if_v4addr(if_v4addr),
 	.if_macaddr(if_macaddr),
 	.dest_v4addr(dest_v4addr),
-	.dest_macaddr(dest_macaddr),
-
-	// XGMII
-	.xgmii_clk(xgmii_clk),
-	.xgmii_0_txd(xgmii_0_txd),
-	.xgmii_0_txc(xgmii_0_txc),
-	.xgmii_0_rxd(xgmii_0_rxd),
-	.xgmii_0_rxc(xgmii_0_rxc)
-      
+	.dest_macaddr(dest_macaddr)
       );
 
     //
@@ -265,8 +257,43 @@ module PIO_EP #(
 
     );
 
-  assign req_compl  = req_compl_int;
-  assign compl_done = compl_done_int;
+    //
+    //
+    //
+
+PIO_RX_SNOOP  #(
+       .TCQ( TCQ )
+       ) PIO_RX_SNOOP_inst (
+      
+    .clk(clk),               // I
+    .rst_n(rst_n),           // I
+      
+    // AXIS RX
+    .m_axis_rx_tdata( m_axis_rx_tdata ),    // I
+    .m_axis_rx_tkeep( m_axis_rx_tkeep ),    // I
+    .m_axis_rx_tlast( m_axis_rx_tlast ),    // I
+    .m_axis_rx_tvalid( m_axis_rx_tvalid ),  // I
+    .m_axis_rx_tready( m_axis_rx_tready ),  // O
+    .m_axis_rx_tuser ( m_axis_rx_tuser ),   // I
+
+    .cfg_completer_id(cfg_completer_id),           // I [15:0]
+
+	// PCIe user registers
+	.if_v4addr(if_v4addr),
+	.if_macaddr(if_macaddr),
+	.dest_v4addr(dest_v4addr),
+	.dest_macaddr(dest_macaddr),
+
+	// XGMII
+        .xgmii_clk(xgmii_clk),
+        .xgmii_0_txd(xgmii_0_txd),
+        .xgmii_0_txc(xgmii_0_txc),
+        .xgmii_0_rxd(xgmii_0_rxd),
+        .xgmii_0_rxc(xgmii_0_rxc)
+);
+
+assign req_compl  = req_compl_int;
+assign compl_done = compl_done_int;
 
 endmodule // PIO_EP
 
