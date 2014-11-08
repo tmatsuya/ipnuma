@@ -97,35 +97,18 @@ module PIO #(
   input [15:0]                  cfg_completer_id,
 
 
-	// PCIe user isters
-	output tx0_enable,
-	output tx0_ipv6,
-	output tx0_fullroute,
-	output tx0_req_arp,
-	output [15:0] tx0_frame_len,
-	output [31:0] tx0_inter_frame_gap,
-	output [31:0] tx0_ipv4_srcip,
-	output [47:0] tx0_src_mac,
-	output [31:0] tx0_ipv4_gwip,
-	input [47:0] tx0_dst_mac,
-	output [31:0] tx0_ipv4_dstip,
-	output [127:0] tx0_ipv6_srcip,
-	output [127:0] tx0_ipv6_dstip,
-	input [31:0] tx0_pps,
-	input [31:0] tx0_throughput,
-	input [31:0] tx0_ipv4_ip,
-	input [31:0] rx1_pps,
-	input [31:0] rx1_throughput,
-	input [23:0] rx1_latency,
-	input [31:0] rx1_ipv4_ip,
-	input [31:0] rx2_pps,
-	input [31:0] rx2_throughput,
-	input [23:0] rx2_latency,
-	input [31:0] rx2_ipv4_ip,
-	input [31:0] rx3_pps,
-	input [31:0] rx3_throughput,
-	input [23:0] rx3_latency,
-	input [31:0] rx3_ipv4_ip
+	// PCIe user registers
+	output [31:0] if_v4addr,
+	output [47:0] if_macaddr,
+	output [31:0] dest_v4addr,
+	output [47:0] dest_macaddr,
+
+	// XGMII
+	input xgmii_clk,
+	output [63:0] xgmii_0_txd,
+	output [ 7:0] xgmii_0_txc,
+	input  [63:0] xgmii_0_rxd,
+	input  [ 7:0] xgmii_0_rxc
 
 ); // synthesis syn_hier = "hard"
 
@@ -176,34 +159,17 @@ module PIO #(
     .cfg_completer_id ( cfg_completer_id ),        // I [15:0]
 
 	// PCIe user registers
-	.tx0_enable(tx0_enable),
-	.tx0_ipv6(tx0_ipv6),
-	.tx0_fullroute(tx0_fullroute),
-	.tx0_req_arp(tx0_req_arp),
-	.tx0_frame_len(tx0_frame_len),
-	.tx0_inter_frame_gap(tx0_inter_frame_gap),
-	.tx0_ipv4_srcip(tx0_ipv4_srcip),
-	.tx0_src_mac(tx0_src_mac),
-	.tx0_ipv4_gwip(tx0_ipv4_gwip),
-	.tx0_dst_mac(tx0_dst_mac),
-	.tx0_ipv4_dstip(tx0_ipv4_dstip),
-	.tx0_ipv6_srcip(tx0_ipv6_srcip),
-	.tx0_ipv6_dstip(tx0_ipv6_dstip),
-	.tx0_pps(tx0_pps),
-	.tx0_throughput(tx0_throughput),
-	.tx0_ipv4_ip(tx0_ipv4_ip),
-	.rx1_pps(rx1_pps),
-	.rx1_throughput(rx1_throughput),
-	.rx1_latency(rx1_latency),
-	.rx1_ipv4_ip(rx1_ipv4_ip),
-	.rx2_pps(rx2_pps),
-	.rx2_throughput(rx2_throughput),
-	.rx2_latency(rx2_latency),
-	.rx2_ipv4_ip(rx2_ipv4_ip),
-	.rx3_pps(rx3_pps),
-	.rx3_throughput(rx3_throughput),
-	.rx3_latency(rx3_latency),
-	.rx3_ipv4_ip(rx3_ipv4_ip)
+	.if_v4addr(if_v4addr),
+	.if_macaddr(if_macaddr),
+	.dest_v4addr(dest_v4addr),
+	.dest_macaddr(dest_macaddr),
+
+	// XGMII
+	.xgmii_clk(xgmii_clk),
+	.xgmii_0_txd(xgmii0_txd),
+	.xgmii_0_txc(xgmii0_txc),
+	.xgmii_0_rxd(xgmii0_rxd),
+	.xgmii_0_rxc(xgmii0_rxc)
   );
 
 
