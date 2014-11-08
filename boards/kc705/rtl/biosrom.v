@@ -8,7 +8,11 @@ module biosrom (
 reg [31:0] rom [0:511];
 
 initial begin
+`ifdef SIMULATION
+	$readmemh("../../../software/biosrom/biosrom.d32", rom, 0, 511);
+`else
 	$readmemh("/home/tmatsuya/ipnuma/software/biosrom/biosrom.d32", rom, 0, 511);
+`endif
 end
 
 always @(posedge clk) begin

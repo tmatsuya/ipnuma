@@ -59,9 +59,9 @@ wire [13:0] segled;
 reg btn;
 
 PIO PIO_insta (
-	.user_clk(user_clk),
-	.user_reset(user_reset),
-	.user_lnk_up(user_lnk_up),
+	.user_clk(clk250),
+	.user_reset(sys_rst),
+	.user_lnk_up(1'b1),
 
 	// AXIS
 	.s_axis_tx_tready(s_axis_tx_tready),
@@ -90,7 +90,7 @@ PIO PIO_insta (
 	.dest_macaddr(dest_macaddr),
 
 	// XGMII
-	.xgmii_clk(xgmii_clk),
+	.xgmii_clk(clk156),
 	.xgmii_0_txd(xgmii_0_txd),
 	.xgmii_0_txc(xgmii_0_txc),
 	.xgmii_0_rxd(xgmii_0_rxd),
@@ -104,24 +104,26 @@ begin
 end
 endtask
 
+reg [103:0] tlp_rom [0:4095];
+reg [11:0] phy_rom [0:4095];
+reg [11:0] tlp_counter = 0, phy_counter = 0;
+wire [103:0] tlp_cur;
+wire [23:0] phy_cur;
+assign tlp_cur = tlp_rom[ tlp_counter ];
+assign phy_cur = phy_rom[ phy_counter ];
+
 always @(posedge clk156) begin
 	if (xgmii_0_txc != 8'hff)
 		$display("%x", xgmii_0_txd);
 end
 
-reg [23:0] tlp_rom [0:4095];
-reg [11:0] phy_rom [0:4095];
-reg [11:0] tlp_counter, phy_counter;
-wire [23:0] tlp_cur;
-wire [23:0] phy_cur;
-assign tlp_cur = tlp_rom[ tlp_counter ];
-assign phy_cur = phy_rom[ phy_counter ];
-
 always @(posedge clk250) begin
-//	rx_st   <= tlp_cur[20];
-//	rx_end  <= tlp_cur[16];
-//	rx_data <= tlp_cur[15:0];
-//	tlp_counter <= tlp_counter + 1;
+	m_axis_rx_tdata <= tlp_cur[63:0];
+	m_axis_rx_tkeep <= tlp_cur[71:64];
+	m_axis_rx_tuser <= {6'b000000, tlp_cur[87:72]};
+	m_axis_rx_tlast <= tlp_cur[88];
+	m_axis_rx_tvalid <= tlp_cur[92];
+	tlp_counter <= tlp_counter + 1;
 end
 
 always @(posedge clk156) begin
