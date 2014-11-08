@@ -3,32 +3,54 @@
 //`include "../rtl/setup.v"
 module tb_system();
 
-/* 125MHz system clock */
-reg         sys_rst;
-reg         sys_clk;	// clk156
-initial sys_clk = 1'b0;
-always #8 sys_clk = ~sys_clk;
+/* 125, 156.25 and 250MHz clock */
+reg clk156, clk125, clk250;
+initial begin
+	clk125 = 0;
+	clk156 = 0;
+	clk250 = 0;
+end
+always #10 clk125 = ~clk125;
+always #8  clk156 = ~clk156;
+always #5  clk250 = ~clk250;
+reg sys_rst;
 
-// XGMII interfaces for 4 MACs
+// regs
+reg user_clk;
+reg user_reset;
+reg user_lnk_up;
+
+reg s_axis_tx_tready;
+wire [63:0] s_axis_tx_tdata;
+wire [7:0] s_axis_tx_tkeep;
+wire s_axis_tx_tlast;
+wire s_axis_tx_tvalid;
+wire tx_src_dsc;
+
+reg [63:0] m_axis_rx_tdata;
+reg [7:0] m_axis_rx_tkeep;
+reg m_axis_rx_tlast;
+reg m_axis_rx_tvalid;
+wire m_axis_rx_tready;
+reg [21:0]  m_axis_rx_tuser;
+
+reg cfg_to_turnoff;
+wire cfg_turnoff_ok;
+
+reg[15:0] cfg_completer_id;
+
+// PCIe user registers
+wire [31:0] if_v4addr;
+wire [47:0] if_macaddr;
+wire [31:0] dest_v4addr;
+wire [47:0] dest_macaddr;
+
+// XGMII
+reg xgmii_clk;
 wire [63:0] xgmii_0_txd;
-wire [7:0]  xgmii_0_txc;
-reg  [63:0] xgmii_0_rxd;
-reg  [7:0]  xgmii_0_rxc;
-
-wire [63:0] xgmii_1_txd;
-wire [7:0]  xgmii_1_txc;
-reg  [63:0] xgmii_1_rxd;
-reg  [7:0]  xgmii_1_rxc;
-
-wire [63:0] xgmii_2_txd;
-wire [7:0]  xgmii_2_txc;
-reg  [63:0] xgmii_2_rxd;
-reg  [7:0]  xgmii_2_rxc;
-
-wire [63:0] xgmii_3_txd;
-wire [7:0]  xgmii_3_txc;
-wire [63:0] xgmii_3_rxd;
-wire [7:0]  xgmii_3_rxc;
+wire [ 7:0] xgmii_0_txc;
+reg [63:0] xgmii_0_rxd;
+reg [ 7:0] xgmii_0_rxc;
 
 // LED and Switches
 reg [7:0] dipsw;
@@ -36,48 +58,53 @@ wire [7:0] led;
 wire [13:0] segled;
 reg btn;
 
-measure measure_inst (
-         .sys_rst   (sys_rst),
-         .sys_clk   (sys_clk),
+PIO PIO_insta (
+	.user_clk(user_clk),
+	.user_reset(user_reset),
+	.user_lnk_up(user_lnk_up),
 
-  // XGMII interfaces for 4 MACs
+	// AXIS
+	.s_axis_tx_tready(s_axis_tx_tready),
+	.s_axis_tx_tdata(s_axis_tx_tdata),
+	.s_axis_tx_tkeep(s_axis_tx_tkeep),
+	.s_axis_tx_tlast(s_axis_tx_tlast),
+	.s_axis_tx_tvalid(s_axis_tx_tvalid),
+	.tx_src_dsc(tx_src_dsc),
+
+	.m_axis_rx_tdata(m_axis_rx_tdata),
+	.m_axis_rx_tkeep(m_axis_rx_tkeep),
+	.m_axis_rx_tlast(m_axis_rx_tlast),
+	.m_axis_rx_tvalid(m_axis_rx_tvalid),
+	.m_axis_rx_tready(m_axis_rx_tready),
+	.m_axis_rx_tuser(m_axis_rx_tuser),
+
+	.cfg_to_turnoff(cfg_to_turnoff),
+	.cfg_turnoff_ok(cfg_turnoff_ok),
+
+	.cfg_completer_id(cfg_completer_id),
+
+	// PCIe user registers
+	.if_v4addr(if_v4addr),
+	.if_macaddr(if_macaddr),
+	.dest_v4addr(dest_v4addr),
+	.dest_macaddr(dest_macaddr),
+
+	// XGMII
+	.xgmii_clk(xgmii_clk),
 	.xgmii_0_txd(xgmii_0_txd),
 	.xgmii_0_txc(xgmii_0_txc),
 	.xgmii_0_rxd(xgmii_0_rxd),
-	.xgmii_0_rxc(xgmii_0_rxc),
-
-	.xgmii_1_txd(xgmii_1_txd),
-	.xgmii_1_txc(xgmii_1_txc),
-	.xgmii_1_rxd(xgmii_1_rxd),
-	.xgmii_1_rxc(xgmii_1_rxc),
-
-  // PCI user register
-	.tx0_enable(1'b1),
-	.tx0_ipv6(1'b0),
-	.tx0_fullroute(1'b0),
-	.tx0_req_arp(1'b0),
-	.tx0_frame_len(16'd68),
-	.tx0_inter_frame_gap(32'd1),
-	.tx0_ipv4_srcip({8'd192, 8'd168, 8'd1, 8'd101}),
-	.tx0_src_mac(48'h001122_334466),
-	.tx0_ipv4_gwip({8'd192, 8'd168, 8'd1, 8'd1}),
-	.tx0_ipv6_srcip(),
-	.tx0_ipv6_dstip(),
-//	.tx0_dst_mac(48'h001122_334455),
-	.tx0_ipv4_dstip({8'd192, 8'd168, 8'd2, 8'd102}),
-	.tx0_pps(),
-	.tx0_throughput(),
-	.tx0_ipv4_ip()
+	.xgmii_0_rxc(xgmii_0_rxc)
 );
 
 task waitclock;
 begin
-	@(posedge sys_clk);
+	@(posedge clk250);
 	#1;
 end
 endtask
 
-always @(posedge sys_clk) begin
+always @(posedge clk156) begin
 	if (xgmii_0_txc != 8'hff)
 		$display("%x", xgmii_0_txd);
 end
@@ -90,14 +117,14 @@ wire [23:0] phy_cur;
 assign tlp_cur = tlp_rom[ tlp_counter ];
 assign phy_cur = phy_rom[ phy_counter ];
 
-always @(posedge sys_clk) begin
+always @(posedge clk250) begin
 //	rx_st   <= tlp_cur[20];
 //	rx_end  <= tlp_cur[16];
 //	rx_data <= tlp_cur[15:0];
 //	tlp_counter <= tlp_counter + 1;
 end
 
-always @(posedge sys_clk) begin
+always @(posedge clk156) begin
 //	gmii_rx_dv  <= phy_cur[8];
 //	gmii_rxd <= phy_cur[7:0];
 //	phy_counter <= phy_counter + 1;

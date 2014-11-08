@@ -1,7 +1,11 @@
 SOURCES=$(wildcard *.v) \
-	$(wildcard ../../../cores/crc32/rtl/*.v) \
-	$(wildcard ../rtl/measure_core.v) \
-	$(wildcard ../rtl/measure.v)
+	$(wildcard ../rtl/pcie/PIO.v) \
+	$(wildcard ../rtl/pcie/PIO_EP.v) \
+	$(wildcard ../rtl/pcie/PIO_TO_CTRL.v) \
+	$(wildcard ../rtl/pcie/PIO_RX_ENGINE.v) \
+	$(wildcard ../rtl/pcie/PIO_TX_ENGINE.v) \
+	$(wildcard ../rtl/pcie/PIO_EP_MEM_ACCESS.v) \
+	$(wildcard ../rtl/biosrom.v)
 
 #all: cversim
 all: tlp_data.hex phy_data.hex isim

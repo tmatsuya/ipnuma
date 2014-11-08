@@ -166,10 +166,10 @@ module PIO #(
 
 	// XGMII
 	.xgmii_clk(xgmii_clk),
-	.xgmii_0_txd(xgmii0_txd),
-	.xgmii_0_txc(xgmii0_txc),
-	.xgmii_0_rxd(xgmii0_rxd),
-	.xgmii_0_rxc(xgmii0_rxc)
+	.xgmii_0_txd(xgmii_0_txd),
+	.xgmii_0_txc(xgmii_0_txc),
+	.xgmii_0_rxd(xgmii_0_rxd),
+	.xgmii_0_rxc(xgmii_0_rxc)
   );
 
 
