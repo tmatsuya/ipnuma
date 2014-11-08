@@ -156,7 +156,8 @@ module PIO_RX_ENGINE  #(
       begin
         if(!rst_n)
           in_packet_q <= #   TCQ 1'b0;
-        else if (m_axis_rx_tvalid && m_axis_rx_tready && m_axis_rx_tlast)
+//macchan        else if (m_axis_rx_tvalid && m_axis_rx_tready && m_axis_rx_tlast)
+        else if (m_axis_rx_tvalid && m_axis_rx_tlast)
           in_packet_q <= #   TCQ 1'b0;
         else if (sop && m_axis_rx_tready)
           in_packet_q <= #   TCQ 1'b1;

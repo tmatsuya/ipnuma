@@ -20,7 +20,7 @@ reg user_clk;
 reg user_reset;
 reg user_lnk_up;
 
-reg s_axis_tx_tready;
+reg s_axis_tx_tready = 1'b1;
 wire [63:0] s_axis_tx_tdata;
 wire [7:0] s_axis_tx_tkeep;
 wire s_axis_tx_tlast;
@@ -34,10 +34,14 @@ reg m_axis_rx_tvalid;
 wire m_axis_rx_tready;
 reg [21:0]  m_axis_rx_tuser;
 
-reg cfg_to_turnoff;
+reg cfg_to_turnoff = 1'b0;
 wire cfg_turnoff_ok;
 
-reg[15:0] cfg_completer_id;
+reg [7:0] cfg_bus_number = 8'h2;
+reg [4:0] cfg_device_number = 5'h2;
+reg [2:0] cfg_function_number = 3'h0;
+wire [15:0] cfg_completer_id;
+assign cfg_completer_id = {cfg_bus_number, cfg_device_number, cfg_function_number};
 
 // PCIe user registers
 wire [31:0] if_v4addr;
