@@ -86,9 +86,9 @@ module PIO_TX_ENGINE    #(
   input [15:0]                    req_rid,
   input [7:0]                     req_tag,
   input [7:0]                     req_be,
-  input [12:0]                    req_addr,
+  input [15:0]                    req_addr,
 
-  output [10:0]                   rd_addr,
+  output [13:0]                   rd_addr,
   output reg [3:0]                rd_be,
   input  [31:0]                   rd_data,
   input [15:0]                    completer_id
@@ -121,7 +121,7 @@ localparam PIO_TX_CPLD_QW1        = 2'b11;
 
   // Present address and byte enable to memory module
 
-  assign rd_addr = req_addr[12:2];
+  assign rd_addr = req_addr[15:2];
  
   always @(posedge clk) begin
     if (!rst_n)

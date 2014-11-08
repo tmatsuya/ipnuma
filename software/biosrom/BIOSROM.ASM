@@ -42,7 +42,7 @@ ENDM
 strROMData CATSTR <'PCIBoard OptionROM'>
 strROMName CATSTR <'Option ROM Sample Program Image ( for PC/AT ROM )',0>
 pcirVendorID	= 3776h
-pcirDeviceID	= 8000h
+pcirDeviceID	= 8010h
 pcirVPD		= 0000h
 pcirClassBase	= 00h
 pcirClassSub	= 00h
@@ -98,7 +98,7 @@ waitkey:
 	MOV	AH,00
 	INT	1Ah		; get system timer count (CX=HIGH,DX=LOW)
 	SUB	DX,SI
-	CMP	DX, (18*3)	; more than 3 sec?
+	CMP	DX, (18*3*2)	; more than 3 sec?
 
 	JB	waitkey
 ;	JMP	menu
@@ -116,8 +116,8 @@ exit:
 ;
 ; remove initial code from rom size
 ;
-	MOV	AX,4C00H
-	INT	21H		; exit to DOS
+;	MOV	AX,4C00H
+;	INT	21H		; exit to DOS
 RET ; if unremove then uncomment
 	MOV	CX, OFFSET postCode+1
 	ADD	CX, 511 ;1023
@@ -136,8 +136,8 @@ calcChkSumLoop:
 
 	MOV	[SI], AL
 
-	MOV	AX,4C00H
-	INT	21H		; exit to DOS
+;	MOV	AX,4C00H
+;	INT	21H		; exit to DOS
 	RET
 
 postCode ENDP

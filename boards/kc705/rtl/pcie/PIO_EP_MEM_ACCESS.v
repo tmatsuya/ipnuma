@@ -9,12 +9,12 @@ module PIO_EP_MEM_ACCESS  #(
 	input rst_n,
 
 	// Read Access
-	input  [10:0] rd_addr,     // I [10:0]  Read Address
+	input  [13:0] rd_addr,     // I [13:0]  Read Address
 	input   [3:0] rd_be,       // I [3:0]   Read Byte Enable
 	output [31:0] rd_data,     // O [31:0]  Read Data
 
 	// Write Access
-	input  [10:0] wr_addr,     // I [10:0]  Write Address
+	input  [13:0] wr_addr,     // I [10:0]  Write Address
 	input   [7:0] wr_be,       // I [7:0]   Write Byte Enable
 	input  [31:0] wr_data,     // I [31:0]  Write Data
 	input	 wr_en,       // I	 Write Enable
@@ -55,9 +55,9 @@ module PIO_EP_MEM_ACCESS  #(
 wire [31:0] bios_data;
 biosrom biosrom_0 (
 	.clk(clk),
-//	.en(rd_addr[10:9] == 2'b11),
+//	.en(rd_addr[13:2] == 2'b11),
 	.en(1'b1),
-	.addr(rd_addr[8:0]),
+	.addr(rd_addr[11:0]),
 	.data(bios_data)
 );
 
@@ -303,7 +303,7 @@ always @(posedge clk) begin
 end
 
 //assign rd_data = read_data;
-assign rd_data = rd_addr[10:9] == 2'b11 ? bios_data : read_data;
+assign rd_data = rd_addr[13:12] == 2'b11 ? bios_data : read_data;
 assign wr_busy = 1'b0;
 
 endmodule

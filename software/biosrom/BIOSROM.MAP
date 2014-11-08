@@ -1,7 +1,7 @@
 
  Start  Stop   Length Name               Class
 
- 00000H 00748H 00749H CODE1              CODE1
+ 00000H 0073EH 0073FH CODE1              CODE1
 
 Program entry point at 0000:0003
 Warning: No stack

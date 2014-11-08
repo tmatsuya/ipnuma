@@ -96,7 +96,7 @@ module PIO_RX_ENGINE  #(
   output reg [15:0]  req_rid,                       // Memory Read Requestor ID
   output reg [7:0]   req_tag,                       // Memory Read Tag
   output reg [7:0]   req_be,                        // Memory Read Byte Enables
-  output reg [12:0]  req_addr,                      // Memory Read Address
+  output reg [15:0]  req_addr,                      // Memory Read Address
 
 
   // Memory interface used to save 1 DW data received
@@ -107,7 +107,7 @@ module PIO_RX_ENGINE  #(
   // processing written information.
 
 
-  output reg [10:0]  wr_addr,                       // Memory Write Address
+  output reg [13:0]  wr_addr,                       // Memory Write Address
   output reg [7:0]   wr_be,                         // Memory Write Byte Enable
   output reg [31:0]  wr_data,                       // Memory Write Data
   output reg         wr_en,                         // Memory Write Enable
@@ -183,10 +183,10 @@ module PIO_RX_ENGINE  #(
           req_rid      <= #TCQ 16'b0;
           req_tag      <= #TCQ 8'b0;
           req_be       <= #TCQ 8'b0;
-          req_addr     <= #TCQ 13'b0;
+          req_addr     <= #TCQ 16'b0;
 
           wr_be        <= #TCQ 8'b0;
-          wr_addr      <= #TCQ 11'b0;
+          wr_addr      <= #TCQ 14'b0;
           wr_data      <= #TCQ 32'b0;
           wr_en        <= #TCQ 1'b0;
 
@@ -396,7 +396,7 @@ module PIO_RX_ENGINE  #(
               begin
 
                 m_axis_rx_tready <= #TCQ 1'b0;
-                req_addr     <= #TCQ {region_select[1:0],m_axis_rx_tdata[10:2], 2'b00};
+                req_addr     <= #TCQ {region_select[1:0],m_axis_rx_tdata[13:2], 2'b00};
                 req_compl    <= #TCQ 1'b1;
                 req_compl_wd <= #TCQ 1'b1;
                 state        <= #TCQ PIO_RX_WAIT_STATE;
@@ -416,7 +416,7 @@ module PIO_RX_ENGINE  #(
                 wr_data      <= #TCQ m_axis_rx_tdata[63:32];
                 wr_en        <= #TCQ 1'b1;
                 m_axis_rx_tready <= #TCQ 1'b0;
-                wr_addr      <= #TCQ {region_select[1:0],m_axis_rx_tdata[10:2]};
+                wr_addr      <= #TCQ {region_select[1:0],m_axis_rx_tdata[13:2]};
                 state        <= #TCQ  PIO_RX_WAIT_STATE;
 
               end // if (m_axis_rx_tvalid)
@@ -431,7 +431,7 @@ module PIO_RX_ENGINE  #(
               if (m_axis_rx_tvalid)
               begin
 
-                req_addr     <= #TCQ {region_select[1:0],m_axis_rx_tdata[42:34], 2'b00};
+                req_addr     <= #TCQ {region_select[1:0],m_axis_rx_tdata[45:34], 2'b00};
                 req_compl    <= #TCQ 1'b1;
                 req_compl_wd <= #TCQ 1'b1;
                 m_axis_rx_tready <= #TCQ 1'b0;
@@ -450,7 +450,7 @@ module PIO_RX_ENGINE  #(
               begin
 
                 m_axis_rx_tready <= #TCQ 1'b0;
-                wr_addr        <= #TCQ {region_select[1:0],m_axis_rx_tdata[42:34]};
+                wr_addr        <= #TCQ {region_select[1:0],m_axis_rx_tdata[45:34]};
                 state          <= #TCQ  PIO_RX_MEM_WR64_DW3;
 
               end // if (m_axis_rx_tvalid)
@@ -485,7 +485,7 @@ module PIO_RX_ENGINE  #(
                 wr_data         <= #TCQ m_axis_rx_tdata[63:32];
                 wr_en           <= #TCQ 1'b1;
                 m_axis_rx_tready  <= #TCQ 1'b0;
-                wr_addr         <= #TCQ {region_select[1:0],m_axis_rx_tdata[10:2]};
+                wr_addr         <= #TCQ {region_select[1:0],m_axis_rx_tdata[13:2]};
                 req_compl       <= #TCQ 1'b1;
                 req_compl_wd    <= #TCQ 1'b0;
                 state             <= #TCQ  PIO_RX_WAIT_STATE;
@@ -584,9 +584,9 @@ module PIO_RX_ENGINE  #(
           req_rid      <= #TCQ 16'b0;
           req_tag      <= #TCQ 8'b0;
           req_be       <= #TCQ 8'b0;
-          req_addr     <= #TCQ 13'b0;
+          req_addr     <= #TCQ 16'b0;
           wr_be        <= #TCQ 8'b0;
-          wr_addr      <= #TCQ 11'b0;
+          wr_addr      <= #TCQ 14'b0;
           wr_data      <= #TCQ 32'b0;
           wr_en        <= #TCQ 1'b0;
 
@@ -751,7 +751,7 @@ module PIO_RX_ENGINE  #(
 
                         //lower qw
                         req_addr     <= #TCQ {region_select[1:0],
-                                                 m_axis_rx_tdata[74:66],2'b00};
+                                                 m_axis_rx_tdata[77:66],2'b00};
                         req_compl    <= #TCQ 1'b1;
                         req_compl_wd <= #TCQ 1'b1;
                         state        <= #TCQ PIO_RX_WAIT_STATE;
@@ -770,7 +770,7 @@ module PIO_RX_ENGINE  #(
                         //lower qw
                         wr_data      <= #TCQ m_axis_rx_tdata[127:96];
                         wr_en        <= #TCQ 1'b1;
-                        wr_addr      <= #TCQ {region_select[1:0], m_axis_rx_tdata[74:66]};
+                        wr_addr      <= #TCQ {region_select[1:0], m_axis_rx_tdata[77:66]};
                         wr_en        <= #TCQ 1'b1;
                         state        <= #TCQ PIO_RX_WAIT_STATE;
                       end // if (m_axis_rx_tdata[9:0] == 10'b1)
@@ -814,7 +814,7 @@ module PIO_RX_ENGINE  #(
                         wr_be        <= #TCQ m_axis_rx_tdata[39:32];
 
                         // lower qw
-                        wr_addr      <= #TCQ {region_select[1:0], m_axis_rx_tdata[74:66]};
+                        wr_addr      <= #TCQ {region_select[1:0], m_axis_rx_tdata[77:66]};
                         state        <= #TCQ PIO_RX_MEM_WR64_DW3;
                       end // if (m_axis_rx_tdata[9:0] == 10'b1)
                       else
@@ -865,7 +865,7 @@ module PIO_RX_ENGINE  #(
 
                         wr_data      <= #TCQ m_axis_rx_tdata[127:96];
                         wr_en        <= #TCQ 1'b1;
-                        wr_addr      <= #TCQ {region_select[1:0], m_axis_rx_tdata[74:66]};
+                        wr_addr      <= #TCQ {region_select[1:0], m_axis_rx_tdata[77:66]};
                         wr_en        <= #TCQ 1'b1;
                         req_compl    <= #TCQ 1'b1;
                         req_compl_wd <= #TCQ 1'b0;
@@ -902,7 +902,7 @@ module PIO_RX_ENGINE  #(
               if (m_axis_rx_tvalid)
               begin
                 m_axis_rx_tready  <= #TCQ 1'b0;
-                req_addr          <= #TCQ {region_select[1:0], m_axis_rx_tdata[10:2], 2'b00};
+                req_addr          <= #TCQ {region_select[1:0], m_axis_rx_tdata[13:2], 2'b00};
                 req_compl         <= #TCQ 1'b1;
                 req_compl_wd      <= #TCQ 1'b1;
                 state             <= #TCQ PIO_RX_WAIT_STATE;
@@ -920,7 +920,7 @@ module PIO_RX_ENGINE  #(
                 wr_data           <= #TCQ m_axis_rx_tdata[63:32];
                 wr_en             <= #TCQ 1'b1;
                 m_axis_rx_tready  <= #TCQ 1'b0;
-                wr_addr           <= #TCQ {region_select[1:0], m_axis_rx_tdata[10:2]};
+                wr_addr           <= #TCQ {region_select[1:0], m_axis_rx_tdata[13:2]};
                 state             <= #TCQ  PIO_RX_WAIT_STATE;
               end // if (m_axis_rx_tvalid)
               else
@@ -936,7 +936,7 @@ module PIO_RX_ENGINE  #(
                 wr_data           <= #TCQ m_axis_rx_tdata[63:32];
                 wr_en             <= #TCQ 1'b1;
                 m_axis_rx_tready  <= #TCQ 1'b0;
-                wr_addr           <= #TCQ {region_select[1:0], m_axis_rx_tdata[10:2]};
+                wr_addr           <= #TCQ {region_select[1:0], m_axis_rx_tdata[13:2]};
                 req_compl         <= #TCQ 1'b1;
                 req_compl_wd      <= #TCQ 1'b0;
                 state             <= #TCQ  PIO_RX_WAIT_STATE;
@@ -951,7 +951,7 @@ module PIO_RX_ENGINE  #(
             PIO_RX_MEM_RD64_DW1DW2 : begin
               if (m_axis_rx_tvalid)
               begin
-                req_addr         <= #TCQ {region_select[1:0], m_axis_rx_tdata[10:2], 2'b00};
+                req_addr         <= #TCQ {region_select[1:0], m_axis_rx_tdata[13:2], 2'b00};
                 req_compl        <= #TCQ 1'b1;
                 req_compl_wd     <= #TCQ 1'b1;
                 m_axis_rx_tready <= #TCQ 1'b0;
@@ -968,7 +968,7 @@ module PIO_RX_ENGINE  #(
               if (m_axis_rx_tvalid)
               begin
                 m_axis_rx_tready  <= #TCQ 1'b0;
-                wr_addr           <= #TCQ {region_select[1:0], m_axis_rx_tdata[10:2]};
+                wr_addr           <= #TCQ {region_select[1:0], m_axis_rx_tdata[13:2]};
                 // lower QW
                 wr_data           <= #TCQ m_axis_rx_tdata[95:64];
                 wr_en             <= #TCQ 1'b1;
@@ -1046,7 +1046,7 @@ module PIO_RX_ENGINE  #(
     end // pio_rx_sm_128
   endgenerate
 
-assign    mem64_bar_hit_n = 1'b1;
+assign    mem64_bar_hit_n = 1'b1; // ~(m_axis_rx_tuser[4]);
 assign    io_bar_hit_n = 1'b1;
 assign    mem32_bar_hit_n = ~(m_axis_rx_tuser[2]);
 assign    erom_bar_hit_n  = ~(m_axis_rx_tuser[8]);
