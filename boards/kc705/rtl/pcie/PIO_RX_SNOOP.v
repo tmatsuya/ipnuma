@@ -27,12 +27,21 @@ module PIO_RX_SNOOP (
 );
 
 // Local wires
+parameter IDLE    = 2'b00;
+parameter IDLE2   = 2'b01;
+
+reg [1:0] state = IDLE;
 
 always @(posedge clk) begin
 	if (sys_rst) begin
 		wr_en <= 1'b0;
+		state <= IDLE;
 	end else begin
-		wr_en <= 1'b1;
+		wr_en <= 1'b0;
+		case (state)
+			IDLE: begin
+			end
+		endcase
 	end
 end
 
