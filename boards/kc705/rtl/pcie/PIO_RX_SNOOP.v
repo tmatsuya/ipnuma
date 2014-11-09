@@ -4,28 +4,28 @@
 module PIO_RX_SNOOP # (
 	parameter Gap = 3'd7
 ) (
-	input clk,
-	input sys_rst,
+	input wire clk,
+	input wire sys_rst,
 
 	//AXIS RX
-	input [63:0] m_axis_rx_tdata,
-	input [7:0] m_axis_rx_tkeep,
-	input m_axis_rx_tlast,
-	input m_axis_rx_tvalid,
-	output m_axis_rx_tready,
-	input [21:0] m_axis_rx_tuser,
+	input wire [63:0] m_axis_rx_tdata,
+	input wire [7:0] m_axis_rx_tkeep,
+	input wire m_axis_rx_tlast,
+	input wire m_axis_rx_tvalid,
+	output wire m_axis_rx_tready,
+	input wire [21:0] m_axis_rx_tuser,
 
-	input [15:0] cfg_completer_id,
+	input wire [15:0] cfg_completer_id,
 
 	// PCIe user registers
-	output [31:0] if_v4addr,
-	output [47:0] if_macaddr,
-	output [31:0] dest_v4addr,
-	output [47:0] dest_macaddr,
+	output wire [31:0] if_v4addr,
+	output wire [47:0] if_macaddr,
+	output wire [31:0] dest_v4addr,
+	output wire [47:0] dest_macaddr,
 
 	// XGMII-TX FIFO
 	output reg [71:0] din,
-	input full,
+	input wire full,
 	output reg wr_en
 );
 

@@ -1,4 +1,8 @@
+`ifdef SIMULATION
 `include "../rtl/setup.v"
+`else
+`include "../setup.v"
+`endif
 module XGMII_TX_ENGINE (
 	// FIFO
 	input sys_rst,
