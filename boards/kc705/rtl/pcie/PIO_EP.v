@@ -283,12 +283,9 @@ afifo72_w250_r156 afifo72_w250_r156_0 (
 //
 // PCIE-RX SNOOP
 //
-PIO_RX_SNOOP  #(
-       .TCQ( TCQ )
-       ) PIO_RX_SNOOP_inst (
-      
+PIO_RX_SNOOP PIO_RX_SNOOP_inst (
     .clk(clk),               // I
-    .sys_rst(~rst_n),           // I
+    .sys_rst(~rst_n),        // I
       
     // AXIS RX
     .m_axis_rx_tdata( m_axis_rx_tdata ),    // I
@@ -323,7 +320,12 @@ XGMII_TX_ENGINE XGMII_TX_ENGINE_inst (
 	.rd_en(tx0_phyq_rd_en),
 	// XGMII
         .xgmii_clk(xgmii_clk),
-        .xgmii_txd({xgmii_0_txc,xgmii_0_txd})
+        .xgmii_txd({xgmii_0_txc,xgmii_0_txd}),
+	// PCIe user registers
+	.if_v4addr(if_v4addr),
+	.if_macaddr(if_macaddr),
+	.dest_v4addr(dest_v4addr),
+	.dest_macaddr(dest_macaddr)
 );
 
 assign req_compl  = req_compl_int;
