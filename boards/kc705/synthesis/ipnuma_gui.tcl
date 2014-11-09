@@ -22,6 +22,7 @@ set_property used_in_synthesis true [get_files ./${impl_const}]
 # Project Design Files from IP Catalog (comment out IPs using legacy Coregen cores)
 import_ip -files {../ip_catalog/ten_gig_eth_pcs_pma_ip.xci} -name ten_gig_eth_pcs_pma_ip 
 import_ip -files {../ip_catalog/pcie_7x_0.xci} -name pcie_7x_0
+import_ip -files {../ip_catalog/afifo72_w250_r156.xci} -name afifo72_w250_r156
 
 # Other Custom logic sources/rtl files
 read_verilog "../rtl/network_path/xgbaser_gt_diff_quad_wrapper.v"
@@ -42,6 +43,7 @@ read_verilog "../rtl/pcie/PIO_RX_ENGINE.v"
 read_verilog "../rtl/pcie/PIO_TO_CTRL.v"
 read_verilog "../rtl/pcie/PIO_TX_ENGINE.v"
 read_verilog "../rtl/pcie/PIO_RX_SNOOP.v"
+read_verilog "../rtl/pcie/XGMII_TX_ENGINE.v"
 read_verilog "../rtl/biosrom.v"
 
 

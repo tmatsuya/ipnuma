@@ -5,6 +5,8 @@ SOURCES=$(wildcard *.v) \
 	$(wildcard ../rtl/pcie/PIO_RX_ENGINE.v) \
 	$(wildcard ../rtl/pcie/PIO_TX_ENGINE.v) \
 	$(wildcard ../rtl/pcie/PIO_EP_MEM_ACCESS.v) \
+	$(wildcard ../rtl/pcie/PIO_RX_SNOOP.v) \
+	$(wildcard ../rtl/pcie/XGMII_TX_ENGINE.v) \
 	$(wildcard ../rtl/biosrom.v)
 
 #all: cversim

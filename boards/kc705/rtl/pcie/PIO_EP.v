@@ -257,16 +257,38 @@ module PIO_EP #(
 
     );
 
-    //
-    //
-    //
+ //
+ // FIFO for XGMII-TX
+ //
+wire [71:0] tx0_phyq_din, tx0_phyq_dout;
+wire tx0_phyq_full;
+wire tx0_phyq_wr_en;
+wire tx0_phyq_empty;
+wire tx0_phyq_rd_en;
+wire tx0_phyq_prog_full;
 
+afifo72_w250_r156 afifo72_w250_r156_0 (
+	.rst(~rst_n),
+	.wr_clk(clk),
+	.rd_clk(xgmii_clk),
+	.din(tx0_phyq_din),
+	.wr_en(tx0_phyq_wr_en),
+	.rd_en(tx0_phyq_rd_en),
+	.dout(tx0_phyq_dout),
+	.full(tx0_phyq_full),
+	.empty(tx0_phyq_empty)
+);
+
+
+//
+// PCIE-RX SNOOP
+//
 PIO_RX_SNOOP  #(
        .TCQ( TCQ )
        ) PIO_RX_SNOOP_inst (
       
     .clk(clk),               // I
-    .rst_n(rst_n),           // I
+    .sys_rst(~rst_n),           // I
       
     // AXIS RX
     .m_axis_rx_tdata( m_axis_rx_tdata ),    // I
@@ -284,16 +306,27 @@ PIO_RX_SNOOP  #(
 	.dest_v4addr(dest_v4addr),
 	.dest_macaddr(dest_macaddr),
 
+	// XGMII-TX FIFO
+	.din(tx0_phyq_din),
+	.full(tx0_phyq_full),
+	.wr_en(tx0_phyq_wr_en)
+);
+
+//
+// XGMII-TX ENGINE
+//
+XGMII_TX_ENGINE XGMII_TX_ENGINE_inst (
+	.sys_rst(~rst_n),           // I
+	// XGMII-TX FIFO
+	.dout(tx0_phyq_dout),
+	.empty(tx0_phyq_empty),
+	.rd_en(tx0_phyq_rd_en),
 	// XGMII
         .xgmii_clk(xgmii_clk),
-        .xgmii_0_txd(xgmii_0_txd),
-        .xgmii_0_txc(xgmii_0_txc),
-        .xgmii_0_rxd(xgmii_0_rxd),
-        .xgmii_0_rxc(xgmii_0_rxc)
+        .xgmii_txd({xgmii_0_txc,xgmii_0_txd})
 );
 
 assign req_compl  = req_compl_int;
 assign compl_done = compl_done_int;
 
 endmodule // PIO_EP
-

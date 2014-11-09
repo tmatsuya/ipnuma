@@ -10,7 +10,7 @@ module PIO_RX_SNOOP #(
 ) (
 
   input                         clk,
-  input                         rst_n,
+  input                         sys_rst,
 
   //AXIS RX
   input   [C_DATA_WIDTH-1:0]    m_axis_rx_tdata,
@@ -28,18 +28,23 @@ module PIO_RX_SNOOP #(
 	output [31:0] dest_v4addr,
 	output [47:0] dest_macaddr,
 
-	// XGMII
-	input xgmii_clk,
-	output [63:0] xgmii_0_txd,
-	output [ 7:0] xgmii_0_txc,
-	input  [63:0] xgmii_0_rxd,
-	input  [ 7:0] xgmii_0_rxc
+	// XGMII-TX FIFO
+	output [71:0] din,
+	input full,
+	output reg wr_en
 );
 
-    // Local wires
+// Local wires
 
-assign xgmii_0_txd = 64'h07_07_07_07_07_07_07_07;
-assign xgmii_0_txc = 8'hff;
+always @(posedge clk) begin
+	if (sys_rst) begin
+		wr_en <= 1'b0;
+	end else begin
+		wr_en <= 1'b1;
+	end
+end
+
+assign din = {8'hff, 64'h07_07_07_07_07_07_07_07};
 
 endmodule // PIO_RX_SNOOP
 
