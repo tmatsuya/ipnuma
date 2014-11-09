@@ -1,26 +1,18 @@
 `timescale 1ps/1ps
 
-(* DowngradeIPIdentifiedWarnings = "yes" *)
-module PIO_RX_SNOOP #(
-  parameter C_DATA_WIDTH = 64,            // RX/TX interface data width
+module PIO_RX_SNOOP (
+	input clk,
+	input sys_rst,
 
-  // Do not override parameters below this line
-  parameter KEEP_WIDTH = C_DATA_WIDTH / 8,              // TSTRB width
-  parameter TCQ        = 1
-) (
+	//AXIS RX
+	input [63:0] m_axis_rx_tdata,
+	input [7:0] m_axis_rx_tkeep,
+	input m_axis_rx_tlast,
+	input m_axis_rx_tvalid,
+	output m_axis_rx_tready,
+	input [21:0] m_axis_rx_tuser,
 
-  input                         clk,
-  input                         sys_rst,
-
-  //AXIS RX
-  input   [C_DATA_WIDTH-1:0]    m_axis_rx_tdata,
-  input   [KEEP_WIDTH-1:0]      m_axis_rx_tkeep,
-  input                         m_axis_rx_tlast,
-  input                         m_axis_rx_tvalid,
-  output                        m_axis_rx_tready,
-  input   [21:0]                m_axis_rx_tuser,
-
-  input   [15:0]                cfg_completer_id,
+	input [15:0] cfg_completer_id,
 
 	// PCIe user registers
 	output [31:0] if_v4addr,
@@ -47,4 +39,3 @@ end
 assign din = {8'hff, 64'h07_07_07_07_07_07_07_07};
 
 endmodule // PIO_RX_SNOOP
-
