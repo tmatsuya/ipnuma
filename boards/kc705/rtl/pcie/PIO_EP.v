@@ -57,6 +57,7 @@
 //------------------------------------------------------------------------------
 
 `timescale 1ps/1ps
+`include "../rtl/setup.v"
 
 (* DowngradeIPIdentifiedWarnings = "yes" *)
 module PIO_EP #(
@@ -331,6 +332,33 @@ XGMII_TX_ENGINE XGMII_TX_ENGINE_inst (
 `else
 assign xgmii_0_txd = 64'h07_07_07_07_07_07_07_07;
 assign xgmii_0_txc = 8'hff;
+`endif
+
+`ifdef ENABLE_SERVER
+//
+// FIFO for XGMII-RX
+//
+wire [71:0] rx0_phyq_din, rx0_phyq_dout;
+wire rx0_phyq_full;
+wire rx0_phyq_wr_en;
+wire rx0_phyq_empty;
+wire rx0_phyq_rd_en;
+wire rx0_phyq_prog_full;
+
+afifo72_w156_r250 afifo72_w156_r250_0 (
+	.rst(~rst_n),
+	.wr_clk(clk),
+	.rd_clk(xgmii_clk),
+	.din(rx0_phyq_din),
+	.wr_en(rx0_phyq_wr_en),
+	.rd_en(rx0_phyq_rd_en),
+	.dout(rx0_phyq_dout),
+	.full(rx0_phyq_full),
+	.empty(rx0_phyq_empty)
+);
+
+
+`else
 `endif
 
 assign req_compl  = req_compl_int;

@@ -23,6 +23,7 @@ set_property used_in_synthesis true [get_files ./${impl_const}]
 import_ip -files {../ip_catalog/ten_gig_eth_pcs_pma_ip.xci} -name ten_gig_eth_pcs_pma_ip 
 import_ip -files {../ip_catalog/pcie_7x_0.xci} -name pcie_7x_0
 import_ip -files {../ip_catalog/afifo72_w250_r156.xci} -name afifo72_w250_r156
+import_ip -files {../ip_catalog/afifo72_w156_r250.xci} -name afifo72_w156_r250
 
 # Other Custom logic sources/rtl files
 read_verilog "../rtl/network_path/xgbaser_gt_diff_quad_wrapper.v"
