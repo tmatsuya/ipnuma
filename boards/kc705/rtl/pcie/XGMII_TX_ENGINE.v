@@ -37,7 +37,7 @@ always @(posedge xgmii_clk) begin
 			FIFO_IDLE: begin
 				rd_en <= ~empty;
 				if (rd_en) begin
-					if (dout[71:64] != 8'hff) begin
+					if (dout[71:64] != 8'h00) begin
 						rd_en <= 1'b0;
 						fifo_state <= FIFO_WAIT;
 					end
@@ -153,7 +153,7 @@ always @(posedge xgmii_clk) begin
 				16'h10: {txc, txd} <= {8'h00, 32'h00_45_00_08, if_macaddr[7:0], if_macaddr[15:8], if_macaddr[23:16], if_macaddr[31:24]};
 				16'h18: {txc, txd} <= {8'h00, 8'h11, ipv4_ttl[7:0], 16'h00, ipv4_id[7:0], ipv4_id[15:8], tx0_ip_len[7:0], 4'h0, tx0_ip_len[11:8]};
 				16'h20: {txc, txd} <= {8'h00, ipv4_dstip[23:16], ipv4_dstip[31:24], if_v4addr[7:0], if_v4addr[15:8], if_v4addr[23:16], if_v4addr[31:24], ip_sum[7:0], ip_sum[15:8]};
-				16'h28: {txc, txd} <= {8'h00, tx0_udp_len[7:0], 4'h0, tx0_udp_len[11:8], 32'h09_00_09_00, ipv4_dstip[7:0], ipv4_dstip[15:8]};
+				16'h28: {txc, txd} <= {8'h00, tx0_udp_len[7:0], 4'h0, tx0_udp_len[11:8], 32'h5e_0d_5e_0d, ipv4_dstip[7:0], ipv4_dstip[15:8]};
 				16'h30: {txc, txd} <= {8'h00, 16'h00, magic_code[7:0], magic_code[15:8], magic_code[23:16], magic_code[31:24], 16'h00_00};
 				16'h38: {txc, txd} <= {~dout[71:64], dout[63:0]}; //{8'h00, 64'h07_06_05_04_03_02_01_00};
 				16'h40: begin
