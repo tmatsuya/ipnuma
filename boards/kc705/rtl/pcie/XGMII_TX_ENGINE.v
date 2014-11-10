@@ -63,14 +63,13 @@ reg [7:0] txc, txc2;
 // CRC logic
 //-----------------------------------
 reg crc_init = 1'b0;
-reg crc_rewrite = 1'b0;
 assign crc_data_en = ~crc_init;
 wire [31:0] crc64_out, crc64_outrev;
 assign crc64_outrev = ~{ crc64_out[24],crc64_out[25],crc64_out[26],crc64_out[27],crc64_out[28],crc64_out[29],crc64_out[30],crc64_out[31], crc64_out[16],crc64_out[17],crc64_out[18],crc64_out[19],crc64_out[20],crc64_out[21],crc64_out[22],crc64_out[23], crc64_out[ 8],crc64_out[ 9],crc64_out[10],crc64_out[11],crc64_out[12],crc64_out[13],crc64_out[14],crc64_out[15], crc64_out[ 0],crc64_out[ 1],crc64_out[ 2],crc64_out[ 3],crc64_out[ 4],crc64_out[ 5],crc64_out[ 6],crc64_out[ 7] };
 
 crc32_d64 crc32_d64_inst (
 	.rst(crc_init),
-	.clk(xgmii_clk),
+	.clk(~xgmii_clk),
 	.crc_en(crc_data_en),
 	.data_in({
 txd[00],txd[01],txd[02],txd[03],txd[04],txd[05],txd[06],txd[07],txd[08],txd[09],
@@ -91,7 +90,6 @@ wire [31:0] magic_code     = `MAGIC_CODE;
 
 reg [16:0] ipv4_id	   = 16'h0;
 reg [7:0]  ipv4_ttl	   = 8'h40;      // IPv4: default TTL value (default: 64)
-reg [23:0] full_ipv4;
 reg [23:0] ip_sum;
 
 reg [31:0] gap_count;
@@ -114,12 +112,10 @@ reg [15:0] tmp_counter;
 always @(posedge xgmii_clk) begin
 	if ( sys_rst ) begin
 		crc_init <= 1'b0;
-		crc_rewrite <= 1'b0;
 		tx_counter <= 32'h0;
 		tmp_counter <= 16'h0;
 		txd <= 64'h0707070707070707;
 		txc <= 8'hff;
-		full_ipv4 <= 24'h0;
 		tx_state <= TX_V4_SEND;
 	end else begin
 		case (tx_state)
@@ -147,13 +143,11 @@ always @(posedge xgmii_clk) begin
 				16'h38: {txc, txd} <= {8'h00, 64'h07_06_05_04_03_02_01_00};
 				16'h40: begin
 					{txc, txd} <= {8'h00, 64'h0f_0e_0d_0c_0b_0a_09_08};
-					crc_rewrite <= 1'b1;
 				end
 				default: begin
 					{txc, txd} <= {8'hff, 32'h07_07_07_fd, crc64_outrev[7:0], crc64_outrev[15:8], crc64_outrev[23:16], crc64_outrev[31:24]};
 					tx_counter <= 32'h0;
 					if (tx0_inter_frame_gap == 32'd0) begin
-						full_ipv4 <= full_ipv4 + 24'h1;
 						tx_state <= TX_IDLE;
 					end else begin
 						gap_count <= tx0_inter_frame_gap - 32'd1;
@@ -166,7 +160,6 @@ always @(posedge xgmii_clk) begin
 			{txc, txd} <= {8'hff, 64'h07_07_07_07_07_07_07_07};
 			gap_count <= gap_count - 32'd1;
 			if (gap_count == 32'd0) begin
-				full_ipv4 <= full_ipv4 + 24'h1;
 				tx_state <= TX_IDLE;
 			end
 		end
