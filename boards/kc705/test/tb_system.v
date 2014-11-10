@@ -1,5 +1,9 @@
 `timescale 1ps / 1ps
 `define SIMULATION
+`define ENABLE_XGMII01
+`define ENABLE_PCIE
+`define	ENABLE_REQUESTER
+`define	ENABLE_SERVER
 //`include "../rtl/setup.v"
 module tb_system();
 

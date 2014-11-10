@@ -257,9 +257,10 @@ module PIO_EP #(
 
     );
 
- //
- // FIFO for XGMII-TX
- //
+`ifdef ENABLE_REQUESTER
+//
+// FIFO for XGMII-TX
+//
 wire [71:0] tx0_phyq_din, tx0_phyq_dout;
 wire tx0_phyq_full;
 wire tx0_phyq_wr_en;
@@ -327,6 +328,10 @@ XGMII_TX_ENGINE XGMII_TX_ENGINE_inst (
 	.dest_v4addr(dest_v4addr),
 	.dest_macaddr(dest_macaddr)
 );
+`else
+assign xgmii_0_txd = 64'h07_07_07_07_07_07_07_07;
+assign xgmii_0_txc = 8'hff;
+`endif
 
 assign req_compl  = req_compl_int;
 assign compl_done = compl_done_int;
