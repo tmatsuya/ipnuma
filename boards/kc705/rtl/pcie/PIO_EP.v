@@ -57,7 +57,7 @@
 //------------------------------------------------------------------------------
 
 `timescale 1ps/1ps
-`include "../rtl/setup.v"
+`include "../setup.v"
 
 (* DowngradeIPIdentifiedWarnings = "yes" *)
 module PIO_EP #(
@@ -347,8 +347,8 @@ wire rx0_phyq_prog_full;
 
 afifo72_w156_r250 afifo72_w156_r250_0 (
 	.rst(~rst_n),
-	.wr_clk(clk),
-	.rd_clk(xgmii_clk),
+	.wr_clk(xgmii_clk),
+	.rd_clk(clk),
 	.din(rx0_phyq_din),
 	.wr_en(rx0_phyq_wr_en),
 	.rd_en(rx0_phyq_rd_en),
@@ -358,6 +358,21 @@ afifo72_w156_r250 afifo72_w156_r250_0 (
 );
 
 
+XGMII_TX_ENGINE XGMII_TX_ENGINE_inst (
+	.sys_rst(~rst_n),           // I
+	// XGMII
+        .xgmii_clk(xgmii_clk),
+        .xgmii_rxd({xgmii_0_rxc,xgmii_0_rxd}),
+	// PCIe user registers
+	.if_v4addr(if_v4addr),
+	.if_macaddr(if_macaddr),
+	.dest_v4addr(dest_v4addr),
+	.dest_macaddr(dest_macaddr),
+	// XGMII-RX FIFO
+	.din(rx0_phyq_din),
+	.full(rx0_phyq_full),
+	.wr_en(rx0_phyq_wr_en)
+);
 `else
 `endif
 
