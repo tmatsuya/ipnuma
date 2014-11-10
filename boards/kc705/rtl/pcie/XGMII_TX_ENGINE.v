@@ -156,9 +156,11 @@ always @(posedge xgmii_clk) begin
 				16'h20: {txc, txd} <= {8'h00, ipv4_dstip[23:16], ipv4_dstip[31:24], if_v4addr[7:0], if_v4addr[15:8], if_v4addr[23:16], if_v4addr[31:24], ip_sum[7:0], ip_sum[15:8]};
 				16'h28: {txc, txd} <= {8'h00, tx0_udp_len[7:0], 4'h0, tx0_udp_len[11:8], 32'h5e_0d_5e_0d, ipv4_dstip[7:0], ipv4_dstip[15:8]};
 				16'h30: {txc, txd} <= {8'h00, 16'h00, magic_code[7:0], magic_code[15:8], magic_code[23:16], magic_code[31:24], 16'h00_00};
-				16'h38: {txc, txd} <= {~dout[71:64], dout[63:0]}; //{8'h00, 64'h07_06_05_04_03_02_01_00};
+//				16'h38: {txc, txd} <= {~dout[71:64], dout[63:0]}; //{8'h00, 64'h07_06_05_04_03_02_01_00};
+				16'h38: {txc, txd} <= {8'h00, 64'h07_06_05_04_03_02_01_00};
+//				16'h40: begin
 				16'h40: begin
-					{txc, txd} <= {~dout[71:64], dout[63:0]}; //{8'h00, 64'h0f_0e_0d_0c_0b_0a_09_08};
+					{txc, txd} <= {8'h00, 64'h0f_0e_0d_0c_0b_0a_09_08};
 				end
 				default: begin
 					{txc, txd} <= {8'hf0, 32'h07_07_07_fd, crc64_outrev[7:0], crc64_outrev[15:8], crc64_outrev[23:16], crc64_outrev[31:24]};
