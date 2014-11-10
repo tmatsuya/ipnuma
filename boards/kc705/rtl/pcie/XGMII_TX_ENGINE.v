@@ -145,7 +145,7 @@ always @(posedge xgmii_clk) begin
 					{txc, txd} <= {8'h00, 64'h0f_0e_0d_0c_0b_0a_09_08};
 				end
 				default: begin
-					{txc, txd} <= {8'hff, 32'h07_07_07_fd, crc64_outrev[7:0], crc64_outrev[15:8], crc64_outrev[23:16], crc64_outrev[31:24]};
+					{txc, txd} <= {8'hf0, 32'h07_07_07_fd, crc64_outrev[7:0], crc64_outrev[15:8], crc64_outrev[23:16], crc64_outrev[31:24]};
 					tx_counter <= 32'h0;
 					if (tx0_inter_frame_gap == 32'd0) begin
 						tx_state <= TX_IDLE;
