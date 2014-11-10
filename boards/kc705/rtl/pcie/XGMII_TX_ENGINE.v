@@ -37,24 +37,24 @@ always @(posedge xgmii_clk) begin
 			FIFO_IDLE: begin
 				rd_en <= ~empty;
 				if (rd_en) begin
-					if (dout[71:64] != 8'hff) begin
+//					if (dout[71:64] != 8'hff) begin
 						rd_en <= 1'b0;
 						fifo_state <= FIFO_WAIT;
-					end
+//					end
 				end
 			end
 			FIFO_WAIT: begin
-				if (tx_counter[15:0] == 16'h28) begin
+//				if (tx_counter[15:0] == 16'h28) begin
 					fifo_state <= FIFO_DATA;
-				end
+//				end
 			end
 			FIFO_DATA: begin
 				rd_en <= ~empty;
-				if (rd_en) begin
-					if (dout[71:64] == 8'h00) begin
-						rd_en <= 1'b0;
+				if (~rd_en) begin
+//					if (dout[71:64] == 8'h00) begin
+//						rd_en <= 1'b0;
 						fifo_state <= FIFO_FIN;
-					end
+//					end
 				end
 			end
 			FIFO_FIN: begin
