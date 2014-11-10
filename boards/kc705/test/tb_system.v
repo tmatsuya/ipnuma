@@ -121,8 +121,8 @@ assign tlp_cur = tlp_rom[ tlp_counter ];
 assign phy_cur = phy_rom[ phy_counter ];
 
 always @(posedge clk156) begin
-	if (xgmii_0_txc != 8'hff)
-		$display("%x", xgmii_0_txd);
+//	if (xgmii_0_txc != 8'hff)
+		$display("%02x %016x", xgmii_0_txc, xgmii_0_txd);
 end
 
 always @(posedge clk250) begin
