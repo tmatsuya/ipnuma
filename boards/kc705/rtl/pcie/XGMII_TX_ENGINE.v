@@ -32,6 +32,7 @@ reg [1:0] fifo_state = FIFO_IDLE;
 always @(posedge xgmii_clk) begin
 	if (sys_rst) begin
 		rd_en <= 1'b0;
+		fifo_state <= FIFO_IDLE;
 	end else begin
 		case (fifo_state)
 			FIFO_IDLE: begin
@@ -69,7 +70,7 @@ end
 //-----------------------------------
 // Transmitte logic
 //-----------------------------------
-reg [31:0] tx_counter;
+reg [31:0] tx_counter = 32'h0000;
 reg [63:0] txd, txd2;
 reg [7:0] txc, txc2;
 
@@ -121,21 +122,21 @@ wire [31:0] ipv4_dstip = dest_v4addr;
 wire [15:0] tx0_udp_len = tx0_frame_len - 16'h26;  // UDP Length
 wire [15:0] tx0_ip_len  = tx0_frame_len - 16'd18;  // IP Length (Frame Len - FCS Len - EtherFrame Len
 
-reg [15:0] tmp_counter;
 
 always @(posedge xgmii_clk) begin
 	if ( sys_rst ) begin
 		crc_init <= 1'b0;
 		tx_counter <= 32'h0;
-		tmp_counter <= 16'h0;
 		txd <= 64'h0707070707070707;
 		txc <= 8'hff;
 		tx_state <= TX_IDLE;
 	end else begin
 		case (tx_state)
 		TX_IDLE: begin
-			if (fifo_state == FIFO_WAIT)
+			if (fifo_state == FIFO_WAIT) begin
+				tx_counter <= 32'h0;
 				tx_state <= TX_V4_SEND;
+			end
 		end
 		TX_V4_SEND: begin
 			tx_counter <= tx_counter + 32'h8;
