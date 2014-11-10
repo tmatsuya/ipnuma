@@ -158,7 +158,7 @@ always @(posedge xgmii_clk) begin
 				16'h18: {txc, txd} <= {8'h00, 8'h11, ipv4_ttl[7:0], 16'h00, ipv4_id[7:0], ipv4_id[15:8], tx0_ip_len[7:0], 4'h0, tx0_ip_len[11:8]};
 				16'h20: {txc, txd} <= {8'h00, ipv4_dstip[23:16], ipv4_dstip[31:24], if_v4addr[7:0], if_v4addr[15:8], if_v4addr[23:16], if_v4addr[31:24], ip_sum[7:0], ip_sum[15:8]};
 				16'h28: {txc, txd} <= {8'h00, tx0_udp_len[7:0], 4'h0, tx0_udp_len[11:8], 32'h09_00_09_00, ipv4_dstip[7:0], ipv4_dstip[15:8]};
-				16'h30: {txc, txd} <= {8'h00, 64'h00_00_00_00_00_00_00_00};
+				16'h30: {txc, txd} <= {8'h00, 16'h00, magic_code[7:0], magic_code[15:8], magic_code[23:16], magic_code[31:24], 16'h00_00};
 				16'h38: {txc, txd} <= {8'h00, 64'h00_00_00_00_00_00_00_00};
 				16'h40: begin
 					{txc, txd} <= {8'h00, 64'he5_e5_e5_e5_00_00_00_00};
