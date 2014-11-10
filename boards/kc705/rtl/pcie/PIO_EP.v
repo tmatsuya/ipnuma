@@ -57,7 +57,11 @@
 //------------------------------------------------------------------------------
 
 `timescale 1ps/1ps
+`ifdef SIMULATION
+`include "../rtl/setup.v"
+`else
 `include "../setup.v"
+`endif
 
 (* DowngradeIPIdentifiedWarnings = "yes" *)
 module PIO_EP #(
@@ -357,8 +361,10 @@ afifo72_w156_r250 afifo72_w156_r250_0 (
 	.empty(rx0_phyq_empty)
 );
 
-
-XGMII_TX_ENGINE XGMII_TX_ENGINE_inst (
+//
+// XGMII-RX ENGINE
+//
+XGMII_RX_ENGINE XGMII_RX_ENGINE_inst (
 	.sys_rst(~rst_n),           // I
 	// XGMII
         .xgmii_clk(xgmii_clk),
@@ -372,6 +378,34 @@ XGMII_TX_ENGINE XGMII_TX_ENGINE_inst (
 	.din(rx0_phyq_din),
 	.full(rx0_phyq_full),
 	.wr_en(rx0_phyq_wr_en)
+);
+
+//
+// PCIE-TX SNOOP
+PIO_TX_SNOOP PIO_TX_SNOOP_inst (
+    .clk(clk),               // I
+    .sys_rst(~rst_n),        // I
+      
+    // AXIS TX
+//    s_axis_tx_tready(s_axis_tx_tready),     // I
+//    s_axis_tx_tdata(s_axis_tx_tdata),       // O
+//    s_axis_tx_tkeep(s_axis_tx_tkeep),       // O
+//    s_axis_tx_tlast(s_axis_tx_tlast),       // O
+//    s_axis_tx_tvalid(s_axis_tx_tvalid),     // O
+//    tx_src_dsc(tx_src_dsc),                 // O
+
+    .cfg_completer_id(cfg_completer_id),           // I [15:0]
+
+	// PCIe user registers
+	.if_v4addr(if_v4addr),
+	.if_macaddr(if_macaddr),
+	.dest_v4addr(dest_v4addr),
+	.dest_macaddr(dest_macaddr),
+
+	// XGMII-RX FIFO
+	.dout(rx0_phyq_dout),
+	.empty(rx0_phyq_empty),
+	.rd_en(rx0_phyq_rd_en)
 );
 `else
 `endif
