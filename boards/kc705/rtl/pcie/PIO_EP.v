@@ -107,7 +107,9 @@ module PIO_EP #(
 	output [63:0] xgmii_0_txd,
 	output [ 7:0] xgmii_0_txc,
 	input  [63:0] xgmii_0_rxd,
-	input  [ 7:0] xgmii_0_rxc
+	input  [ 7:0] xgmii_0_rxc,
+
+	output [7:0] led
 
 );
 
@@ -378,7 +380,9 @@ XGMII_RX_ENGINE XGMII_RX_ENGINE_inst (
 	// XGMII-RX FIFO
 	.din(rx0_phyq_din),
 	.full(rx0_phyq_full),
-	.wr_en(rx0_phyq_wr_en)
+	.wr_en(rx0_phyq_wr_en),
+
+	.led(led)
 );
 
 //

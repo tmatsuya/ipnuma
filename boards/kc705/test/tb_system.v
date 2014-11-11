@@ -101,8 +101,8 @@ PIO PIO_insta (
 	.xgmii_clk(clk156),
 	.xgmii_0_txd(xgmii_0_txd),
 	.xgmii_0_txc(xgmii_0_txc),
-	.xgmii_0_rxd(xgmii_0_rxd),
-	.xgmii_0_rxc(xgmii_0_rxc)
+	.xgmii_0_rxd(xgmii_rxd),
+	.xgmii_0_rxc(xgmii_rxc)
 );
 
 task waitclock;
@@ -113,12 +113,14 @@ end
 endtask
 
 reg [103:0] tlp_rom [0:4095];
-reg [11:0] phy_rom [0:4095];
-reg [11:0] tlp_counter = 0, phy_counter = 0;
+reg [71:0] xgmii_rom [0:4095];
+reg [11:0] tlp_counter = 0, xgmii_counter = 0;
 wire [103:0] tlp_cur;
-wire [23:0] phy_cur;
+wire [71:0] xgmii_cur;
+reg [7:0] xgmii_rxc;
+reg [63:0] xgmii_rxd;
 assign tlp_cur = tlp_rom[ tlp_counter ];
-assign phy_cur = phy_rom[ phy_counter ];
+assign xgmii_cur = xgmii_rom[ xgmii_counter ];
 
 always @(posedge clk156) begin
 //	if (xgmii_0_txc != 8'hff)
@@ -135,16 +137,16 @@ always @(posedge clk250) begin
 end
 
 always @(posedge clk156) begin
-//	gmii_rx_dv  <= phy_cur[8];
-//	gmii_rxd <= phy_cur[7:0];
-//	phy_counter <= phy_counter + 1;
+	xgmii_rxc <= xgmii_cur[71:64];
+	xgmii_rxd <= xgmii_cur[63:0];
+	xgmii_counter <= xgmii_counter + 1;
 end
 
 initial begin
         $dumpfile("./test.vcd");
 	$dumpvars(0, tb_system); 
 	$readmemh("./tlp_data.hex", tlp_rom);
-	$readmemh("./phy_data.hex", phy_rom);
+	$readmemh("./xgmii_data.hex", xgmii_rom);
 	/* Reset / Initialize our logic */
 	sys_rst = 1'b1;
 

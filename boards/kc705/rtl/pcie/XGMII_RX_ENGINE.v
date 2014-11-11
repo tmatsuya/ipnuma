@@ -17,8 +17,12 @@ module XGMII_RX_ENGINE (
         // XGMII-RX FIFO
         output [71:0] din,
         input full,
-        output wr_en
+        output reg wr_en,
+
+	output [7:0] led
 );
+
+reg [7:0] led_r = 8'h00;
 
 //-----------------------------------
 // Recive logic
@@ -40,7 +44,10 @@ always @(posedge xgmii_clk) begin
 		tx_dst_mac <= 48'h0;
 		rx_protocol <= 8'h0;
 		rx_dport <= 16'h00;
+		wr_en <= 1'b0;
+		led_r <= 8'h00;
 	end else begin
+		wr_en <= 1'b0;
 		if (xgmii_rxc[7:0] != 8'hff) begin
 			rx_count <= rx_count + 16'h8;
 			case (rx_count)
@@ -69,11 +76,14 @@ always @(posedge xgmii_clk) begin
 				rx_magic[23:16] <= xgmii_rxd[31:24];
 				rx_magic[15:8]  <= xgmii_rxd[39:32];
 				rx_magic[7:0]   <= xgmii_rxd[47:40];
-			end
-
-			16'h38: begin
-				if (rx_magic[31:0] == `MAGIC_CODE) begin
+				if (rx_type == 16'h0800 && rx_protocol == 8'h11 && rx_dport == 16'd3422 && {xgmii_rxd[23:16], xgmii_rxd[31:24], xgmii_rxd[39:32], xgmii_rxd[47:40]} == `MAGIC_CODE) begin
+//					led_r[0] <= 1'b1;
 				end
+			end
+			16'h38: begin
+				led_r <= xgmii_rxd[7:0];
+			end
+			default: begin
 			end
 			endcase
 		end else begin
@@ -81,5 +91,8 @@ always @(posedge xgmii_clk) begin
 		end
 	end
 end
+
+
+assign led = led_r;
 
 endmodule

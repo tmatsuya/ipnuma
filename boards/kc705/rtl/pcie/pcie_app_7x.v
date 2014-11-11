@@ -155,7 +155,9 @@ module  pcie_app_7x#(
 	output [63:0] xgmii_0_txd,
 	output [ 7:0] xgmii_0_txc,
 	input  [63:0] xgmii_0_rxd,
-	input  [ 7:0] xgmii_0_rxc
+	input  [ 7:0] xgmii_0_rxc,
+
+	output [7:0] led
 
 );
   //----------------------------------------------------------------------------------------------------------------//
@@ -274,7 +276,9 @@ module  pcie_app_7x#(
 	.xgmii_0_txd(xgmii_0_txd),
 	.xgmii_0_txc(xgmii_0_txc),
 	.xgmii_0_rxd(xgmii_0_rxd),
-	.xgmii_0_rxc(xgmii_0_rxc)
+	.xgmii_0_rxc(xgmii_0_rxc),
+
+	.led(led)
   );
 
 endmodule // pcie_app

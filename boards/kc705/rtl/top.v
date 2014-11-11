@@ -529,7 +529,7 @@ wire [47:0] if_macaddr;
 wire [31:0] dest_v4addr;
 wire [47:0] dest_macaddr;
 
-
+`ifdef NO
 assign led[0] = xphy0_status[0]; 
 assign led[1] = xphy1_status[0]; 
 assign led[2] = xphy2_status[0]; 
@@ -539,6 +539,7 @@ assign led[4] = 1'b0;
 assign led[5] = 1'b0;
 assign led[6] = 1'b0;
 assign led[7] = 1'b0;
+`endif
 `endif
 
 //- Tie off related to SFP+
@@ -654,10 +655,12 @@ assign fmc_clk_312_5 = (fmc_gbtclk0_fsel == 2'b11) ? 1'b1 : 1'b0;
 
   IBUFDS_GTE2 refclk_ibuf (.O(sys_clk), .ODIV2(), .I(sys_clk_p), .CEB(1'b0), .IB(sys_clk_n));
 
+`ifdef NO
   assign led[4] = sys_rst_n_c;
   assign led[5] = !user_reset;
   assign led[6] = user_lnk_up;
   assign led[7] = user_clk_heartbeat[25];
+`endif
 //  OBUF   led_4_obuf (.O(led[4]), .I(sys_rst_n_c));
 //  OBUF   led_5_obuf (.O(led[5]), .I(!user_reset));
 //  OBUF   led_6_obuf (.O(led[6]), .I(user_lnk_up));
@@ -1060,8 +1063,9 @@ pcie_app_7x  #(
 	.xgmii_0_txd(xgmii0_txd),
 	.xgmii_0_txc(xgmii0_txc),
 	.xgmii_0_rxd(xgmii0_rxd),
-	.xgmii_0_rxc(xgmii0_rxc)
+	.xgmii_0_rxc(xgmii0_rxc),
 
+	.led(led)
 );
 `endif
 
