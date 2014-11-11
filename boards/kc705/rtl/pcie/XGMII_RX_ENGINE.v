@@ -6,18 +6,20 @@
 module XGMII_RX_ENGINE (
 	input sys_rst,
 	// XGMII
-        input xgmii_clk,
-        input [7:0] xgmii_rxc,
-        input [63:0] xgmii_rxd,
-        // PCIe user registers
-        input [31:0] if_v4addr,
-        input [47:0] if_macaddr,
-        input [31:0] dest_v4addr,
-        input [47:0] dest_macaddr,
-        // XGMII-RX FIFO
-        output [71:0] din,
-        input full,
-        output reg wr_en,
+	input xgmii_clk,
+	input [7:0] xgmii_rxc,
+	input [63:0] xgmii_rxd,
+	// PCIe user registers
+	input [31:0] if_v4addr,
+	input [47:0] if_macaddr,
+	input [31:0] dest_v4addr,
+	input [47:0] dest_macaddr,
+	// XGMII-RX FIFO
+	output [71:0] din,
+	input full,
+	output reg wr_en,
+
+	output [7:0] xgmii_pktcount,
 
 	output [7:0] led
 );
@@ -29,11 +31,14 @@ reg [7:0] led_r = 8'h00;
 //-----------------------------------
 reg [15:0] rx_count = 0;
 reg [31:0] rx_magic;
-reg [15:0] rx_type;         // frame type
+reg [15:0] rx_type;	 // frame type
 reg [47:0] rx_src_mac;
 reg [47:0] tx_dst_mac;
 reg [7:0] rx_protocol;
 reg [15:0] rx_dport;
+reg bit64 = 1'b0;
+reg [9:0] length = 10'h0;
+reg xgmii_frame_end = 1'b0;
 reg found_packet = 1'b0;
 
 always @(posedge xgmii_clk) begin
@@ -45,10 +50,14 @@ always @(posedge xgmii_clk) begin
 		tx_dst_mac <= 48'h0;
 		rx_protocol <= 8'h0;
 		rx_dport <= 16'h00;
+		bit64 <= 1'b0;
+		length <= 10'h0;
 		wr_en <= 1'b0;
 		found_packet <= 1'b0;
 		led_r <= 8'h00;
+		xgmii_frame_end <= 1'b0;
 	end else begin
+		xgmii_frame_end <= 1'b0;
 		wr_en <= 1'b0;
 		if (xgmii_rxc[7:0] != 8'hff) begin
 			rx_count <= rx_count + 16'h8;
@@ -82,13 +91,13 @@ always @(posedge xgmii_clk) begin
 					found_packet <= 1'b1;
 				end
 			end
-			16'h38: begin
-					led_r <= led_r + 8'd1;
+			default: begin
+				bit64 <= xgmii_rxd[29];
+				length <= xgmii_rxd[9:0];
+				led_r <= led_r + 8'd1;
 //				if (found_packet) begin
 //					led_r <= xgmii_rxd[7:0];
 //				end
-			end
-			default: begin
 			end
 			endcase
 		end else begin
@@ -98,6 +107,23 @@ always @(posedge xgmii_clk) begin
 	end
 end
 
+//-----------------------------------
+// count XGMII frame
+//-----------------------------------
+reg [7:0] xgmii_packet_count;	 // receive XGMII packet count
+reg [3:0] prev_xgmii_end;
+always @(posedge xgmii_clk) begin
+	if (sys_rst) begin
+		xgmii_packet_count <= 8'h0;
+		prev_xgmii_end <= 4'b0000;
+	end else begin
+		prev_xgmii_end <= {xgmii_frame_end, prev_xgmii_end[3:1]};
+		if (prev_xgmii_end == 4'b0001)
+			xgmii_packet_count <= xgmii_packet_count + 8'd1;
+	end
+end
+
+assign xgmii_pktcount = xgmii_packet_count;
 
 assign led = led_r;
 

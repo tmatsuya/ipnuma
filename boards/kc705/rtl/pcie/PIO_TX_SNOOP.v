@@ -24,7 +24,10 @@ module PIO_TX_SNOOP (
 	// XGMII-RX FIFO
 	output wire [71:0] dout,
 	input wire empty,
-	output wire rd_en
+	output wire rd_en,
+
+	input [7:0] xgmii_pktcount,
+	output [7:0] tlp_pktcount
 );
 
 `ifdef NO

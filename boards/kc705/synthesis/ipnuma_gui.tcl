@@ -47,6 +47,7 @@ read_verilog "../rtl/pcie/PIO_RX_SNOOP.v"
 read_verilog "../rtl/pcie/XGMII_TX_ENGINE.v"
 read_verilog "../rtl/pcie/PIO_TX_SNOOP.v"
 read_verilog "../rtl/pcie/XGMII_RX_ENGINE.v"
+read_verilog "../rtl/pcie/TX_MUX.v"
 read_verilog "../rtl/biosrom.v"
 
 

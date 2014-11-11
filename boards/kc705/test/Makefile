@@ -9,6 +9,7 @@ SOURCES=$(wildcard *.v) \
 	$(wildcard ../rtl/pcie/XGMII_TX_ENGINE.v) \
 	$(wildcard ../rtl/pcie/XGMII_RX_ENGINE.v) \
 	$(wildcard ../rtl/pcie/PIO_TX_SNOOP.v) \
+	$(wildcard ../rtl/pcie/TX_MUX.v) \
 	$(wildcard ../../../cores/crc32/rtl/CRC32_D64.v) \
 	$(wildcard ../../../cores/crc32/rtl/CRC32_D32.v) \
 	$(wildcard ../rtl/biosrom.v)

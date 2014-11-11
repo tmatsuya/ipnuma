@@ -220,6 +220,47 @@ module PIO_EP #(
   );
 
     //
+    // PCIe TX MUX (2 inputs, 1 output)
+    //
+wire s_axis_tx1_req, s_axis_tx2_req;
+wire s_axis_tx1_ack, s_axis_tx2_ack;
+wire s_axis_tx1_tready, s_axis_tx2_tready;
+wire [63:0] s_axis_tx1_tdata, s_axis_tx2_tdata;
+wire [7:0] s_axis_tx1_tkeep, s_axis_tx2_tkeep;
+wire s_axis_tx1_tlast, s_axis_tx2_tlast;
+wire s_axis_tx1_tvalid, s_axis_tx2_tvalid;
+wire tx1_src_dsc, tx2_src_dsc;
+TX_MUX TX_MUX_inst (
+        .clk(clk),
+        .sys_rst(sys_rst),
+        // AXIS Output
+        .s_axis_tx_tready(s_axis_tx_tready),
+        .s_axis_tx_tdata(s_axis_tx_tdata),
+        .s_axis_tx_tkeep(s_axis_tx_tkeep),
+        .s_axis_tx_tlast(s_axis_tx_tlast),
+        .s_axis_tx_tvalid(s_axis_tx_tvalid),
+        .tx_src_dsc(tx_src_dsc),
+        // AXIS Input 1
+        .s_axis_tx1_req(s_axis_tx1_req),
+        .s_axis_tx1_ack(s_axis_tx1_ack),
+        .s_axis_tx1_tready(s_axis_tx1_tready),
+        .s_axis_tx1_tdata(s_axis_tx1_tdata),
+        .s_axis_tx1_tkeep(s_axis_tx1_tkeep),
+        .s_axis_tx1_tlast(s_axis_tx1_tlast),
+        .s_axis_tx1_tvalid(s_axis_tx1_tvalid),
+        .tx1_src_dsc(tx1_src_dsc),
+        // AXIS Input 2
+        .s_axis_tx2_req(s_axis_tx2_req),
+        .s_axis_tx2_ack(s_axis_tx2_ack),
+        .s_axis_tx2_tready(s_axis_tx2_tready),
+        .s_axis_tx2_tdata(s_axis_tx2_tdata),
+        .s_axis_tx2_tkeep(s_axis_tx2_tkeep),
+        .s_axis_tx2_tlast(s_axis_tx2_tlast),
+        .s_axis_tx2_tvalid(s_axis_tx2_tvalid),
+        .tx2_src_dsc(tx2_src_dsc)
+);
+
+    //
     // Local-Link Transmit Controller
     //
 
@@ -233,12 +274,12 @@ module PIO_EP #(
     .rst_n(rst_n),                              // I
 
     // AXIS Tx
-    .s_axis_tx_tready( s_axis_tx_tready ),      // I
-    .s_axis_tx_tdata( s_axis_tx_tdata ),        // O
-    .s_axis_tx_tkeep( s_axis_tx_tkeep ),        // O
-    .s_axis_tx_tlast( s_axis_tx_tlast ),        // O
-    .s_axis_tx_tvalid( s_axis_tx_tvalid ),      // O
-    .tx_src_dsc( tx_src_dsc ),                  // O
+    .s_axis_tx_tready( s_axis_tx1_tready ),      // I
+    .s_axis_tx_tdata( s_axis_tx1_tdata ),        // O
+    .s_axis_tx_tkeep( s_axis_tx1_tkeep ),        // O
+    .s_axis_tx_tlast( s_axis_tx1_tlast ),        // O
+    .s_axis_tx_tvalid( s_axis_tx1_tvalid ),      // O
+    .tx_src_dsc( tx1_src_dsc ),                  // O
 
     // Handshake with Rx engine
     .req_compl(req_compl_int),                // I
@@ -367,6 +408,7 @@ afifo72_w156_r250 afifo72_w156_r250_0 (
 //
 // XGMII-RX ENGINE
 //
+wire [7:0] xgmii_pktcount;
 XGMII_RX_ENGINE XGMII_RX_ENGINE_inst (
 	.sys_rst(sys_rst),           // I
 	// XGMII
@@ -383,11 +425,14 @@ XGMII_RX_ENGINE XGMII_RX_ENGINE_inst (
 	.full(rx0_phyq_full),
 	.wr_en(rx0_phyq_wr_en),
 
+	.xgmii_pktcount(xgmii_pktcount),
+
 	.led(led)
 );
 
 //
 // PCIE-TX SNOOP
+wire [7:0] tlp_pktcount;
 PIO_TX_SNOOP PIO_TX_SNOOP_inst (
     .clk(clk),               // I
     .sys_rst(sys_rst),        // I
@@ -411,7 +456,10 @@ PIO_TX_SNOOP PIO_TX_SNOOP_inst (
 	// XGMII-RX FIFO
 	.dout(rx0_phyq_dout),
 	.empty(rx0_phyq_empty),
-	.rd_en(rx0_phyq_rd_en)
+	.rd_en(rx0_phyq_rd_en),
+
+	.xgmii_pktcount(xgmii_pktcount),
+	.tlp_pktcount(tlp_pktcount)
 );
 `else
 `endif
