@@ -34,7 +34,7 @@ reg [47:0] rx_src_mac;
 reg [47:0] tx_dst_mac;
 reg [7:0] rx_protocol;
 reg [15:0] rx_dport;
-reg found_packet = 1'b0
+reg found_packet = 1'b0;
 
 always @(posedge xgmii_clk) begin
 	if (sys_rst) begin
