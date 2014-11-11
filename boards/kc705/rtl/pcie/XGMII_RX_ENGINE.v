@@ -83,9 +83,10 @@ always @(posedge xgmii_clk) begin
 				end
 			end
 			16'h38: begin
-				if (found_packet) begin
-					led_r <= xgmii_rxd[7:0];
-				end
+					led_r <= led_r + 8'd1;
+//				if (found_packet) begin
+//					led_r <= xgmii_rxd[7:0];
+//				end
 			end
 			default: begin
 			end

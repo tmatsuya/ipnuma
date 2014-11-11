@@ -82,9 +82,9 @@ end
 wire sys_rst;
 
 `ifdef ENABLE_PCIE
-assign sys_rst = (button_c | cold_reset);
+assign sys_rst = (button_c | cold_reset | ~user_lnk_up_q | user_reset_q);
 `else
-assign sys_rst = (button_c | cold_reset | user_lnk_up_q | user_reset_q);
+assign sys_rst = (button_c | cold_reset);
 `endif
  
 // -------------------
