@@ -162,13 +162,13 @@ set_property IOSTANDARD LVCMOS25 [get_ports {fmc_gbtclk0_fsel[1]}]
 set_property PACKAGE_PIN E21 [get_ports fmc_clk_312_5]
 set_property IOSTANDARD LVCMOS25 [get_ports fmc_clk_312_5]
 
-#create_clock -period 5.000 -name clk_ref_p [get_ports clk_ref_p]
+create_clock -period 5.000 -name sysclk_p [get_ports sysclk_p]
 
-#set_property IOSTANDARD DIFF_SSTL15 [get_ports clk_ref_n]
+set_property IOSTANDARD DIFF_SSTL15 [get_ports sysclk_n]
 
-#set_property IOSTANDARD DIFF_SSTL15 [get_ports clk_ref_p]
-#set_property PACKAGE_PIN AD12 [get_ports clk_ref_p]
-#set_property PACKAGE_PIN AD11 [get_ports clk_ref_n]
+set_property IOSTANDARD DIFF_SSTL15 [get_ports sysclk_p]
+set_property PACKAGE_PIN AD12 [get_ports sysclk_p]
+set_property PACKAGE_PIN AD11 [get_ports sysclk_n]
 
 # Domain Crossing Constraints
 #create_clock -name userclk2 -period 4.0 [get_nets user_clk]

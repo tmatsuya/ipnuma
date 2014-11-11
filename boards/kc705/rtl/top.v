@@ -9,6 +9,8 @@ module top # (
 	parameter C_DATA_WIDTH        = 64, // RX/TX interface data width
 	parameter KEEP_WIDTH          = C_DATA_WIDTH / 8 // TSTRB width
 ) (
+	input wire sysclk_p,
+	input wire sysclk_n,
 `ifdef ENABLE_XGMII01
 	input xphy0_refclk_p, 
 	input xphy0_refclk_n, 
@@ -59,8 +61,31 @@ module top # (
 );
 
 // Clock and Reset
+wire clk200;
+IBUFDS IBUFDS_clk200 (
+	.I(sysclk_p),
+	.IB(sysclk_n),
+	.O(clk200)
+);
+
+reg [7:0] cold_counter = 8'h0;
+reg cold_reset = 1'b0;
+
+always @(posedge clk200) begin
+	if (cold_counter != 8'hff) begin
+		cold_reset <= 1'b1;
+		cold_counter <= cold_counter + 8'd1;
+	end else
+		cold_reset <= 1'b0;
+end
+
 wire sys_rst;
-assign sys_rst = button_c; // 1'b0;
+
+`ifdef ENABLE_PCIE
+assign sys_rst = (button_c | cold_reset);
+`else
+assign sys_rst = (button_c | cold_reset | user_lnk_up_q | user_reset_q);
+`endif
  
 // -------------------
 // -- Local Signals --
@@ -340,11 +365,13 @@ network_path network_path_inst_0 (
 	.xgmii_rxc(xgmii0_rxctmp)
 ); 
 
-xgmii2fifo72 xgmii2_0 (
+xgmiisync xgmiisync_0 (
 	.sys_rst(sys_rst),
 	.xgmii_rx_clk(clk156),
-	.xgmii_rxd({xgmii0_rxctmp,xgmii0_rxdtmp}),
-	.din({xgmii0_rxc,xgmii0_rxd})
+	.xgmii_rxd_i(xgmii0_rxdtmp),
+	.xgmii_rxc_i(xgmii0_rxctmp),
+	.xgmii_rxd_o(xgmii0_rxd),
+	.xgmii_rxc_o(xgmii0_rxc)
 );
 
 
@@ -955,6 +982,7 @@ pcie_app_7x  #(
   .TCQ( TCQ )
 
 ) app (
+  .sys_rst                        ( sys_rst ),
 
   //----------------------------------------------------------------------------------------------------------------//
   // AXI-S Interface                                                                                                //

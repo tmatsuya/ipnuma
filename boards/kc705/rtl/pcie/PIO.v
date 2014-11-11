@@ -70,6 +70,8 @@ module PIO #(
   parameter KEEP_WIDTH = C_DATA_WIDTH / 8,              // TSTRB width
   parameter TCQ        = 1
 )(
+  input                         sys_rst,
+
   input                         user_clk,
   input                         user_reset,
   input                         user_lnk_up,
@@ -137,6 +139,7 @@ module PIO #(
     .KEEP_WIDTH( KEEP_WIDTH ),
     .TCQ( TCQ )
   ) PIO_EP_inst (
+    .sys_rst( sys_rst ),
 
     .clk( user_clk ),                             // I
     .rst_n( pio_reset_n ),                        // I

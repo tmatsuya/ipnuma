@@ -69,6 +69,7 @@ module  pcie_app_7x#(
   parameter KEEP_WIDTH = C_DATA_WIDTH / 8,              // TSTRB width
   parameter TCQ        = 1
 )(
+  input                         sys_rst,
 
   input                         user_clk,
   input                         user_reset,
@@ -242,6 +243,7 @@ module  pcie_app_7x#(
     .TCQ( TCQ )
 
   ) PIO (
+    .sys_rst( sys_rst ),
 
     .user_clk ( user_clk ),                         // I
     .user_reset ( user_reset ),                     // I

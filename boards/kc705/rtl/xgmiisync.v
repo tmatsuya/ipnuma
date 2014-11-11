@@ -1,13 +1,15 @@
-module xgmii2fifo72 # (
+module xgmiisync # (
 	parameter Gap = 4'h0
 ) (
 	input         sys_rst,
 	input         xgmii_rx_clk,
-	input  [71:0] xgmii_rxd,
-	output [71:0] din
+	input  [63:0] xgmii_rxd_i,
+	input  [ 7:0] xgmii_rxc_i,
+	output [63:0] xgmii_rxd_o,
+	output [ 7:0] xgmii_rxc_o
 );
 
-
+`ifdef NO
 //-----------------------------------
 // logic
 //-----------------------------------
@@ -57,7 +59,9 @@ always @(posedge xgmii_rx_clk) begin
 		end
 	end
 end
+`endif
 
-assign din[71:0] = rxd[71:0];
+assign xgmii_rxd_o = xgmii_rxd_i;
+assign xgmii_rxc_o = xgmii_rxc_i;
 
 endmodule
