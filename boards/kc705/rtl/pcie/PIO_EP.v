@@ -368,7 +368,8 @@ XGMII_RX_ENGINE XGMII_RX_ENGINE_inst (
 	.sys_rst(~rst_n),           // I
 	// XGMII
         .xgmii_clk(xgmii_clk),
-        .xgmii_rxd({xgmii_0_rxc,xgmii_0_rxd}),
+        .xgmii_rxc(xgmii_0_rxc),
+        .xgmii_rxd(xgmii_0_rxd),
 	// PCIe user registers
 	.if_v4addr(if_v4addr),
 	.if_macaddr(if_macaddr),

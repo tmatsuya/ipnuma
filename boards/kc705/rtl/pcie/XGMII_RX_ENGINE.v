@@ -6,7 +6,8 @@
 module XGMII_RX_ENGINE (
 	input sys_rst,
 	// XGMII
-        input [7:0] xgmii_clk,
+        input xgmii_clk,
+        input [7:0] xgmii_rxc,
         input [63:0] xgmii_rxd,
         // PCIe user registers
         input [31:0] if_v4addr,
@@ -19,7 +20,6 @@ module XGMII_RX_ENGINE (
         output wr_en
 );
 
-`ifdef NO
 //-----------------------------------
 // Recive logic
 //-----------------------------------
@@ -31,7 +31,7 @@ reg [47:0] tx_dst_mac;
 reg [7:0] rx_protocol;
 reg [15:0] rx_dport;
 
-always @(posedge sys_clk) begin
+always @(posedge xgmii_clk) begin
 	if (sys_rst) begin
 		rx_count <= 16'h0;
 		rx_magic <= 32'b0;
@@ -81,6 +81,5 @@ always @(posedge sys_clk) begin
 		end
 	end
 end
-`endif
 
 endmodule
