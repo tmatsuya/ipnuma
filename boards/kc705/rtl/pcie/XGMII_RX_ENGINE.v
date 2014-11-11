@@ -34,6 +34,7 @@ reg [47:0] rx_src_mac;
 reg [47:0] tx_dst_mac;
 reg [7:0] rx_protocol;
 reg [15:0] rx_dport;
+reg found_packet = 1'b0
 
 always @(posedge xgmii_clk) begin
 	if (sys_rst) begin
@@ -45,6 +46,7 @@ always @(posedge xgmii_clk) begin
 		rx_protocol <= 8'h0;
 		rx_dport <= 16'h00;
 		wr_en <= 1'b0;
+		found_packet <= 1'b0;
 		led_r <= 8'h00;
 	end else begin
 		wr_en <= 1'b0;
@@ -77,16 +79,19 @@ always @(posedge xgmii_clk) begin
 				rx_magic[15:8]  <= xgmii_rxd[39:32];
 				rx_magic[7:0]   <= xgmii_rxd[47:40];
 				if (rx_type == 16'h0800 && rx_protocol == 8'h11 && rx_dport == 16'd3422 && {xgmii_rxd[23:16], xgmii_rxd[31:24], xgmii_rxd[39:32], xgmii_rxd[47:40]} == `MAGIC_CODE) begin
-//					led_r[0] <= 1'b1;
+					found_packet <= 1'b1;
 				end
 			end
 			16'h38: begin
-				led_r <= xgmii_rxd[7:0];
+				if (found_packet) begin
+					led_r <= xgmii_rxd[7:0];
+				end
 			end
 			default: begin
 			end
 			endcase
 		end else begin
+			found_packet <= 1'b0;
 			rx_count <= 16'h0;
 		end
 	end
