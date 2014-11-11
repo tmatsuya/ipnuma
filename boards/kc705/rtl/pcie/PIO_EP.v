@@ -148,9 +148,9 @@ module PIO_EP #(
     PIO_EP_MEM_ACCESS  #(
        .TCQ( TCQ )
        ) EP_MEM_inst (
+      .sys_rst(sys_rst),       // I
       
       .clk(clk),               // I
-      .rst_n(rst_n),           // I
       
       // Read Port
       

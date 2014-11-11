@@ -6,7 +6,7 @@ module PIO_EP_MEM_ACCESS  #(
 ) (
 
 	input clk,
-	input rst_n,
+	input sys_rst,
 
 	// Read Access
 	input  [13:0] rd_addr,     // I [13:0]  Read Address
@@ -39,7 +39,7 @@ biosrom biosrom_0 (
 reg [31:0] read_data;
 
 always @(posedge clk) begin
-	if (rst_n == 1'b0) begin
+	if (sys_rst) begin
 		// PCIe User Registers
 		if_v4addr = {8'd10, 8'd0, 8'd21, 8'd199};
 		if_macaddr = 48'h003776_000001;

@@ -67,6 +67,8 @@ wire [13:0] segled;
 reg btn;
 
 PIO PIO_insta (
+	.sys_rst(sys_rst),
+
 	.user_clk(clk250),
 	.user_reset(sys_rst),
 	.user_lnk_up(1'b1),
