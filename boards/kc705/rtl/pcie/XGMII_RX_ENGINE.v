@@ -5,6 +5,7 @@
 `endif
 module XGMII_RX_ENGINE (
 	input sys_rst,
+	input clk,
 	// XGMII
 	input xgmii_clk,
 	input [7:0] xgmii_rxc,
@@ -81,8 +82,10 @@ always @(posedge xgmii_clk) begin
 			16'h28: begin
 				rx_dport[15:8]    <= xgmii_rxd[39:32];
 				rx_dport[ 7:0]    <= xgmii_rxd[47:40];
+				xgmii_frame_end <= 1'b1;
 			end
 			16'h30: begin
+				xgmii_frame_end <= 1'b1;
 				rx_magic[31:24] <= xgmii_rxd[23:16];
 				rx_magic[23:16] <= xgmii_rxd[31:24];
 				rx_magic[15:8]  <= xgmii_rxd[39:32];
@@ -112,7 +115,7 @@ end
 //-----------------------------------
 reg [7:0] xgmii_packet_count;	 // receive XGMII packet count
 reg [3:0] prev_xgmii_end;
-always @(posedge xgmii_clk) begin
+always @(posedge clk) begin
 	if (sys_rst) begin
 		xgmii_packet_count <= 8'h0;
 		prev_xgmii_end <= 4'b0000;
@@ -122,8 +125,6 @@ always @(posedge xgmii_clk) begin
 			xgmii_packet_count <= xgmii_packet_count + 8'd1;
 	end
 end
-
-assign xgmii_pktcount = xgmii_packet_count;
 
 assign led = led_r;
 

@@ -26,8 +26,8 @@ module PIO_TX_SNOOP (
 	input wire empty,
 	output wire rd_en,
 
-	input [7:0] xgmii_pktcount,
-	output [7:0] tlp_pktcount
+	input wire [7:0] xgmii_pktcount,
+	output wire [7:0] tlp_pktcount
 );
 
 `ifdef NO
@@ -87,5 +87,6 @@ always @(posedge clk) begin
 end
 `endif
 
+assign tlp_pktcount = xgmii_pktcount;
 endmodule // PIO_TX_SNOOP
 `default_nettype wire

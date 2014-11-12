@@ -411,6 +411,7 @@ afifo72_w156_r250 afifo72_w156_r250_0 (
 wire [7:0] xgmii_pktcount;
 XGMII_RX_ENGINE XGMII_RX_ENGINE_inst (
 	.sys_rst(sys_rst),           // I
+	.clk(clk),                   // I
 	// XGMII
         .xgmii_clk(xgmii_clk),
         .xgmii_rxc(xgmii_0_rxc),
