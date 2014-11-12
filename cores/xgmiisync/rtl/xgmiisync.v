@@ -11,7 +11,6 @@ module xgmiisync # (
 	output reg [7:0] xgmii_rxc_o
 );
 
-`ifdef NO
 //-----------------------------------
 // logic
 //-----------------------------------
@@ -42,7 +41,6 @@ always @(posedge xgmii_rx_clk) begin
 		end
 	end
 end
-`endif
 
 endmodule
 `default_nettype wire
