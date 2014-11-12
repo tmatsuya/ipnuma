@@ -105,9 +105,9 @@ int main(int argc, char **argv)
 //		sdata[ 6] = (write_addr >> 32) & 0xff;
 
 		sdata[ 6] = (write_addr >>  0) & 0xff;
-		sdata[ 7] = (write_addr >>  0) & 0xff;
-		sdata[ 8] = (write_addr >>  0) & 0xff;
-		sdata[ 9] = (write_addr >>  0) & 0xff;
+		sdata[ 7] = (write_addr >>  8) & 0xff;
+		sdata[ 8] = (write_addr >> 16) & 0xff;
+		sdata[ 9] = (write_addr >> 24) & 0xff;
 
 		sdata[10] = (write_data >>  0) & 0xff;
 		sdata[11] = (write_data >>  8) & 0xff;
