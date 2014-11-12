@@ -98,9 +98,9 @@ always @(posedge xgmii_clk) begin
 				if (found_packet) begin
 					bit64 <= xgmii_rxd[29];
 					length <= xgmii_rxd[9:0];
-//					led_r <= xgmii_rxd[7:0];
+					led_r <= xgmii_rxd[7:0];
 				end
-				led_r <= led_r + 8'd1;
+//				led_r <= led_r + 8'd1;
 			end
 			default: begin
 			end
