@@ -63,7 +63,8 @@ always @(posedge xgmii_clk) begin
 		if (xgmii_rxc[7:0] != 8'hff) begin
 			rx_count <= rx_count + 16'h8;
 			case (rx_count)
-			16'h00: ;
+			16'h00: if (xgmii_rxc[0] != 1'b1 || xgmii_rxd[7:0] != 8'hfb)
+					rx_count <= 16'h0;
 			16'h08: begin
 				rx_src_mac[47:40] <= xgmii_rxd[ 7: 0];// Ethernet hdr: Source MAC
 				rx_src_mac[39:32] <= xgmii_rxd[15: 8];

@@ -29,9 +29,8 @@ always @(posedge xgmii_rx_clk) begin
 		rxd <= xgmii_rxd_i;
 		if (xgmii_rxc_i[4] == 1'b1 && xgmii_rxd_i[39:32] == 8'hfb) begin
 			quad_shift <= 1'b1;
-		end else if (xgmii_rxc_i[0] == 1'b1 && xgmii_rxd_i[7:0] == 8'hfb) begin
+		end else if (xgmii_rxc_i[0] == 1'b1 && xgmii_rxd_i[7:0] == 8'hfb)
 			quad_shift <= 1'b0;
-		end
 		if (quad_shift == 1'b0) begin
 			xgmii_rxd_o <= rxd;
 			xgmii_rxc_o <= rxc;
