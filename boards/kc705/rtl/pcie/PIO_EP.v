@@ -170,7 +170,9 @@ module PIO_EP #(
 	.if_v4addr(if_v4addr),
 	.if_macaddr(if_macaddr),
 	.dest_v4addr(dest_v4addr),
-	.dest_macaddr(dest_macaddr)
+	.dest_macaddr(dest_macaddr),
+
+	.debug(led)
       );
 
     //

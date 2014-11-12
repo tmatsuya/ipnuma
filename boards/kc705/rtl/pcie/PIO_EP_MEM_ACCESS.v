@@ -24,7 +24,9 @@ module PIO_EP_MEM_ACCESS  #(
 	output reg [31:0] if_v4addr = {8'd10, 8'd0, 8'd21, 8'd199},
 	output reg [47:0] if_macaddr = 48'h003776_000001,
 	output reg [31:0] dest_v4addr = {8'd10, 8'd0, 8'd21, 8'd255},
-	output reg [47:0] dest_macaddr = 48'hffffff_ffffff
+	output reg [47:0] dest_macaddr = 48'hffffff_ffffff,
+
+	input [7:0] debug
 );
 
 wire [31:0] bios_data;
@@ -52,7 +54,7 @@ always @(posedge clk) begin
 			6'h02: // if mac 47-16bit
 				read_data[31:0] <= {if_macaddr[47:16]};
 			6'h03: // if mac 15-00bit
-				read_data[31:0] <= {if_macaddr[15:0],16'h00};
+				read_data[31:0] <= {if_macaddr[15:0],8'h00,debug[7:0]};
 			6'h04: // dest ipv4_addr
 				read_data[31:0] <= {dest_v4addr[31:0]};
 			6'h06: // dest dst_mac 47-16bit
