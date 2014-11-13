@@ -144,7 +144,7 @@ module PIO_EP #(
     //
     // ENDPOINT MEMORY : 8KB memory aperture implemented in FPGA BlockRAM(*)
     //
-
+wire [7:0] debug;
     PIO_EP_MEM_ACCESS  #(
        .TCQ( TCQ )
        ) EP_MEM_inst (
@@ -172,7 +172,7 @@ module PIO_EP #(
 	.dest_v4addr(dest_v4addr),
 	.dest_macaddr(dest_macaddr),
 
-	.debug(led)
+	.debug(debug)
       );
 
     //
@@ -432,7 +432,7 @@ XGMII_RX_ENGINE XGMII_RX_ENGINE_inst (
 
 	.xgmii_pktcount(xgmii_pktcount),
 
-	.led(led)
+	.led() //debug)
 );
 
 //
@@ -468,6 +468,8 @@ PIO_TX_SNOOP PIO_TX_SNOOP_inst (
 	.xgmii_pktcount(xgmii_pktcount),
 	.tlp_pktcount(tlp_pktcount)
 );
+assign debug = {xgmii_pktcount[3:0],tlp_pktcount[3:0]};
+assign led = debug;
 `else
 `endif
 

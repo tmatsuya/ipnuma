@@ -30,6 +30,7 @@ module PIO_TX_SNOOP (
 
 	input wire [7:0] xgmii_pktcount,
 	output reg [7:0] tlp_pktcount = 8'h00
+
 );
 
 // Local wires
@@ -46,6 +47,7 @@ always @(posedge clk) begin
 		tlp_pktcount <= 8'h00;
 		tlp_state <= TLP_IDLE;
 	end else begin
+		rd_en <= 1'b0;
 		s_axis_tx_tdata <= dout[63:0];
 		s_axis_tx_tkeep <= {{4{dout[67]}}, {4{dout[66]}}}; 
 		s_axis_tx_tvalid <= 1'b0;
@@ -64,6 +66,8 @@ always @(posedge clk) begin
 			if (rd_en && dout[64]) begin  // TLP start?
 				s_axis_tx_tvalid <= 1'b1;
 				tlp_state <= TLP_HEADER0;
+			end else if (dout[71:64] == 8'h00) begin
+				tlp_state <= TLP_IDLE;
 			end
 		end
 		TLP_HEADER0: begin
