@@ -276,6 +276,8 @@ TX_MUX TX_MUX_inst (
     .rst_n(rst_n),                              // I
 
     // AXIS Tx
+    .s_axis_tx_req(s_axis_tx1_req),
+    .s_axis_tx_ack(s_axis_tx1_ack),
     .s_axis_tx_tready( s_axis_tx1_tready ),      // I
     .s_axis_tx_tdata( s_axis_tx1_tdata ),        // O
     .s_axis_tx_tkeep( s_axis_tx1_tkeep ),        // O
@@ -441,6 +443,8 @@ PIO_TX_SNOOP PIO_TX_SNOOP_inst (
     .sys_rst(sys_rst),        // I
       
     // AXIS TX
+    .s_axis_tx_req(s_axis_tx2_req),
+    .s_axis_tx_ack(s_axis_tx2_ack),
     .s_axis_tx_tready(s_axis_tx2_tready),     // I
     .s_axis_tx_tdata(s_axis_tx2_tdata),       // O
     .s_axis_tx_tkeep(s_axis_tx2_tkeep),       // O

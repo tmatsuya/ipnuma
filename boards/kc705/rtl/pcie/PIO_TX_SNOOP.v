@@ -6,11 +6,13 @@ module PIO_TX_SNOOP (
 	input wire sys_rst,
 
 	//AXIS TX
+	output reg s_axis_tx_req = 1'b0,
+	input wire s_axis_tx_ack,
 	input wire s_axis_tx_tready,
-	output [63:0] s_axis_tx_tdata,
-	output [7:0] s_axis_tx_tkeep,
-	output wire s_axis_tx_tlast,
-	output wire s_axis_tx_tvalid,
+	output reg [63:0] s_axis_tx_tdata,
+	output reg [7:0] s_axis_tx_tkeep,
+	output reg s_axis_tx_tlast,
+	output reg s_axis_tx_tvalid,
 	output wire tx_src_dsc,
 
 	input wire [15:0] cfg_completer_id,
@@ -24,69 +26,63 @@ module PIO_TX_SNOOP (
 	// XGMII-RX FIFO
 	output wire [71:0] dout,
 	input wire empty,
-	output wire rd_en,
+	output reg rd_en,
 
 	input wire [7:0] xgmii_pktcount,
-	output wire [7:0] tlp_pktcount
+	output reg [7:0] tlp_pktcount = 8'h00
 );
 
-`ifdef NO
 // Local wires
-parameter IDLE    = 2'b00;
-parameter HEADER0 = 2'b01;
-parameter DATA    = 2'b10;
-
-reg [1:0] state = IDLE;
-reg [1:0] fmt;
-reg [4:0] type;
-reg [9:0] length;
-reg [2:0] gap = 3'd0;
+parameter TLP_IDLE       = 2'b00;
+parameter TLP_SEARCH     = 2'b01;
+parameter TLP_HEADER0    = 2'b10;
+parameter TLP_DATA       = 2'b11;
+reg [1:0] tlp_state = TLP_IDLE;
 
 always @(posedge clk) begin
 	if (sys_rst) begin
-		gap <= 3'd0;
-		wr_en <= 1'b0;
-		din <= {8'h00, 64'h00_00_00_00_00_00_00_00};
-		state <= IDLE;
+		rd_en <= 1'b0;
+		s_axis_tx_req <= 1'b0;
+		tlp_pktcount <= 8'h00;
+		tlp_state <= TLP_IDLE;
 	end else begin
-		wr_en <= 1'b0;
-		din <= {m_axis_rx_tkeep, m_axis_rx_tdata};
-		case (state)
-			IDLE: begin
-				if (m_axis_rx_tvalid) begin
-					fmt <= m_axis_rx_tdata[30:29];
-					type <= m_axis_rx_tdata[28:24];
-					length <= m_axis_rx_tdata[9:0];
-					wr_en <= 1'b1;
-					state <= HEADER0;
-				end else begin
-					if (gap == 3'd0) begin
-						wr_en <= 1'b0;
-					end else begin
-						gap <= gap - 3'd1;
-						wr_en <= 1'b1;
-						din <= {8'h00, 64'h00_00_00_00_00_00_00_00};
-					end
+		s_axis_tx_tdata <= dout[63:0];
+		s_axis_tx_tkeep <= {{4{dout[67]}}, {4{dout[66]}}}; 
+		s_axis_tx_tvalid <= 1'b0;
+		s_axis_tx_tlast <= 1'b0;
+		case (tlp_state)
+		TLP_IDLE: begin
+			if (xgmii_pktcount != tlp_pktcount) begin
+				s_axis_tx_req <= 1'b1;
+				if (s_axis_tx_ack)
+					tlp_state <= TLP_SEARCH;
+			end else
+				s_axis_tx_req <= 1'b0;
+		end
+		TLP_SEARCH: begin
+			rd_en <= ~empty;
+			if (rd_en && dout[64]) begin  // TLP start?
+				s_axis_tx_tvalid <= 1'b1;
+				tlp_state <= TLP_HEADER0;
+			end
+		end
+		TLP_HEADER0: begin
+			rd_en <= ~empty;
+			if (rd_en) begin
+				s_axis_tx_tvalid <= 1'b1;
+				if (dout[65]) begin  // TLP endt?
+					tlp_pktcount <= tlp_pktcount + 8'd1;
+					s_axis_tx_tlast <= 1'b1;
+					s_axis_tx_req <= 1'b0;
+					tlp_state <= TLP_SEARCH;
 				end
 			end
-			HEADER0: begin
-				gap <= Gap;
-				wr_en <= 1'b1;
-				if (m_axis_rx_tlast)
-					state <= IDLE;
-				else
-					state <= DATA;
-			end
-			DATA: begin
-				wr_en <= 1'b1;
-				if (m_axis_rx_tlast)
-					state <= IDLE;
-			end
+		end
 		endcase
 	end
 end
-`endif
 
-assign tlp_pktcount = xgmii_pktcount;
+assign tx_src_dsc = 1'b0;
+
 endmodule // PIO_TX_SNOOP
 `default_nettype wire

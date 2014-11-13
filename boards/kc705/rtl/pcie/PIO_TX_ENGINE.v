@@ -67,6 +67,8 @@ module PIO_TX_ENGINE    #(
   input             rst_n,
 
   // AXIS
+  output  reg                     s_axis_tx_req = 1'b0,
+  input                           s_axis_tx_ack,
   input                           s_axis_tx_tready,
   output  reg [C_DATA_WIDTH-1:0]  s_axis_tx_tdata,
   output  reg [KEEP_WIDTH-1:0]    s_axis_tx_tkeep,
@@ -190,6 +192,7 @@ localparam PIO_TX_CPLD_QW1        = 2'b11;
           s_axis_tx_tvalid  <= #TCQ 1'b0;
           s_axis_tx_tdata   <= #TCQ {C_DATA_WIDTH{1'b0}};
           s_axis_tx_tkeep   <= #TCQ {KEEP_WIDTH{1'b0}};
+          s_axis_tx_req     <= #TCQ 1'b0;
          
           compl_done        <= #TCQ 1'b0;
           compl_busy_i      <= #TCQ 1'b0;
@@ -207,11 +210,12 @@ localparam PIO_TX_CPLD_QW1        = 2'b11;
               if (compl_busy_i) 
               begin
                 
+                s_axis_tx_req     <= #TCQ 1'b1;
                 s_axis_tx_tdata   <= #TCQ {C_DATA_WIDTH{1'b0}};
                 s_axis_tx_tkeep   <= #TCQ 8'hFF;
                 s_axis_tx_tlast   <= #TCQ 1'b0;
                 s_axis_tx_tvalid  <= #TCQ 1'b0;
-                  if (s_axis_tx_tready)
+                  if (s_axis_tx_tready && s_axis_tx_ack)
                     state             <= #TCQ PIO_TX_CPLD_QW1_FIRST;
                   else
                   state             <= #TCQ PIO_TX_RST_STATE;
@@ -219,6 +223,7 @@ localparam PIO_TX_CPLD_QW1        = 2'b11;
               else
               begin
 
+                s_axis_tx_req     <= #TCQ 1'b0;
                 s_axis_tx_tlast   <= #TCQ 1'b0;
                 s_axis_tx_tvalid  <= #TCQ 1'b0;
                 s_axis_tx_tdata   <= #TCQ 64'b0;
