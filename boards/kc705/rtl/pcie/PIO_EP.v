@@ -441,12 +441,12 @@ PIO_TX_SNOOP PIO_TX_SNOOP_inst (
     .sys_rst(sys_rst),        // I
       
     // AXIS TX
-//    s_axis_tx_tready(s_axis_tx_tready),     // I
-//    s_axis_tx_tdata(s_axis_tx_tdata),       // O
-//    s_axis_tx_tkeep(s_axis_tx_tkeep),       // O
-//    s_axis_tx_tlast(s_axis_tx_tlast),       // O
-//    s_axis_tx_tvalid(s_axis_tx_tvalid),     // O
-//    tx_src_dsc(tx_src_dsc),                 // O
+    .s_axis_tx_tready(s_axis_tx2_tready),     // I
+    .s_axis_tx_tdata(s_axis_tx2_tdata),       // O
+    .s_axis_tx_tkeep(s_axis_tx2_tkeep),       // O
+    .s_axis_tx_tlast(s_axis_tx2_tlast),       // O
+    .s_axis_tx_tvalid(s_axis_tx2_tvalid),     // O
+    .tx_src_dsc(tx2_src_dsc),                 // O
 
     .cfg_completer_id(cfg_completer_id),           // I [15:0]
 

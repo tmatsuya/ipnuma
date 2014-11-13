@@ -11,8 +11,8 @@ module TX_MUX (
 	output s_axis_tx_tvalid,
 	output tx_src_dsc,
 	// AXIS Input 1
-	output s_axis_tx1_req,
-	output s_axis_tx1_ack,
+	input s_axis_tx1_req,
+	output reg s_axis_tx1_ack = 1'b0,
 	output s_axis_tx1_tready,
 	input [63:0] s_axis_tx1_tdata,
 	input [7:0] s_axis_tx1_tkeep,
@@ -20,8 +20,8 @@ module TX_MUX (
 	input s_axis_tx1_tvalid,
 	input tx1_src_dsc,
 	// AXIS Input 2
-	output s_axis_tx2_req,
-	output s_axis_tx2_ack,
+	input s_axis_tx2_req,
+	output reg s_axis_tx2_ack = 1'b0,
 	output s_axis_tx2_tready,
 	input [63:0] s_axis_tx2_tdata,
 	input [7:0] s_axis_tx2_tkeep,
@@ -30,14 +30,38 @@ module TX_MUX (
 	input tx2_src_dsc
 );
 
-reg sel = 1'b0;
+always @(posedge clk) begin
+	if (sys_rst) begin
+		s_axis_tx1_ack <= 1'b0;
+		s_axis_tx2_ack <= 1'b0;
+	end else begin
+		case ({s_axis_tx2_ack, s_axis_tx1_ack})
+		2'b00: begin
+			if (s_axis_tx1_req)
+				s_axis_tx1_ack <= 1'b1;
+			else if (s_axis_tx2_req)
+				s_axis_tx2_ack <= 1'b1;
+		end
+		2'b01: begin
+			if (~s_axis_tx1_req)
+				s_axis_tx1_ack <= 1'b0;
+		end
+		2'b10: begin
+			if (~s_axis_tx2_req)
+				s_axis_tx2_ack <= 1'b0;
+		end
+		2'b11: begin
+		end
+		endcase
+	end
+end
 
-assign s_axis_tx1_tready= sel ? 1'b1: s_axis_tx_tready;
-assign s_axis_tx2_tready= ~sel? 1'b1: s_axis_tx_tready;
-assign s_axis_tx_tdata  = sel ? s_axis_tx2_tdata:  s_axis_tx1_tdata;
-assign s_axis_tx_tkeep  = sel ? s_axis_tx2_tkeep:  s_axis_tx1_tkeep;
-assign s_axis_tx_tlast  = sel ? s_axis_tx2_tlast:  s_axis_tx1_tlast;
-assign s_axis_tx_tvalid = sel ? s_axis_tx2_tvalid: s_axis_tx1_tvalid;
-assign tx_src_dsc       = sel ? tx2_src_dsc:       tx1_src_dsc;
+assign s_axis_tx1_tready= s_axis_tx_tready;
+assign s_axis_tx2_tready= s_axis_tx_tready;
+assign s_axis_tx_tdata  = s_axis_tx2_ack ? s_axis_tx2_tdata:  s_axis_tx1_tdata;
+assign s_axis_tx_tkeep  = s_axis_tx2_ack ? s_axis_tx2_tkeep:  s_axis_tx1_tkeep;
+assign s_axis_tx_tlast  = s_axis_tx2_ack ? s_axis_tx2_tlast:  s_axis_tx1_tlast;
+assign s_axis_tx_tvalid = s_axis_tx2_ack ? s_axis_tx2_tvalid: s_axis_tx1_tvalid;
+assign tx_src_dsc       = s_axis_tx2_ack ? tx2_src_dsc:       tx1_src_dsc;
 
 endmodule // TX_MUX
