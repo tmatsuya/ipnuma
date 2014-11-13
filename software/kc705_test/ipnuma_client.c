@@ -23,7 +23,7 @@ int main(int argc, char **argv)
 	int i, j, dwlen, dwlen2;
 	int tlp[10];
 	char sdata[BUFSIZE], dest_ip[256];
-	long int write_addr, write_data;
+	long int write_addr, write_data = 0xa1b2c3d4;
 
 	if ( argc < 2) {
 		fprintf( stderr, "usage: %s [dest IP] <write_address> <write_data>\n", argv[0] );
@@ -110,7 +110,7 @@ int main(int argc, char **argv)
 		tlp[0] = 0x40000001;
 		tlp[1] = 0x123401ff;
 		tlp[2] = write_addr; //0x000b8000;
-		tlp[3] = 0xa1b2c3d4;
+		tlp[3] = write_data; //0xa1b2c3d4;
 
 		for (i=0; i<4; ++i) {
 			sdata[ i*4+6 ] = (tlp[i] >>  0) & 0xff;
