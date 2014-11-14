@@ -18,10 +18,10 @@ module PIO_RX_SNOOP # (
 	input wire [15:0] cfg_completer_id,
 
 	// PCIe user registers
-	output wire [31:0] if_v4addr,
-	output wire [47:0] if_macaddr,
-	output wire [31:0] dest_v4addr,
-	output wire [47:0] dest_macaddr,
+	input wire [31:0] if_v4addr,
+	input wire [47:0] if_macaddr,
+	input wire [31:0] dest_v4addr,
+	input wire [47:0] dest_macaddr,
 
 	// XGMII-TX FIFO
 	output reg [71:0] din,
@@ -31,32 +31,40 @@ module PIO_RX_SNOOP # (
 
 // Local wires
 parameter IDLE    = 2'b00;
-parameter HEADER0 = 2'b01;
+parameter HEADER1 = 2'b01;
 parameter DATA    = 2'b10;
+parameter FIN     = 2'b11;
 
 reg [1:0] state = IDLE;
 reg [1:0] fmt;
 reg [4:0] type;
 reg [9:0] length;
 reg [2:0] gap = 3'd0;
+reg [63:0] rx_tdata2;
+reg [7:0] rx_tkeep2;
 
 always @(posedge clk) begin
 	if (sys_rst) begin
 		gap <= 3'd0;
 		wr_en <= 1'b0;
+		rx_tdata2 <= 64'h00;
+		rx_tkeep2 <= 8'h00;
 		din <= {8'h00, 64'h00_00_00_00_00_00_00_00};
 		state <= IDLE;
 	end else begin
+		rx_tdata2 <= m_axis_rx_tdata;
+		rx_tkeep2 <= m_axis_rx_tkeep;
+		din <= {rx_tkeep2, rx_tdata2};
 		wr_en <= 1'b0;
-		din <= {m_axis_rx_tkeep, m_axis_rx_tdata};
 		case (state)
 			IDLE: begin
 				if (m_axis_rx_tvalid) begin
 					fmt <= m_axis_rx_tdata[30:29];
 					type <= m_axis_rx_tdata[28:24];
 					length <= m_axis_rx_tdata[9:0];
+					din <= {8'h10, 64'h00_00_00_00_00_00_00_00};	// bit68: start next bit
 					wr_en <= 1'b1;
-					state <= HEADER0;
+					state <= HEADER1;
 				end else begin
 					if (gap == 3'd0) begin
 						wr_en <= 1'b0;
@@ -67,18 +75,28 @@ always @(posedge clk) begin
 					end
 				end
 			end
-			HEADER0: begin
+			HEADER1: begin
+				if (type[4:1] == 4'b0000) begin	// memory access request (need address translation)
+					if (fmt[0] == 1'b0)	// 32bit address
+						;
+					else				// 64bit address
+						;
+				end
 				gap <= Gap;
 				wr_en <= 1'b1;
 				if (m_axis_rx_tlast)
-					state <= IDLE;
+					state <= FIN;
 				else
 					state <= DATA;
 			end
 			DATA: begin
 				wr_en <= 1'b1;
 				if (m_axis_rx_tlast)
-					state <= IDLE;
+					state <= FIN;
+			end
+			FIN: begin
+				wr_en <= 1'b1;
+				state <= IDLE;
 			end
 		endcase
 	end

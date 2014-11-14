@@ -1,3 +1,5 @@
+`default_nettype none
+`timescale 1ps/1ps
 `ifdef SIMULATION
 `include "../rtl/setup.v"
 `else
@@ -5,18 +7,18 @@
 `endif
 module XGMII_TX_ENGINE (
 	// FIFO
-	input sys_rst,
-	input [71:0] dout,
-	input empty,
+	input wire sys_rst,
+	input wire [71:0] dout,
+	input wire empty,
 	output reg rd_en = 1'b0,
 	// XGMII
-	input	 xgmii_clk,
-	output [71:0] xgmii_txd,
+	input wire xgmii_clk,
+	output wire [71:0] xgmii_txd,
 	// PCIe user registers
-	input [31:0] if_v4addr,
-	input [47:0] if_macaddr,
-	input [31:0] dest_v4addr,
-	input [47:0] dest_macaddr
+	input wire [31:0] if_v4addr,
+	input wire [47:0] if_macaddr,
+	input wire [31:0] dest_v4addr,
+	input wire [47:0] dest_macaddr
 );
 
 //-----------------------------------
@@ -78,6 +80,7 @@ reg [7:0] txc, txc2;
 // CRC logic
 //-----------------------------------
 reg crc_init = 1'b0;
+wire crc_data_en;
 assign crc_data_en = ~crc_init;
 wire [31:0] crc64_out, crc64_outrev;
 assign crc64_outrev = ~{ crc64_out[24],crc64_out[25],crc64_out[26],crc64_out[27],crc64_out[28],crc64_out[29],crc64_out[30],crc64_out[31], crc64_out[16],crc64_out[17],crc64_out[18],crc64_out[19],crc64_out[20],crc64_out[21],crc64_out[22],crc64_out[23], crc64_out[ 8],crc64_out[ 9],crc64_out[10],crc64_out[11],crc64_out[12],crc64_out[13],crc64_out[14],crc64_out[15], crc64_out[ 0],crc64_out[ 1],crc64_out[ 2],crc64_out[ 3],crc64_out[ 4],crc64_out[ 5],crc64_out[ 6],crc64_out[ 7] };
@@ -187,4 +190,5 @@ end
 
 assign xgmii_txd = {txc, txd};
 
-endmodule
+endmodule // XGMII_TX_ENGINE
+`default_nettype wire
