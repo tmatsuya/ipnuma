@@ -159,14 +159,12 @@ initial begin
 	waitclock;
 	waitclock;
 
-	force tb_system.PIO_insta.PIO_EP_inst.afifo72_w250_r156_0.din = 72'h0000;
-	force tb_system.PIO_insta.PIO_EP_inst.afifo72_w250_r156_0.wr_en = 1'h1;
-	waitclock;
-	waitclock;
-	waitclock;
-	waitclock;
-	release tb_system.PIO_insta.PIO_EP_inst.afifo72_w250_r156_0.din;
-	release tb_system.PIO_insta.PIO_EP_inst.afifo72_w250_r156_0.wr_en;
+//	force tb_system.PIO_insta.PIO_EP_inst.afifo72_w250_r156_0.din = 72'h0000;
+//	force tb_system.PIO_insta.PIO_EP_inst.afifo72_w250_r156_0.wr_en = 1'h1;
+//	waitclock;
+//	waitclock;
+//	release tb_system.PIO_insta.PIO_EP_inst.afifo72_w250_r156_0.din;
+//	release tb_system.PIO_insta.PIO_EP_inst.afifo72_w250_r156_0.wr_en;
 
 //	#(500*16) mst_req_o = 1'b1;
 
