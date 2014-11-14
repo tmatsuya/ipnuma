@@ -43,7 +43,7 @@ int main(int argc, char **argv)
 
 	if ( argc >= 4 ) {
 		write_addr = strtoll( argv[3], NULL, 0);
-		printf("write_addr=%16llx", write_addr);
+		printf("mode=%d, write_addr=%16llx", mode, write_addr);
 	}
 
 	if ( argc >= 5 ) {
