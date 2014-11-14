@@ -1,10 +1,8 @@
 `default_nettype none
 `timescale 1ps/1ps
-
-//
 // FIFO DIN b63-00: data
 //          b64:    next TLP
-//          b65:    TLP last
+//          b65:    last TLP
 //          b66:    b31-b0 enable
 //          b67:    b63-b32 enable
 //
@@ -43,12 +41,13 @@ parameter DATA    = 2'b10;
 parameter FIN     = 2'b11;
 
 reg [1:0] state = IDLE;
-reg [1:0] fmt;
-reg [4:0] type;
-reg [9:0] length;
+reg [1:0] fmt = 2'b00;
+reg [4:0] type = 5'b00000;
+reg [9:0] length = 10'b0000000000;
 reg [2:0] gap = 3'd0;
-reg [63:0] rx_tdata2;
-reg [7:0] rx_tkeep2;
+reg [63:0] rx_tdata2 = 64'h00;
+reg [7:0] rx_tkeep2 = 8'h00;
+reg rx_tlast2 = 1'b0;
 
 always @(posedge clk) begin
 	if (sys_rst) begin
@@ -56,12 +55,14 @@ always @(posedge clk) begin
 		wr_en <= 1'b0;
 		rx_tdata2 <= 64'h00;
 		rx_tkeep2 <= 8'h00;
+		rx_tlast2 <= 1'b0;
 		din <= {8'h00, 64'h00_00_00_00_00_00_00_00};
 		state <= IDLE;
 	end else begin
 		rx_tdata2 <= m_axis_rx_tdata;
 		rx_tkeep2 <= m_axis_rx_tkeep;
-		din <= {6'b00, rx_tkeep2[4], rx_tkeep2[0], rx_tdata2};
+		rx_tlast2 <= m_axis_rx_tlast;
+		din <= {4'b00, rx_tkeep2[4], rx_tkeep2[0], rx_tlast2, 1'b0, rx_tdata2};
 		wr_en <= 1'b0;
 		case (state)
 			IDLE: begin
@@ -69,7 +70,7 @@ always @(posedge clk) begin
 					fmt <= m_axis_rx_tdata[30:29];
 					type <= m_axis_rx_tdata[28:24];
 					length <= m_axis_rx_tdata[9:0];
-					din <= {8'h10, 64'h00_00_00_00_00_00_00_00};	// bit68: start next bit
+					din[67:0] <= {4'h1, 64'h00_00_00_00_00_00_00_00};	// bit68: start next bit
 					wr_en <= 1'b1;
 					state <= HEADER1;
 				end else begin
@@ -78,7 +79,7 @@ always @(posedge clk) begin
 					end else begin
 						gap <= gap - 3'd1;
 						wr_en <= 1'b1;
-						din <= {8'h00, 64'h00_00_00_00_00_00_00_00};
+						din[67:0] <= {4'h0, 64'h00_00_00_00_00_00_00_00};
 					end
 				end
 			end

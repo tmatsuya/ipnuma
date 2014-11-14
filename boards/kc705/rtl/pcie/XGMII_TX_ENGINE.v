@@ -5,6 +5,12 @@
 `else
 `include "../setup.v"
 `endif
+// FIFO DOUT b63-00: data
+//           b64:    next TLP
+//           b65:    last TLP
+//           b66:    b31-b0 enable
+//           b67:    b63-b32 enable
+//
 module XGMII_TX_ENGINE (
 	// FIFO
 	input wire sys_rst,
@@ -40,24 +46,24 @@ always @(posedge xgmii_clk) begin
 			FIFO_IDLE: begin
 				rd_en <= ~empty;
 				if (rd_en) begin
-					if (dout[71:64] != 8'h00) begin
+					if (dout[64]) begin	// find next TLP bit
 						rd_en <= 1'b0;
 						fifo_state <= FIFO_WAIT;
 					end
 				end
 			end
 			FIFO_WAIT: begin
-//				if (tx_counter[15:0] == 16'h28) begin
+				if (tx_counter[15:0] == 16'h28) begin
 					fifo_state <= FIFO_DATA;
-//				end
+				end
 			end
 			FIFO_DATA: begin
 				rd_en <= ~empty;
 				if (~rd_en) begin
-//					if (dout[71:64] == 8'h00) begin
-//						rd_en <= 1'b0;
+					if (dout[65]) begin	// find last TLP bit
+						rd_en <= 1'b0;
 						fifo_state <= FIFO_FIN;
-//					end
+					end
 				end
 			end
 			FIFO_FIN: begin
