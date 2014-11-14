@@ -18,28 +18,37 @@
 
 int main(int argc, char **argv)
 {
-	int sockfd;
+	int sockfd, mode = 0;
 	struct sockaddr_in servaddr;
 	int i, j, dwlen, dwlen2;
-	int tlp[10];
+	int tlp[10], tlp_len;
 	char sdata[BUFSIZE], dest_ip[256];
-	long int write_addr, write_data = 0xa1b2c3d4;
+	long long int write_addr, write_data = 0xa1b2c3d4;
 
 	if ( argc < 2) {
-		fprintf( stderr, "usage: %s [dest IP] <write_address> <write_data>\n", argv[0] );
+		fprintf( stderr, "usage: %s [dest IP] <mode> <write_address> <write_data>\n", argv[0] );
+		fprintf( stderr, "      mode  0:3DW+1DW 1:3DW+2DW 2:4DW+1DW 3:4DW+2DW\n");
 		exit(-1);
 	}
 
 	strcpy( dest_ip, argv[1] );
 
 	if ( argc >= 3 ) {
-		write_addr = strtol( argv[2], NULL, 0);
-		printf("write_addr=%012lx\n", write_addr);
+		mode = atoi(argv[2]);
+		if (mode < 0 || mode > 3) {
+			fprintf( stderr, "invalid mode\n");
+			exit(-1);
+		}
 	}
 
 	if ( argc >= 4 ) {
-		write_data = strtol( argv[3], NULL, 0);
-		printf("write_data=%08x\n", write_data);
+		write_addr = strtoll( argv[3], NULL, 0);
+		printf("write_addr=%12llx\n", write_addr);
+	}
+
+	if ( argc >= 5 ) {
+		write_data = strtoll( argv[4], NULL, 0);
+		printf("write_data=%16llx\n", write_data);
 	}
 
 	memset(&servaddr, 0, sizeof(servaddr));
@@ -107,19 +116,30 @@ int main(int argc, char **argv)
 
 //		sdata[ 6] = (write_addr >> 32) & 0xff;
 
-		tlp[0] = 0x40000001;
-		tlp[1] = 0x123401ff;
-		tlp[2] = write_addr; //0x000b8000;
-		tlp[3] = write_data; //0xa1b2c3d4;
+		tlp_len = 0;
+		switch (mode) {
+			case 0: tlp[tlp_len++] = 0x40000001; break;
+			case 1: tlp[tlp_len++] = 0x40000002; break;
+			case 2: tlp[tlp_len++] = 0x60000001; break;
+			case 3: tlp[tlp_len++] = 0x60000002; break;
+			default:tlp[tlp_len++] = 0x40000001; break;
+		}
+		tlp[tlp_len++] = 0x123401ff;
+		if (mode & 2)
+			tlp[tlp_len++] = write_addr>>32; //0x000b8000;
+		tlp[tlp_len++] = write_addr; //0x000b8000;
+		tlp[tlp_len++] = write_data; //0xa1b2c3d4;
+		if (mode & 1)
+			tlp[tlp_len++] = write_data>>32; //0xa1b2c3d4;
 
-		for (i=0; i<4; ++i) {
+		for (i=0; i<tlp_len; ++i) {
 			sdata[ i*4+6 ] = (tlp[i] >>  0) & 0xff;
 			sdata[ i*4+7 ] = (tlp[i] >>  8) & 0xff;
 			sdata[ i*4+8 ] = (tlp[i] >> 16) & 0xff;
 			sdata[ i*4+9 ] = (tlp[i] >> 24) & 0xff;
 		}
 
-		if (sendto(sockfd, sdata, 6+4*4, 0, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0){
+		if (sendto(sockfd, sdata, 6+(tlp_len*4), 0, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0){
 			perror("sendto()");
 		}
 
