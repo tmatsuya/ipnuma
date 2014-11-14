@@ -43,13 +43,14 @@ int main(int argc, char **argv)
 
 	if ( argc >= 4 ) {
 		write_addr = strtoll( argv[3], NULL, 0);
-		printf("write_addr=%12llx\n", write_addr);
+		printf("write_addr=%16llx", write_addr);
 	}
 
 	if ( argc >= 5 ) {
 		write_data = strtoll( argv[4], NULL, 0);
-		printf("write_data=%16llx\n", write_data);
+		printf(", write_data=%16llx", write_data);
 	}
+	printf("\n");
 
 	memset(&servaddr, 0, sizeof(servaddr));
 	servaddr.sin_family = AF_INET;
