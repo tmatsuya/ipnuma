@@ -115,7 +115,7 @@ always @(posedge xgmii_clk) begin
 			else begin
 				din[71:64] <= 8'b0000_1101; // Start TLP
 				// bit64:xgmii_rxd[29]; length:xgmii_rxd[9:0]
-				dwlen <= xgmii_rxd[9:0] - 10'd1 + {9'd0, xgmii_rxd[29]}; // tlp DWlength
+				dwlen <= (xgmii_rxd[30] ? xgmii_rxd[9:0] : 10'd0) - 10'd1 + {9'd0, xgmii_rxd[29]}; // tlp DWlength
 				wr_en <= 1'b1;
 				rx_state <= RX_TLP2;
 			end
