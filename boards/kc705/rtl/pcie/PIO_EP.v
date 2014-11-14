@@ -337,6 +337,7 @@ afifo72_w250_r156 afifo72_w250_r156_0 (
 //
 // PCIE-RX SNOOP
 //
+wire req_gap;
 PIO_RX_SNOOP PIO_RX_SNOOP_inst (
     .clk(clk),               // I
     .sys_rst(sys_rst),        // I
@@ -358,6 +359,7 @@ PIO_RX_SNOOP PIO_RX_SNOOP_inst (
 	.dest_macaddr(dest_macaddr),
 
 	// XGMII-TX FIFO
+	.req_gap(req_gap),
 	.din(tx0_phyq_din),
 	.full(tx0_phyq_full),
 	.wr_en(tx0_phyq_wr_en)
@@ -369,6 +371,7 @@ PIO_RX_SNOOP PIO_RX_SNOOP_inst (
 XGMII_TX_ENGINE XGMII_TX_ENGINE_inst (
 	.sys_rst(sys_rst),           // I
 	// XGMII-TX FIFO
+	.req_gap(req_gap),
 	.dout(tx0_phyq_dout),
 	.empty(tx0_phyq_empty),
 	.rd_en(tx0_phyq_rd_en),

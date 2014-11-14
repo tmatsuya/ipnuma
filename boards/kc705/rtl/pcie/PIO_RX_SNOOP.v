@@ -5,7 +5,7 @@
 //          b65:    last TLP
 //          b66:    b31-b0 enable
 //          b67:    b63-b32 enable
-//
+//          b68:    IFG
 module PIO_RX_SNOOP # (
 	parameter Gap = 3'd7
 ) (
@@ -29,6 +29,7 @@ module PIO_RX_SNOOP # (
 	input wire [47:0] dest_macaddr,
 
 	// XGMII-TX FIFO
+	input req_gap,
 	output reg [71:0] din,
 	input wire full,
 	output reg wr_en
@@ -47,6 +48,7 @@ reg [9:0] length = 10'b0000000000;
 reg [63:0] rx_tdata2 = 64'h00;
 reg [7:0] rx_tkeep2 = 8'h00;
 reg rx_tlast2 = 1'b0;
+reg [2:0] gap = 3'd0;
 
 always @(posedge clk) begin
 	if (sys_rst) begin
@@ -54,6 +56,7 @@ always @(posedge clk) begin
 		rx_tdata2 <= 64'h00;
 		rx_tkeep2 <= 8'h00;
 		rx_tlast2 <= 1'b0;
+		gap <= 3'd0;
 		din <= {8'h00, 64'h00_00_00_00_00_00_00_00};
 		state <= IDLE;
 	end else begin
@@ -62,6 +65,8 @@ always @(posedge clk) begin
 		rx_tlast2 <= m_axis_rx_tlast;
 		din <= {4'b00, rx_tkeep2[4], rx_tkeep2[0], rx_tlast2, 1'b0, rx_tdata2};
 		wr_en <= 1'b0;
+		if (req_gap)
+			gap <= Gap;
 		case (state)
 			IDLE: begin
 				if (m_axis_rx_tvalid) begin
@@ -69,6 +74,14 @@ always @(posedge clk) begin
 					type <= m_axis_rx_tdata[28:24];
 					length <= m_axis_rx_tdata[9:0];
 					state <= HEADER1;
+				end else begin
+					if (gap == 3'd0) begin
+						wr_en <= 1'b0;
+					end else begin
+						gap <= gap - 3'd1;
+						wr_en <= 1'b1;
+						din <= {8'h10, 64'h00_00_00_00_00_00_00_00};	// IFG=1
+					end
 				end
 			end
 			HEADER1: begin

@@ -10,10 +10,11 @@
 //           b65:    last TLP
 //           b66:    b31-b0 enable
 //           b67:    b63-b32 enable
-//
+//           b68:    IFG
 module XGMII_TX_ENGINE (
 	// FIFO
 	input wire sys_rst,
+	output reg req_gap = 1'b0,
 	input wire [71:0] dout,
 	input wire empty,
 	output reg rd_en = 1'b0,
@@ -39,6 +40,7 @@ reg [1:0] fifo_state = FIFO_IDLE;
 
 always @(posedge xgmii_clk) begin
 	if (sys_rst) begin
+		req_gap<= 1'b0;
 		rd_en <= 1'b0;
 		fifo_state <= FIFO_IDLE;
 	end else begin
@@ -154,11 +156,13 @@ always @(posedge xgmii_clk) begin
 					{txc, txd} <= {8'h01, 64'hd5_55_55_55_55_55_55_fb};
 					ip_sum <= 16'h4500 + {4'h0,tx0_ip_len[11:0]} + ipv4_id[15:0] + {ipv4_ttl[7:0],8'h11} + if_v4addr[31:16] + if_v4addr[15:0] + ipv4_dstip[31:16] + ipv4_dstip[15:0];
 					crc_init <= 1'b1;
+					req_gap <= 1'b1;
 				end
 				16'h08: begin
 					{txc, txd} <= {8'h00, if_macaddr[39:32], if_macaddr[47:40], dest_macaddr[7:0], dest_macaddr[15:8], dest_macaddr[23:16], dest_macaddr[31:24], dest_macaddr[39:32], dest_macaddr[47:40]};
 					ip_sum <= ~(ip_sum[15:0] + ip_sum[23:16]);
 					crc_init <= 1'b0;
+					req_gap <= 1'b0;
 				end
 				16'h10: {txc, txd} <= {8'h00, 32'h00_45_00_08, if_macaddr[7:0], if_macaddr[15:8], if_macaddr[23:16], if_macaddr[31:24]};
 				16'h18: {txc, txd} <= {8'h00, 8'h11, ipv4_ttl[7:0], 16'h00, ipv4_id[7:0], ipv4_id[15:8], tx0_ip_len[7:0], 4'h0, tx0_ip_len[11:8]};
