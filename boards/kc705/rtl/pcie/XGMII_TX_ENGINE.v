@@ -6,7 +6,7 @@
 `include "../setup.v"
 `endif
 // FIFO DOUT b63-00: data
-//           b64:    next TLP
+//           b64:    start TLP
 //           b65:    last TLP
 //           b66:    b31-b0 enable
 //           b67:    b63-b32 enable

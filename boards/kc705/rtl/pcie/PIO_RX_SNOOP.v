@@ -1,7 +1,7 @@
 `default_nettype none
 `timescale 1ps/1ps
 // FIFO DIN b63-00: data
-//          b64:    next TLP
+//          b64:    start TLP
 //          b65:    last TLP
 //          b66:    b31-b0 enable
 //          b67:    b63-b32 enable
@@ -44,14 +44,12 @@ reg [1:0] state = IDLE;
 reg [1:0] fmt = 2'b00;
 reg [4:0] type = 5'b00000;
 reg [9:0] length = 10'b0000000000;
-reg [2:0] gap = 3'd0;
 reg [63:0] rx_tdata2 = 64'h00;
 reg [7:0] rx_tkeep2 = 8'h00;
 reg rx_tlast2 = 1'b0;
 
 always @(posedge clk) begin
 	if (sys_rst) begin
-		gap <= 3'd0;
 		wr_en <= 1'b0;
 		rx_tdata2 <= 64'h00;
 		rx_tkeep2 <= 8'h00;
@@ -70,27 +68,18 @@ always @(posedge clk) begin
 					fmt <= m_axis_rx_tdata[30:29];
 					type <= m_axis_rx_tdata[28:24];
 					length <= m_axis_rx_tdata[9:0];
-					din[67:0] <= {4'h1, 64'h00_00_00_00_00_00_00_00};	// bit68: start next bit
-					wr_en <= 1'b1;
 					state <= HEADER1;
-				end else begin
-					if (gap == 3'd0) begin
-						wr_en <= 1'b0;
-					end else begin
-						gap <= gap - 3'd1;
-						wr_en <= 1'b1;
-						din[67:0] <= {4'h0, 64'h00_00_00_00_00_00_00_00};
-					end
 				end
 			end
 			HEADER1: begin
+				din[64] <= 1'b1;	// bit68: start bit
+				wr_en <= 1'b1;
 				if (type[4:1] == 4'b0000) begin	// memory access request (need address translation)
 					if (fmt[0] == 1'b0)	// 32bit address
 						;
 					else				// 64bit address
 						;
 				end
-				gap <= Gap;
 				wr_en <= 1'b1;
 				if (m_axis_rx_tlast)
 					state <= FIN;
@@ -98,6 +87,7 @@ always @(posedge clk) begin
 					state <= DATA;
 			end
 			DATA: begin
+				din[64] <= 1'b0;	// bit68: start bit
 				wr_en <= 1'b1;
 				if (m_axis_rx_tlast)
 					state <= FIN;
