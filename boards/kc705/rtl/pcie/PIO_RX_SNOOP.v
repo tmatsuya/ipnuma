@@ -1,6 +1,13 @@
 `default_nettype none
 `timescale 1ps/1ps
 
+//
+// FIFO DIN b63-00: data
+//          b64:    next TLP
+//          b65:    TLP last
+//          b66:    b31-b0 enable
+//          b67:    b63-b32 enable
+//
 module PIO_RX_SNOOP # (
 	parameter Gap = 3'd7
 ) (
@@ -54,7 +61,7 @@ always @(posedge clk) begin
 	end else begin
 		rx_tdata2 <= m_axis_rx_tdata;
 		rx_tkeep2 <= m_axis_rx_tkeep;
-		din <= {rx_tkeep2, rx_tdata2};
+		din <= {6'b00, rx_tkeep2[4], rx_tkeep2[0], rx_tdata2};
 		wr_en <= 1'b0;
 		case (state)
 			IDLE: begin

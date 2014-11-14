@@ -3,6 +3,11 @@
 `else
 `include "../setup.v"
 `endif
+// FIFO DIN b63-00: data
+//          b64:    Valid TLP
+//          b65:    TLP last
+//          b66:    b31-b0 enable
+//          b67:    b63-b32 enable
 module XGMII_RX_ENGINE # (
 	parameter Gap = 4'h5
 ) (
@@ -124,15 +129,15 @@ always @(posedge xgmii_clk) begin
 			wr_en <= 1'b1;
 			dwlen <= dwlen - 10'd2;
 			if (dwlen == 10'd0) begin
-				din[71:64] <= 8'b0000_1110; // End TLP (2DW)
+				din[71:64] <= 8'b0000_1111; // End TLP (2DW)
 				tlp_frame_end <= 1'b1;
 				rx_state <= RX_TLP1;
 			end else if (dwlen == 10'd1023) begin
-				din[71:64] <= 8'b0000_0110; // End TLP (1DW)
+				din[71:64] <= 8'b0000_0111; // End TLP (1DW)
 				tlp_frame_end <= 1'b1;
 				rx_state <= RX_TLP1;
 			end else begin
-				din[71:64] <= 8'b0000_1100; // TLP (2DW)
+				din[71:64] <= 8'b0000_1101; // TLP (2DW)
 			end
 		end
 		RX_GAP: begin

@@ -74,7 +74,7 @@ always @(posedge clk) begin
 			rd_en <= ~empty;
 			if (rd_en) begin
 				s_axis_tx_tvalid <= 1'b1;
-				if (dout[65]) begin  // TLP endt?
+				if (dout[65]) begin  // TLP end?
 					tlp_pktcount <= tlp_pktcount + 8'd1;
 					s_axis_tx_tlast <= 1'b1;
 					s_axis_tx_req <= 1'b0;
