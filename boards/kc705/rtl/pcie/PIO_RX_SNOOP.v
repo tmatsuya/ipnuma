@@ -29,7 +29,7 @@ module PIO_RX_SNOOP # (
 	input wire [47:0] dest_macaddr,
 
 	// XGMII-TX FIFO
-	input req_gap,
+	input wire req_gap,
 	output reg [71:0] din,
 	input wire full,
 	output reg wr_en
