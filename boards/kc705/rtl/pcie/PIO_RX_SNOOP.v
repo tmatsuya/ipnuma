@@ -36,13 +36,12 @@ module PIO_RX_SNOOP # (
 );
 
 // Local wires
-parameter RESET   = 3'b111;
-parameter IDLE    = 3'b000;
-parameter HEADER1 = 3'b001;
-parameter DATA    = 3'b010;
-parameter FIN     = 3'b011;
+parameter IDLE    = 2'b00;
+parameter HEADER1 = 2'b01;
+parameter DATA    = 2'b10;
+parameter FIN     = 2'b11;
 
-reg [2:0] state = RESET;
+reg [1:0] state = IDLE;
 reg [1:0] fmt = 2'b00;
 reg [4:0] type = 5'b00000;
 reg [9:0] length = 10'b0000000000;
@@ -59,7 +58,7 @@ always @(posedge clk) begin
 		rx_tlast2 <= 1'b0;
 		gap <= 3'd0;
 		din <= {8'h00, 64'h00_00_00_00_00_00_00_00};
-		state <= RESET;
+		state <= IDLE;
 	end else begin
 		rx_tdata2 <= m_axis_rx_tdata;
 		rx_tkeep2 <= m_axis_rx_tkeep;
@@ -69,11 +68,6 @@ always @(posedge clk) begin
 		if (req_gap)
 			gap <= Gap;
 		case (state)
-			RESET: begin
-				wr_en <= 1'b1;
-				din <= {8'h00, 64'h00_00_00_00_00_00_00_00};	// dummy
-				state <= IDLE;
-			end
 			IDLE: begin
 				if (m_axis_rx_tvalid) begin
 					fmt <= m_axis_rx_tdata[30:29];
@@ -96,7 +90,7 @@ always @(posedge clk) begin
 				if (type[4:1] == 4'b0000) begin	// memory access request (need address translation)
 					if (fmt[0] == 1'b0)	// 32bit address
 						;
-					else				// 64bit address
+					else			// 64bit address
 						;
 				end
 				wr_en <= 1'b1;

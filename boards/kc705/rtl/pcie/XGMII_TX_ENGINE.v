@@ -48,7 +48,7 @@ always @(posedge xgmii_clk) begin
 			FIFO_IDLE: begin
 				rd_en <= ~empty;
 				if (rd_en) begin
-					if (dout[64]) begin	// find next TLP bit
+					if (dout[64]) begin	// find start TLP bit
 						rd_en <= 1'b0;
 						fifo_state <= FIFO_WAIT;
 					end
@@ -156,7 +156,6 @@ always @(posedge xgmii_clk) begin
 					{txc, txd} <= {8'h01, 64'hd5_55_55_55_55_55_55_fb};
 					ip_sum <= 16'h4500 + {4'h0,tx0_ip_len[11:0]} + ipv4_id[15:0] + {ipv4_ttl[7:0],8'h11} + if_v4addr[31:16] + if_v4addr[15:0] + ipv4_dstip[31:16] + ipv4_dstip[15:0];
 					crc_init <= 1'b1;
-					req_gap <= 1'b1;
 				end
 				16'h08: begin
 					{txc, txd} <= {8'h00, if_macaddr[39:32], if_macaddr[47:40], dest_macaddr[7:0], dest_macaddr[15:8], dest_macaddr[23:16], dest_macaddr[31:24], dest_macaddr[39:32], dest_macaddr[47:40]};
