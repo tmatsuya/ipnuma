@@ -177,16 +177,6 @@ always @(posedge xgmii_clk) begin
 					{txc, txd} <= {8'h00, 16'h00, magic_code[7:0], magic_code[15:8], magic_code[23:16], magic_code[31:24], 16'h00_00};
 					tx_state <= TX_DATA;
 				end
-`ifdef NO
-				16'h38: {txc, txd} <= {8'h00, dout2[39:32], dout2[47:40], dout2[55:48], dout2[63:56], dout2[7:0], dout2[15:8], dout2[23:16], dout2[31:24]};
-				16'h40: {txc, txd} <= {8'h00, dout2[39:32], dout2[47:40], dout2[55:48], dout2[63:56], dout2[7:0], dout2[15:8], dout2[23:16], dout2[31:24]};
-				16'h48: {txc, txd} <= {8'h00, dout2[39:32], dout2[47:40], dout2[55:48], dout2[63:56], dout2[7:0], dout2[15:8], dout2[23:16], dout2[31:24]};
-				16'h50: {txc, txd} <= {8'h00, dout2[39:32], dout2[47:40], dout2[55:48], dout2[63:56], dout2[7:0], dout2[15:8], dout2[23:16], dout2[31:24]};
-				16'h58: {txc, txd} <= {8'h00, dout2[39:32], dout2[47:40], dout2[55:48], dout2[63:56], dout2[7:0], dout2[15:8], dout2[23:16], dout2[31:24]};
-				16'h60: begin
-					{txc, txd} <= {8'h00, dout2[39:32], dout2[47:40], dout2[55:48], dout2[63:56], dout2[7:0], dout2[15:8], dout2[23:16], dout2[31:24]};
-				end
-`endif
 			endcase
 		end
 		TX_DATA: begin
@@ -197,7 +187,7 @@ always @(posedge xgmii_clk) begin
 				gap_count <= tx0_inter_frame_gap - 32'd1;
 				tx_state <= TX_GAP;
 			end else begin
-				{txc, txd} <= {8'h00, dout2[39:32], dout2[47:40], dout2[55:48], dout2[63:56], dout2[7:0], dout2[15:8], dout2[23:16], dout2[31:24]};
+				{txc, txd} <= {8'h00, dout2[63:0]};
 			end
 		end
 		TX_GAP: begin
