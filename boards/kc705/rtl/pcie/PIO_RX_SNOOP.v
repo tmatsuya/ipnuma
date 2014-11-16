@@ -73,7 +73,7 @@ always @(posedge clk) begin
 //			gap <= Gap;
 		case (state)
 			IDLE: begin
-				if (m_axis_rx_tvalid) begin
+				if (m_axis_rx_tvalid && m_axis_rx_tuser[4]) begin  // BAR2 only
 					fmt <= m_axis_rx_tdata[30:29];
 					type <= m_axis_rx_tdata[28:24];
 					length <= m_axis_rx_tdata[9:0];
@@ -94,10 +94,11 @@ always @(posedge clk) begin
 //				din[64] <= 1'b1;	// bit64: start bit
 				wr_en <= 1'b1;
 				if (type[4:1] == 4'b0000) begin	// memory access request (need address translation)
-					if (fmt[0] == 1'b0)	// 32bit address
-						;
-					else			// 64bit address
-						;
+					if (fmt[0] == 1'b0) begin	// 32bit address
+						din <= {4'h2, m_axis_rx_tkeep[4], m_axis_rx_tkeep[0], m_axis_rx_tlast, m_axis_rx_tvalid, m_axis_rx_tdata[63:32], if_v4addr[31:20], m_axis_rx_tdata[19:0]};
+					end else begin			// 64bit address
+						din <= {4'h4, m_axis_rx_tkeep[4], m_axis_rx_tkeep[0], m_axis_rx_tlast, m_axis_rx_tvalid, if_v4addr[31:20], m_axis_rx_tdata[19:0], 32'h0000_0000};
+					end
 				end
 				wr_en <= 1'b1;
 				if (m_axis_rx_tlast)
