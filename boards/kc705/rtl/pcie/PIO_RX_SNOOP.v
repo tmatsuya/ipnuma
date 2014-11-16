@@ -36,17 +36,19 @@ module PIO_RX_SNOOP # (
 );
 
 // Local wires
-parameter IDLE    = 2'b00;
-parameter HEADER1 = 2'b01;
-parameter DATA    = 2'b10;
-parameter FIN     = 2'b11;
+parameter IDLE    = 3'b000;
+parameter HEADER1 = 3'b001;
+parameter DATA    = 3'b010;
+parameter FIN     = 3'b011;
+parameter FIN2    = 3'b100;
 
-reg [1:0] state = IDLE;
+reg [2:0] state = IDLE;
 reg [1:0] fmt = 2'b00;
 reg [4:0] type = 5'b00000;
 reg [9:0] length = 10'b0000000000;
 reg [63:0] rx_tdata2 = 64'h00;
 reg [7:0] rx_tkeep2 = 8'h00;
+reg rx_tvalid2 = 1'b0;
 reg rx_tlast2 = 1'b0;
 reg [2:0] gap = 3'd0;
 
@@ -55,6 +57,7 @@ always @(posedge clk) begin
 		wr_en <= 1'b0;
 		rx_tdata2 <= 64'h00;
 		rx_tkeep2 <= 8'h00;
+		rx_tvalid2 <= 1'b0;
 		rx_tlast2 <= 1'b0;
 		gap <= 3'd0;
 		din <= {8'h00, 64'h00_00_00_00_00_00_00_00};
@@ -62,11 +65,12 @@ always @(posedge clk) begin
 	end else begin
 		rx_tdata2 <= m_axis_rx_tdata;
 		rx_tkeep2 <= m_axis_rx_tkeep;
+		rx_tvalid2 <= m_axis_rx_tvalid;
 		rx_tlast2 <= m_axis_rx_tlast;
-		din <= {4'b00, rx_tkeep2[4], rx_tkeep2[0], rx_tlast2, 1'b0, rx_tdata2};
-		wr_en <= 1'b0;
-		if (req_gap)
-			gap <= Gap;
+//		din <= {4'hA, rx_tkeep2[4], rx_tkeep2[0], rx_tlast2, rx_tvalid2, rx_tdata2};
+		din <= {4'hA, m_axis_rx_tkeep[4], m_axis_rx_tkeep[0], m_axis_rx_tlast, m_axis_rx_tvalid, m_axis_rx_tdata};
+//		if (req_gap)
+//			gap <= Gap;
 		case (state)
 			IDLE: begin
 				if (m_axis_rx_tvalid) begin
@@ -74,18 +78,20 @@ always @(posedge clk) begin
 					type <= m_axis_rx_tdata[28:24];
 					length <= m_axis_rx_tdata[9:0];
 					state <= HEADER1;
-				end else begin
-					if (gap == 3'd0) begin
-						wr_en <= 1'b0;
-					end else begin
-						gap <= gap - 3'd1;
-						wr_en <= 1'b1;
-						din <= {8'h10, 64'h00_00_00_00_00_00_00_00};	// IFG=1
-					end
-				end
+					wr_en <= 1'b1;
+//				end else begin
+//					if (gap == 3'd0) begin
+//						wr_en <= 1'b0;
+//					end else begin
+//						gap <= gap - 3'd1;
+//						wr_en <= 1'b1;
+//						din <= {8'h10, 64'h00_00_00_00_00_00_00_00};	// IFG=1
+//					end
+				end else
+					wr_en <= 1'b0;
 			end
 			HEADER1: begin
-				din[64] <= 1'b1;	// bit68: start bit
+//				din[64] <= 1'b1;	// bit64: start bit
 				wr_en <= 1'b1;
 				if (type[4:1] == 4'b0000) begin	// memory access request (need address translation)
 					if (fmt[0] == 1'b0)	// 32bit address
@@ -95,20 +101,30 @@ always @(posedge clk) begin
 				end
 				wr_en <= 1'b1;
 				if (m_axis_rx_tlast)
-					state <= FIN;
+					state <= IDLE;
 				else
 					state <= DATA;
 			end
 			DATA: begin
-				din[64] <= 1'b0;	// bit68: start bit
+//				din[64] <= 1'b0;	// bit64: start bit
 				wr_en <= 1'b1;
 				if (m_axis_rx_tlast)
-					state <= FIN;
+					state <= IDLE;
 			end
+`ifdef NO
 			FIN: begin
 				wr_en <= 1'b1;
-				state <= IDLE;
+				gap <= Gap;
+				state <= FIN2;
 			end
+			FIN2: begin
+				wr_en <= 1'b1;
+				gap <= gap - 3'd1;
+				if (gap == 3'd0)
+					state <= IDLE;
+				din <= {8'h10, 64'h00_00_00_00_00_00_00_00};	// IFG=1
+			end
+`endif
 		endcase
 	end
 end

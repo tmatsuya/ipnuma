@@ -37,34 +37,38 @@ parameter FIFO_WAIT   = 2'b01;
 parameter FIFO_DATA   = 2'b10;
 parameter FIFO_FIN    = 2'b11;
 reg [1:0] fifo_state = FIFO_IDLE;
+reg [71:0] dout2 = 72'h0;
 
 always @(posedge xgmii_clk) begin
 	if (sys_rst) begin
 		req_gap<= 1'b0;
 		rd_en <= 1'b0;
+		dout2 <= 72'h00;
 		fifo_state <= FIFO_IDLE;
 	end else begin
 		case (fifo_state)
 			FIFO_IDLE: begin
 				rd_en <= ~empty;
 				if (rd_en) begin
-					if (dout[64]) begin	// find start TLP bit
+					dout2 <= dout;
+					if (dout[64] & ~dout[65]) begin	// find start TLP bit
 						rd_en <= 1'b0;
 						fifo_state <= FIFO_WAIT;
 					end
 				end
 			end
 			FIFO_WAIT: begin
-				if (tx_counter[15:0] == 16'h28) begin
+				if (tx_counter[15:0] == 16'h30) begin
 					fifo_state <= FIFO_DATA;
 				end
 			end
 			FIFO_DATA: begin
 				rd_en <= ~empty;
-				if (~rd_en) begin
+				dout2 <= dout;
+				if (rd_en) begin
 					if (dout[65]) begin	// find last TLP bit
 						rd_en <= 1'b0;
-						fifo_state <= FIFO_FIN;
+						fifo_state <= FIFO_IDLE;
 					end
 				end
 			end
@@ -120,8 +124,9 @@ reg [23:0] ip_sum;
 
 reg [31:0] gap_count;
 parameter TX_IDLE        = 2'b00;  // IDLE
-parameter TX_V4_SEND     = 2'b01;  // IPv4 Payload
-parameter TX_GAP	 = 2'b10;  // Inter Frame Gap
+parameter TX_HEADER      = 2'b01;  // HEADER
+parameter TX_DATA        = 2'b10;  // TLP_DATA
+parameter TX_GAP	 = 2'b11;  // Inter Frame Gap
 reg [1:0] tx_state = TX_IDLE;
 
 wire [15:0] tx0_frame_len;
@@ -146,45 +151,54 @@ always @(posedge xgmii_clk) begin
 		TX_IDLE: begin
 			if (fifo_state == FIFO_WAIT) begin
 				tx_counter <= 32'h0;
-				tx_state <= TX_V4_SEND;
+				tx_state <= TX_HEADER;
 			end
 		end
-		TX_V4_SEND: begin
+		TX_HEADER: begin
 			tx_counter <= tx_counter + 32'h8;
 			case (tx_counter[15:0] )
 				16'h00: begin
 					{txc, txd} <= {8'h01, 64'hd5_55_55_55_55_55_55_fb};
 					ip_sum <= 16'h4500 + {4'h0,tx0_ip_len[11:0]} + ipv4_id[15:0] + {ipv4_ttl[7:0],8'h11} + if_v4addr[31:16] + if_v4addr[15:0] + ipv4_dstip[31:16] + ipv4_dstip[15:0];
 					crc_init <= 1'b1;
+//					req_gap <= 1'b1;
 				end
 				16'h08: begin
 					{txc, txd} <= {8'h00, if_macaddr[39:32], if_macaddr[47:40], dest_macaddr[7:0], dest_macaddr[15:8], dest_macaddr[23:16], dest_macaddr[31:24], dest_macaddr[39:32], dest_macaddr[47:40]};
 					ip_sum <= ~(ip_sum[15:0] + ip_sum[23:16]);
 					crc_init <= 1'b0;
-					req_gap <= 1'b0;
+//					req_gap <= 1'b0;
 				end
 				16'h10: {txc, txd} <= {8'h00, 32'h00_45_00_08, if_macaddr[7:0], if_macaddr[15:8], if_macaddr[23:16], if_macaddr[31:24]};
 				16'h18: {txc, txd} <= {8'h00, 8'h11, ipv4_ttl[7:0], 16'h00, ipv4_id[7:0], ipv4_id[15:8], tx0_ip_len[7:0], 4'h0, tx0_ip_len[11:8]};
 				16'h20: {txc, txd} <= {8'h00, ipv4_dstip[23:16], ipv4_dstip[31:24], if_v4addr[7:0], if_v4addr[15:8], if_v4addr[23:16], if_v4addr[31:24], ip_sum[7:0], ip_sum[15:8]};
 				16'h28: {txc, txd} <= {8'h00, tx0_udp_len[7:0], 4'h0, tx0_udp_len[11:8], 32'h5e_0d_5e_0d, ipv4_dstip[7:0], ipv4_dstip[15:8]};
-				16'h30: {txc, txd} <= {8'h00, 16'h00, magic_code[7:0], magic_code[15:8], magic_code[23:16], magic_code[31:24], 16'h00_00};
-//				16'h38: {txc, txd} <= {~dout[71:64], dout[63:0]}; //{8'h00, 64'h07_06_05_04_03_02_01_00};
-				16'h38: {txc, txd} <= {8'h00, 64'h07_06_05_04_03_02_01_00};
-//				16'h40: begin
-				16'h40: begin
-					{txc, txd} <= {8'h00, 64'h0f_0e_0d_0c_0b_0a_09_08};
+				16'h30: begin
+					{txc, txd} <= {8'h00, 16'h00, magic_code[7:0], magic_code[15:8], magic_code[23:16], magic_code[31:24], 16'h00_00};
+					tx_state <= TX_DATA;
 				end
-				default: begin
-					{txc, txd} <= {8'hf0, 32'h07_07_07_fd, crc64_outrev[7:0], crc64_outrev[15:8], crc64_outrev[23:16], crc64_outrev[31:24]};
-					tx_counter <= 32'h0;
-					if (tx0_inter_frame_gap == 32'd0) begin
-						tx_state <= TX_IDLE;
-					end else begin
-						gap_count <= tx0_inter_frame_gap - 32'd1;
-						tx_state <= TX_GAP;
-					end
+`ifdef NO
+				16'h38: {txc, txd} <= {8'h00, dout2[39:32], dout2[47:40], dout2[55:48], dout2[63:56], dout2[7:0], dout2[15:8], dout2[23:16], dout2[31:24]};
+				16'h40: {txc, txd} <= {8'h00, dout2[39:32], dout2[47:40], dout2[55:48], dout2[63:56], dout2[7:0], dout2[15:8], dout2[23:16], dout2[31:24]};
+				16'h48: {txc, txd} <= {8'h00, dout2[39:32], dout2[47:40], dout2[55:48], dout2[63:56], dout2[7:0], dout2[15:8], dout2[23:16], dout2[31:24]};
+				16'h50: {txc, txd} <= {8'h00, dout2[39:32], dout2[47:40], dout2[55:48], dout2[63:56], dout2[7:0], dout2[15:8], dout2[23:16], dout2[31:24]};
+				16'h58: {txc, txd} <= {8'h00, dout2[39:32], dout2[47:40], dout2[55:48], dout2[63:56], dout2[7:0], dout2[15:8], dout2[23:16], dout2[31:24]};
+				16'h60: begin
+					{txc, txd} <= {8'h00, dout2[39:32], dout2[47:40], dout2[55:48], dout2[63:56], dout2[7:0], dout2[15:8], dout2[23:16], dout2[31:24]};
 				end
+`endif
 			endcase
+		end
+		TX_DATA: begin
+//			if (dout2[65]) begin	// find last TLP bit
+			if (fifo_state != FIFO_DATA) begin	// TLP end
+				tx_counter <= 32'h0;
+				{txc, txd} <= {8'hf0, 32'h07_07_07_fd, crc64_outrev[7:0], crc64_outrev[15:8], crc64_outrev[23:16], crc64_outrev[31:24]};
+				gap_count <= tx0_inter_frame_gap - 32'd1;
+				tx_state <= TX_GAP;
+			end else begin
+				{txc, txd} <= {8'h00, dout2[39:32], dout2[47:40], dout2[55:48], dout2[63:56], dout2[7:0], dout2[15:8], dout2[23:16], dout2[31:24]};
+			end
 		end
 		TX_GAP: begin
 			{txc, txd} <= {8'hff, 64'h07_07_07_07_07_07_07_07};
