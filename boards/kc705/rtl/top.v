@@ -455,6 +455,9 @@ network_path network_path_inst_1 (
 assign xphy4_prtad  = 5'd4;
 assign xphy4_signal_detect = 1'b1;
 assign nw4_reset = nw4_reset_i;
+
+wire [63:0] xgmii4_rxdtmp;
+wire [7:0] xgmii4_rxctmp;
  
 network_path network_path_inst_4 (
 	//XGEMAC PHY IO
@@ -494,10 +497,19 @@ network_path network_path_inst_4 (
 	.dclk(dclk_i), 
 	.xgmii_txd(xgmii4_txd),
 	.xgmii_txc(xgmii4_txc),
-	.xgmii_rxd(xgmii4_rxd),
-	.xgmii_rxc(xgmii4_rxc),
+	.xgmii_rxd(xgmii4_rxdtmp),
+	.xgmii_rxc(xgmii4_rxctmp),
 	.polarity(dipsw[0])	// macchan
 ); 
+
+xgmiisync xgmiisync_4 (
+	.sys_rst(sys_rst),
+	.xgmii_rx_clk(clk156),
+	.xgmii_rxd_i(xgmii4_rxdtmp),
+	.xgmii_rxc_i(xgmii4_rxctmp),
+	.xgmii_rxd_o(xgmii4_rxd),
+	.xgmii_rxc_o(xgmii4_rxc)
+);
 `endif    //ENABLE_XGMII4
 
 `ifdef USE_DIFF_QUAD
