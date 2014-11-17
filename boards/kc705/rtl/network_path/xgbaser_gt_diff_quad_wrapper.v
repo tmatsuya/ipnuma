@@ -53,6 +53,7 @@
 // PART OF THIS FILE AT ALL TIMES.
 
 `define DLY #1
+`include "../setup.v"
 
 module xgbaser_gt_diff_quad_wrapper 
   (
@@ -152,7 +153,11 @@ module xgbaser_gt_diff_quad_wrapper
     .BANDWIDTH            ("OPTIMIZED"),
     .STARTUP_WAIT         ("FALSE"),
     .DIVCLK_DIVIDE        (1),
+`ifdef ENABLE_XGMII4
+    .CLKFBOUT_MULT_F      (6.500),
+`else
     .CLKFBOUT_MULT_F      (3.250),
+`endif
     .CLKFBOUT_PHASE       (0.000),
     .CLKOUT0_DIVIDE_F     (6.500),
     .CLKOUT0_PHASE        (0.000),
@@ -160,7 +165,11 @@ module xgbaser_gt_diff_quad_wrapper
     .CLKOUT1_DIVIDE       (13),
     .CLKOUT1_PHASE        (0.000),
     .CLKOUT1_DUTY_CYCLE   (0.500),
+`ifdef ENABLE_XGMII4
+    .CLKIN1_PERIOD        (6.400),
+`else
     .CLKIN1_PERIOD        (3.200),
+`endif
     .REF_JITTER1          (0.010)
 
   )

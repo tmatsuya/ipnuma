@@ -53,6 +53,7 @@
 // PART OF THIS FILE AT ALL TIMES.
 
 `define DLY #1
+`include "../setup.v"
 
 module xgbaser_gt_same_quad_wrapper 
   (
@@ -135,7 +136,11 @@ module xgbaser_gt_same_quad_wrapper
     .BANDWIDTH            ("OPTIMIZED"),
     .STARTUP_WAIT         ("FALSE"),
     .DIVCLK_DIVIDE        (1),
-    .CLKFBOUT_MULT_F      (3.250),
+`ifdef ENABLE_XGMII4
+    .CLKFBOUT_MULT_F      (6.500),	// for internal SFP+ module (156.25MHz)
+`else
+    .CLKFBOUT_MULT_F      (3.250),	// for FM-S14 (312.5MHz)
+`endif
     .CLKFBOUT_PHASE       (0.000),
     .CLKOUT0_DIVIDE_F     (6.500),
     .CLKOUT0_PHASE        (0.000),
@@ -143,7 +148,11 @@ module xgbaser_gt_same_quad_wrapper
     .CLKOUT1_DIVIDE       (13),
     .CLKOUT1_PHASE        (0.000),
     .CLKOUT1_DUTY_CYCLE   (0.500),
-    .CLKIN1_PERIOD        (3.200),
+`ifdef ENABLE_XGMII4
+    .CLKIN1_PERIOD        (6.400),	// fo internal SFP+ module (156.25MHz)
+`else
+    .CLKIN1_PERIOD        (3.200),	// for FM-S14 (312.5MHz)
+`endif
     .REF_JITTER1          (0.010)
 
   )
@@ -293,6 +302,3 @@ module xgbaser_gt_same_quad_wrapper
   end
 
 endmodule
-
-
-

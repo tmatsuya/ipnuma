@@ -74,7 +74,8 @@ module network_path (
     input [63:0]                     xgmii_txd,
     input [7:0]                      xgmii_txc,
     output [63:0]                    xgmii_rxd,
-    output [7:0]                     xgmii_rxc
+    output [7:0]                     xgmii_rxc,
+    input                            polarity	// macchan 0:rev1.1 1:rev1.0 board
 );
 
 /*-------------------------------------------------------------------------*/
@@ -190,7 +191,9 @@ ten_gig_eth_pcs_pma_ip  ten_gig_eth_pcs_pma_inst (
      .drp_drpdo_i(drp_drpdo_i),
 
      .pma_pmd_type(3'b101),
-     .tx_disable()
+     .tx_disable(),
+     .gt0_txpolarity(polarity),	// macchan
+     .gt0_rxpolarity(polarity)	// macchan
 
  );
 

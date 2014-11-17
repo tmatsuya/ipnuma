@@ -147,7 +147,8 @@ module  ten_gig_eth_pcs_pma_ip_GT_Common_wrapper # (
             .QPLL_INIT_CFG                          (24'h000006),
             .QPLL_LOCK_CFG                          (16'h21E8),
             .QPLL_LPF                               (4'b1111),
-            .QPLL_REFCLK_DIV                        (2)
+//            .QPLL_REFCLK_DIV                        (2)
+            .QPLL_REFCLK_DIV                        (1)
 
     )
     gtxe2_common_0_i
@@ -164,8 +165,10 @@ module  ten_gig_eth_pcs_pma_ip_GT_Common_wrapper # (
         .GTGREFCLK                      (tied_to_ground_i),
         .GTNORTHREFCLK0                 (tied_to_ground_i),
         .GTNORTHREFCLK1                 (tied_to_ground_i),
-        .GTREFCLK0                      (GT0_GTREFCLK0_COMMON_IN),
-        .GTREFCLK1                      (tied_to_ground_i),
+//        .GTREFCLK0                      (GT0_GTREFCLK0_COMMON_IN),
+//        .GTREFCLK1                      (tied_to_ground_i),
+        .GTREFCLK0                      (tied_to_ground_i),
+        .GTREFCLK1                      (GT0_GTREFCLK0_COMMON_IN),
         .GTSOUTHREFCLK0                 (tied_to_ground_i),
         .GTSOUTHREFCLK1                 (tied_to_ground_i),
         //----------------------- Common Block - QPLL Ports ------------------------
@@ -179,7 +182,8 @@ module  ten_gig_eth_pcs_pma_ip_GT_Common_wrapper # (
         .QPLLOUTRESET                   (tied_to_ground_i),
         .QPLLPD                         (tied_to_ground_i),
         .QPLLREFCLKLOST                 (GT0_QPLLREFCLKLOST_OUT),
-        .QPLLREFCLKSEL                  (3'b001),
+//        .QPLLREFCLKSEL                  (3'b001),	// for FM-S14
+        .QPLLREFCLKSEL                  (3'b010),	// for internal SFP++
         .QPLLRESET                      (GT0_QPLLRESET_IN),
         .QPLLRSVD1                      (16'b0000000000000000),
         .QPLLRSVD2                      (5'b11111),

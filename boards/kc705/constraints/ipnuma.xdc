@@ -9,8 +9,8 @@
 set_property PACKAGE_PIN C8 [get_ports xphy0_refclk_p]
 set_property PACKAGE_PIN C7 [get_ports xphy0_refclk_n]
 ##GT Ref clk (SI5326 SI5326_OUT_C_{P,N}, MGTREFCLK0{P,N})
-set_property PACKAGE_PIN L8 [get_ports xphy4_refclk_p]
-set_property PACKAGE_PIN L7 [get_ports xphy4_refclk_n]
+#set_property PACKAGE_PIN L8 [get_ports xphy4_refclk_p]
+#set_property PACKAGE_PIN L7 [get_ports xphy4_refclk_n]
 
 ### Comment the following lines for different quad instance
 ###---------- Set placement for gt0_gtx_wrapper_i/GTX_DUAL ------
@@ -70,6 +70,28 @@ set_property IOSTANDARD LVCMOS25 [get_ports {sfp_tx_disable[3]}]
 
 set_property PACKAGE_PIN Y20 [get_ports {sfp_tx_disable[4]}]
 set_property IOSTANDARD LVCMOS25 [get_ports {sfp_tx_disable[4]}]
+
+# SI560 (156.25MHz) input
+set_property PACKAGE_PIN K28 [get_ports si570_refclk_p]
+set_property IOSTANDARD LVDS_25 [get_ports si570_refclk_p]
+set_property PACKAGE_PIN K29 [get_ports si570_refclk_n]
+set_property IOSTANDARD LVDS_25 [get_ports si570_refclk_n]
+
+# USER_SMA_GPIO output
+set_property PACKAGE_PIN Y23 [get_ports user_sma_gpio_p]
+set_property IOSTANDARD LVDS_25 [get_ports user_sma_gpio_p]
+set_property PACKAGE_PIN Y24 [get_ports user_sma_gpio_n]
+set_property IOSTANDARD LVDS_25 [get_ports user_sma_gpio_n]
+
+# user_sma_clock input (for 156.25MHz test)
+#set_property PACKAGE_PIN L25 [get_ports user_sma_clock_p]
+#set_property IOSTANDARD LVDS_25 [get_ports user_sma_clock_p]
+#set_property PACKAGE_PIN K25 [get_ports user_sma_clock_n]
+#set_property IOSTANDARD LVDS_25 [get_ports user_sma_clock_n]
+
+# SMA_MGT_REFCLK (for internal SFP+ module)
+set_property PACKAGE_PIN J7 [get_ports sma_mgt_refclk_n]
+set_property PACKAGE_PIN J8 [get_ports sma_mgt_refclk_p]
 
 ## SFP TX Fault loc
 set_property PACKAGE_PIN E20 [get_ports {sfp_tx_fault[0]}]
@@ -170,16 +192,23 @@ set_property IOSTANDARD DIFF_SSTL15 [get_ports sysclk_p]
 set_property PACKAGE_PIN AD12 [get_ports sysclk_p]
 set_property PACKAGE_PIN AD11 [get_ports sysclk_n]
 
+
 # Domain Crossing Constraints
-#create_clock -name userclk2 -period 4.0 [get_nets user_clk]
+create_clock -name userclk2 -period 4.0 [get_nets user_clk]
 create_clock -period 6.400 -name clk156 [get_pins xgbaser_gt_wrapper_inst_0/clk156_bufg_inst/O]
 create_clock -period 12.800 -name dclk [get_pins xgbaser_gt_wrapper_inst_0/dclk_bufg_inst/O]
-create_clock -period 3.200 -name refclk [get_pins xgbaser_gt_wrapper_inst_0/ibufds_inst/O]
+create_clock -period 6.400 -name refclk [get_pins xgbaser_gt_wrapper_inst_0/ibufds_inst/O]
+#create_clock -period 3.200 -name refclk [get_pins xgbaser_gt_wrapper_inst_0/ibufds_inst/O]
 create_clock -period 3.103 -name rxoutclk0 [get_pins network_path_inst_0/ten_gig_eth_pcs_pma_inst/inst/gt0_gtwizard_10gbaser_multi_gt_i/gt0_gtwizard_10gbaser_i/gtxe2_i/RXOUTCLK]
 create_clock -period 3.103 -name rxoutclk1 [get_pins network_path_inst_1/ten_gig_eth_pcs_pma_inst/inst/gt0_gtwizard_10gbaser_multi_gt_i/gt0_gtwizard_10gbaser_i/gtxe2_i/RXOUTCLK]
 create_clock -period 3.103 -name txoutclk0 [get_pins network_path_inst_0/ten_gig_eth_pcs_pma_inst/inst/gt0_gtwizard_10gbaser_multi_gt_i/gt0_gtwizard_10gbaser_i/gtxe2_i/TXOUTCLK]
 create_clock -period 3.103 -name txoutclk1 [get_pins network_path_inst_1/ten_gig_eth_pcs_pma_inst/inst/gt0_gtwizard_10gbaser_multi_gt_i/gt0_gtwizard_10gbaser_i/gtxe2_i/TXOUTCLK]
 
+create_clock -period 6.400 -name clk156 [get_pins xgbaser_gt_wrapper_inst_4/clk156_bufg_inst/O]
+create_clock -period 6.400 -name refclk [get_pins xgbaser_gt_wrapper_inst_4/ibufds_inst/O]
+create_clock -period 6.203 -name rxoutclk0 [get_pins network_path_inst_4/ten_gig_eth_pcs_pma_inst/inst/gt0_gtwizard_10gbaser_multi_gt_i/gt0_gtwizard_10gbaser_i/gtxe2_i/RXOUTCLK]
+create_clock -period 6.203 -name txoutclk0 [get_pins network_path_inst_4/ten_gig_eth_pcs_pma_inst/inst/gt0_gtwizard_10gbaser_multi_gt_i/gt0_gtwizard_10gbaser_i/gtxe2_i/TXOUTCLK]
+#
 #
 #create_generated_clock -name clk50 -source [get_ports clk_ref_p] -divide_by 4 [get_pins {clk_divide_reg[1]/Q}]
 #set_clock_sense -positive clk_divide_reg[1]_i_1/O

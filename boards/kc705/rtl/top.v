@@ -11,6 +11,15 @@ module top # (
 ) (
 	input wire sysclk_p,
 	input wire sysclk_n,
+	// SI570 user clock (input 156.25MHz)
+	input wire si570_refclk_p,
+	input wire si570_refclk_n,
+	// USER SMA GPIO clock (output to USER SMA clock)
+	output wire user_sma_gpio_p,
+	output wire user_sma_gpio_n,
+	// SMA MGT reference clock (input from USER SMA GPIO for SFP+ module)
+	input wire sma_mgt_refclk_p,
+	input wire sma_mgt_refclk_n,
 `ifdef ENABLE_XGMII01
 	input xphy0_refclk_p, 
 	input xphy0_refclk_n, 
@@ -28,8 +37,6 @@ module top # (
 	input xphy1_rxn,
 `endif
 `ifdef ENABLE_XGMII4
-	input xphy4_refclk_p, 
-	input xphy4_refclk_n, 
 	output xphy4_txp, 
 	output xphy4_txn, 
 	input xphy4_rxp, 
@@ -66,6 +73,18 @@ IBUFDS IBUFDS_clk200 (
 	.I(sysclk_p),
 	.IB(sysclk_n),
 	.O(clk200)
+);
+
+wire clksi570;
+IBUFDS IBUFDS_0 (
+	.I(si570_refclk_p),
+	.IB(si570_refclk_n),
+	.O(clksi570)
+);
+OBUFDS OBUFDS_0 (
+	.I(clksi570),
+	.O(user_sma_gpio_p),
+	.OB(user_sma_gpio_n)
 );
 
 reg [7:0] cold_counter = 8'h0;
@@ -362,7 +381,8 @@ network_path network_path_inst_0 (
 	.xgmii_txd(xgmii0_txd),
 	.xgmii_txc(xgmii0_txc),
 	.xgmii_rxd(xgmii0_rxdtmp),
-	.xgmii_rxc(xgmii0_rxctmp)
+	.xgmii_rxc(xgmii0_rxctmp),
+	.polarity(1'b0)		// macchan
 ); 
 
 xgmiisync xgmiisync_0 (
@@ -422,7 +442,8 @@ network_path network_path_inst_1 (
 	.xgmii_txd(xgmii1_txd),
 	.xgmii_txc(xgmii1_txc),
 	.xgmii_rxd(xgmii1_rxd),
-	.xgmii_rxc(xgmii1_rxc)
+	.xgmii_rxc(xgmii1_rxc),
+	.polarity(1'b0)		// macchan
 ); 
 `endif
 
@@ -463,7 +484,7 @@ network_path network_path_inst_4 (
 	.tx_resetdone(xphy4_tx_resetdone),
     
 	.signal_detect(xphy4_signal_detect),
-	.tx_fault(sfp_tx_fault[3]),
+	.tx_fault(),
 	.prtad(xphy4_prtad),
 	.xphy_status(xphy4_status),
 	.clk156(clk156),
@@ -474,17 +495,17 @@ network_path network_path_inst_4 (
 	.xgmii_txd(xgmii4_txd),
 	.xgmii_txc(xgmii4_txc),
 	.xgmii_rxd(xgmii4_rxd),
-	.xgmii_rxc(xgmii4_rxc)
+	.xgmii_rxc(xgmii4_rxc),
+	.polarity(dipsw[0])	// macchan
 ); 
 `endif    //ENABLE_XGMII4
 
-`ifdef ENABLE_XGMII01
 `ifdef USE_DIFF_QUAD
 xgbaser_gt_diff_quad_wrapper xgbaser_gt_wrapper_inst_0 (
 	.areset(sys_rst),
 `ifdef ENABLE_XGMII4
-	.refclk_p(xphy4_refclk_p),
-	.refclk_n(xphy4_refclk_n),
+	.refclk_p(sma_mgt_refclk_p),
+	.refclk_n(sma_mgt_refclk_n),
 `else
 	.refclk_p(xphy0_refclk_p),
 	.refclk_n(xphy0_refclk_n),
@@ -516,8 +537,8 @@ xgbaser_gt_diff_quad_wrapper xgbaser_gt_wrapper_inst_0 (
 xgbaser_gt_same_quad_wrapper xgbaser_gt_wrapper_inst_0 (
 	.areset(sys_rst),
 `ifdef ENABLE_XGMII4
-	.refclk_p(xphy4_refclk_p),
-	.refclk_n(xphy4_refclk_n),
+	.refclk_p(sma_mgt_refclk_p),
+	.refclk_n(sma_mgt_refclk_n),
 `else
 	.refclk_p(xphy0_refclk_p),
 	.refclk_n(xphy0_refclk_n),
@@ -544,7 +565,6 @@ xgbaser_gt_same_quad_wrapper xgbaser_gt_wrapper_inst_0 (
 	.qplloutrefclk(qplloutrefclk) 
 );
 `endif    //USE_DIFF_QUAD
-`endif    //ENABLE_XGMII01
 
 
 
@@ -557,10 +577,10 @@ wire [31:0] dest_v4addr;
 wire [47:0] dest_macaddr;
 
 `ifdef NO
-assign led[0] = xphy0_status[0]; 
-assign led[1] = xphy1_status[0]; 
-assign led[2] = xphy2_status[0]; 
-assign led[3] = xphy3_status[0]; 
+assign led[0] = xphy4_status[0]; 
+assign led[1] = 1'b0;
+assign led[2] = 1'b0;
+assign led[3] = 1'b0;
 `ifndef ENABLE_PCIE
 assign led[4] = 1'b0;
 assign led[5] = 1'b0;
@@ -1088,10 +1108,10 @@ pcie_app_7x  #(
 
 	// XGMII
 	.xgmii_clk(clk156),
-	.xgmii_0_txd(xgmii0_txd),
-	.xgmii_0_txc(xgmii0_txc),
-	.xgmii_0_rxd(xgmii0_rxd),
-	.xgmii_0_rxc(xgmii0_rxc),
+	.xgmii_0_txd(xgmii4_txd),
+	.xgmii_0_txc(xgmii4_txc),
+	.xgmii_0_rxd(xgmii4_rxd),
+	.xgmii_0_rxc(xgmii4_rxc),
 
 	.led(led)
 );
