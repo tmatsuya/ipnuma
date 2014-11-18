@@ -44,8 +44,8 @@ set_property PACKAGE_PIN A4 [get_ports xphy3_txp]
 ### Uncomment the following lines for different quad instance
 ###---------- Set placement for gt0_gtx_wrapper_i/GTX_DUAL ------
 set_property LOC GTXE2_CHANNEL_X0Y10 [get_cells network_path_inst_4/ten_gig_eth_pcs_pma_inst/inst/gt0_gtwizard_10gbaser_multi_gt_i/gt0_gtwizard_10gbaser_i/gtxe2_i]
-set_property PACKAGE_PIN G4 [get_ports xphy4_rxn]
-set_property PACKAGE_PIN G3 [get_ports xphy4_rxp]
+set_property PACKAGE_PIN G4 [get_ports xphy4_rxp]
+set_property PACKAGE_PIN G3 [get_ports xphy4_rxn]
 set_property PACKAGE_PIN H1 [get_ports xphy4_txn]
 set_property PACKAGE_PIN H2 [get_ports xphy4_txp]
 #
@@ -204,8 +204,8 @@ create_clock -period 3.103 -name rxoutclk1 [get_pins network_path_inst_1/ten_gig
 create_clock -period 3.103 -name txoutclk0 [get_pins network_path_inst_0/ten_gig_eth_pcs_pma_inst/inst/gt0_gtwizard_10gbaser_multi_gt_i/gt0_gtwizard_10gbaser_i/gtxe2_i/TXOUTCLK]
 create_clock -period 3.103 -name txoutclk1 [get_pins network_path_inst_1/ten_gig_eth_pcs_pma_inst/inst/gt0_gtwizard_10gbaser_multi_gt_i/gt0_gtwizard_10gbaser_i/gtxe2_i/TXOUTCLK]
 
-create_clock -period 6.400 -name clk156 [get_pins xgbaser_gt_wrapper_inst_4/clk156_bufg_inst/O]
-create_clock -period 6.400 -name refclk [get_pins xgbaser_gt_wrapper_inst_4/ibufds_inst/O]
+create_clock -period 6.400 -name clk156 [get_pins xgbaser_gt_wrapper_inst_0/clk156_bufg_inst/O]
+create_clock -period 6.400 -name refclk [get_pins xgbaser_gt_wrapper_inst_0/ibufds_inst/O]
 create_clock -period 6.203 -name rxoutclk0 [get_pins network_path_inst_4/ten_gig_eth_pcs_pma_inst/inst/gt0_gtwizard_10gbaser_multi_gt_i/gt0_gtwizard_10gbaser_i/gtxe2_i/RXOUTCLK]
 create_clock -period 6.203 -name txoutclk0 [get_pins network_path_inst_4/ten_gig_eth_pcs_pma_inst/inst/gt0_gtwizard_10gbaser_multi_gt_i/gt0_gtwizard_10gbaser_i/gtxe2_i/TXOUTCLK]
 #
