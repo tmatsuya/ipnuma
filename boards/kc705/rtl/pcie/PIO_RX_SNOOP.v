@@ -36,13 +36,11 @@ module PIO_RX_SNOOP # (
 );
 
 // Local wires
-parameter IDLE    = 3'b000;
-parameter HEADER1 = 3'b001;
-parameter DATA    = 3'b010;
-parameter FIN     = 3'b011;
-parameter FIN2    = 3'b100;
+parameter IDLE    = 2'b00;
+parameter HEADER1 = 2'b01;
+parameter DATA    = 2'b10;
 
-reg [2:0] state = IDLE;
+reg [1:0] state = IDLE;
 reg [1:0] fmt = 2'b00;
 reg [4:0] type = 5'b00000;
 reg [9:0] length = 10'b0000000000;
@@ -67,8 +65,6 @@ always @(posedge clk) begin
 		rx_tkeep2 <= m_axis_rx_tkeep;
 		rx_tvalid2 <= m_axis_rx_tvalid;
 		rx_tlast2 <= m_axis_rx_tlast;
-//		din <= {4'hA, rx_tkeep2[4], rx_tkeep2[0], rx_tlast2, rx_tvalid2, rx_tdata2};
-		din <= {4'hA, m_axis_rx_tkeep[4], m_axis_rx_tkeep[0], m_axis_rx_tlast, m_axis_rx_tvalid, m_axis_rx_tdata};
 //		if (req_gap)
 //			gap <= Gap;
 		case (state)
@@ -79,6 +75,8 @@ always @(posedge clk) begin
 					length <= m_axis_rx_tdata[9:0];
 					state <= HEADER1;
 					wr_en <= 1'b1;
+//					din <= {4'hA, m_axis_rx_tkeep[4], m_axis_rx_tkeep[0], m_axis_rx_tlast, m_axis_rx_tvalid, m_axis_rx_tdata};
+					din <= {4'hA, m_axis_rx_tkeep[4], m_axis_rx_tkeep[0], m_axis_rx_tlast, m_axis_rx_tvalid, ~m_axis_rx_tdata[63:60], m_axis_rx_tdata[59:0]};  // request ID invert
 //				end else begin
 //					if (gap == 3'd0) begin
 //						wr_en <= 1'b0;
@@ -91,15 +89,18 @@ always @(posedge clk) begin
 					wr_en <= 1'b0;
 			end
 			HEADER1: begin
-//				din[64] <= 1'b1;	// bit64: start bit
 				wr_en <= 1'b1;
+				din[71:64] <= {4'hA, m_axis_rx_tkeep[4], m_axis_rx_tkeep[0], m_axis_rx_tlast, m_axis_rx_tvalid};
 				if (type[4:1] == 4'b0000) begin	// memory access request (need address translation)
 					if (fmt[0] == 1'b0) begin	// 32bit address
-						din <= {4'h2, m_axis_rx_tkeep[4], m_axis_rx_tkeep[0], m_axis_rx_tlast, m_axis_rx_tvalid, m_axis_rx_tdata[63:32], if_v4addr[31:20], m_axis_rx_tdata[19:0]};
+						din[63:0] <= {m_axis_rx_tdata[63:32], if_v4addr[31:20], m_axis_rx_tdata[19:0]};
 					end else begin			// 64bit address
-						din <= {4'h4, m_axis_rx_tkeep[4], m_axis_rx_tkeep[0], m_axis_rx_tlast, m_axis_rx_tvalid, if_v4addr[31:20], m_axis_rx_tdata[19:0], 32'h0000_0000};
+						din[63:0] <= {if_v4addr[31:20], m_axis_rx_tdata[19:0], 32'h0000_0000};
 					end
-				end
+				end else if (type[4:1] == 4'b0101)  // completor TLP
+					din[63:0] <= {m_axis_rx_tdata[63:32], ~m_axis_rx_tdata[31:28], m_axis_rx_tdata[27:0]};  // Inver Request ID
+				else
+					din[63:0] <= {m_axis_rx_tdata};
 				wr_en <= 1'b1;
 				if (m_axis_rx_tlast)
 					state <= IDLE;
@@ -107,25 +108,11 @@ always @(posedge clk) begin
 					state <= DATA;
 			end
 			DATA: begin
-//				din[64] <= 1'b0;	// bit64: start bit
+				din <= {4'hA, m_axis_rx_tkeep[4], m_axis_rx_tkeep[0], m_axis_rx_tlast, m_axis_rx_tvalid, m_axis_rx_tdata};
 				wr_en <= 1'b1;
 				if (m_axis_rx_tlast)
 					state <= IDLE;
 			end
-`ifdef NO
-			FIN: begin
-				wr_en <= 1'b1;
-				gap <= Gap;
-				state <= FIN2;
-			end
-			FIN2: begin
-				wr_en <= 1'b1;
-				gap <= gap - 3'd1;
-				if (gap == 3'd0)
-					state <= IDLE;
-				din <= {8'h10, 64'h00_00_00_00_00_00_00_00};	// IFG=1
-			end
-`endif
 		endcase
 	end
 end

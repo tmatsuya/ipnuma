@@ -4,4 +4,4 @@
 `define ENABLE_XGMII4
 `define ENABLE_PCIE
 `define ENABLE_REQUESTER
-`define ENABLE_SERVER
+//`define ENABLE_SERVER

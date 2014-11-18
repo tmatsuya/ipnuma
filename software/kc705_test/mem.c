@@ -15,7 +15,7 @@
 int main(int argc,char **argv)
 {
 	unsigned char *mmapped;
-	int fd;
+	int fd, i;
 	unsigned int st,len=0x1000,poff;
 
 	st = 0x80000000;
@@ -32,7 +32,8 @@ int main(int argc,char **argv)
 		return 1;
 	}
 
-	*(int *)(mmapped + 0x0) = 0x12345678;
+	for (i=0x40; i<=0xff; i+=4)
+		*(int *)(mmapped + i) = i<<8 |  i;
 	munmap(mmapped,len);
 	close(fd);
 	return (0);

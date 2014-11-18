@@ -1125,6 +1125,7 @@ pcie_app_7x  #(
 	.xgmii_0_rxd(xgmii4_rxd),
 	.xgmii_0_rxc(xgmii4_rxc),
 
+	.dipsw(dipsw),
 	.led(led)
 );
 `endif

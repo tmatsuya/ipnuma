@@ -112,6 +112,7 @@ module PIO #(
 	input  [63:0] xgmii_0_rxd,
 	input  [ 7:0] xgmii_0_rxc,
 
+	input [3:0] dipsw,
 	output [7:0] led
 
 ); // synthesis syn_hier = "hard"
@@ -176,6 +177,7 @@ module PIO #(
 	.xgmii_0_rxd(xgmii_0_rxd),
 	.xgmii_0_rxc(xgmii_0_rxc),
 
+	.dipsw(dipsw),
 	.led(led)
   );
 

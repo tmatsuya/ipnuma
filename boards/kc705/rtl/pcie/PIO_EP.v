@@ -110,6 +110,7 @@ module PIO_EP #(
 	input  [63:0] xgmii_0_rxd,
 	input  [ 7:0] xgmii_0_rxc,
 
+	input [3:0] dipsw,
 	output [7:0] led
 
 );
@@ -322,7 +323,7 @@ wire tx0_phyq_rd_en;
 wire tx0_phyq_prog_full;
 
 afifo72_w250_r156 afifo72_w250_r156_0 (
-	.rst(sys_rst),
+	.rst(sys_rst | dipsw[1]),
 	.wr_clk(clk),
 	.rd_clk(xgmii_clk),
 	.din(tx0_phyq_din),
@@ -340,7 +341,7 @@ afifo72_w250_r156 afifo72_w250_r156_0 (
 wire req_gap;
 PIO_RX_SNOOP PIO_RX_SNOOP_inst (
     .clk(clk),               // I
-    .sys_rst(sys_rst),        // I
+    .sys_rst(sys_rst | dipsw[1]),        // I
       
     // AXIS RX
     .m_axis_rx_tdata( m_axis_rx_tdata ),    // I
@@ -369,7 +370,7 @@ PIO_RX_SNOOP PIO_RX_SNOOP_inst (
 // XGMII-TX ENGINE
 //
 XGMII_TX_ENGINE XGMII_TX_ENGINE_inst (
-	.sys_rst(sys_rst),           // I
+	.sys_rst(sys_rst | dipsw[1]),           // I
 	// XGMII-TX FIFO
 	.req_gap(req_gap),
 	.dout(tx0_phyq_dout),
@@ -401,7 +402,7 @@ wire rx0_phyq_rd_en;
 wire rx0_phyq_prog_full;
 
 afifo72_w156_r250 afifo72_w156_r250_0 (
-	.rst(sys_rst),
+	.rst(sys_rst | dipsw[2]),
 	.wr_clk(xgmii_clk),
 	.rd_clk(clk),
 	.din(rx0_phyq_din),
@@ -417,7 +418,7 @@ afifo72_w156_r250 afifo72_w156_r250_0 (
 //
 wire [7:0] xgmii_pktcount;
 XGMII_RX_ENGINE XGMII_RX_ENGINE_inst (
-	.sys_rst(sys_rst),           // I
+	.sys_rst(sys_rst | dipsw[2]),           // I
 	.clk(clk),                   // I
 	// XGMII
         .xgmii_clk(xgmii_clk),
@@ -435,7 +436,7 @@ XGMII_RX_ENGINE XGMII_RX_ENGINE_inst (
 
 	.xgmii_pktcount(xgmii_pktcount),
 
-	.led() //debug)
+	.led(led) //debug)
 );
 
 //
@@ -443,7 +444,7 @@ XGMII_RX_ENGINE XGMII_RX_ENGINE_inst (
 wire [7:0] tlp_pktcount;
 PIO_TX_SNOOP PIO_TX_SNOOP_inst (
     .clk(clk),               // I
-    .sys_rst(sys_rst),        // I
+    .sys_rst(sys_rst | dipsw[2]),        // I
       
     // AXIS TX
     .s_axis_tx_req(s_axis_tx2_req),
@@ -472,7 +473,7 @@ PIO_TX_SNOOP PIO_TX_SNOOP_inst (
 	.tlp_pktcount(tlp_pktcount)
 );
 assign debug = {xgmii_pktcount[3:0],tlp_pktcount[3:0]};
-assign led = debug;
+//assign led = debug;
 `else
 `endif
 
