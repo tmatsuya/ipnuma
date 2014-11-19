@@ -41,6 +41,10 @@ always @(posedge clk) begin
 				s_axis_tx1_ack <= 1'b1;
 			else if (s_axis_tx2_req)
 				s_axis_tx2_ack <= 1'b1;
+			else begin
+				s_axis_tx1_ack <= 1'b0;
+				s_axis_tx2_ack <= 1'b0;
+			end
 		end
 		2'b01: begin
 			if (~s_axis_tx1_req)

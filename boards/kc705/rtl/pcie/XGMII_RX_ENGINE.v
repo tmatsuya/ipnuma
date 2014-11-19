@@ -9,7 +9,7 @@
 //          b66:    b31-b0 enable
 //          b67:    b63-b32 enable
 module XGMII_RX_ENGINE # (
-	parameter Gap = 4'h5
+	parameter Gap = 4'h1
 ) (
 	input wire sys_rst,
 	input wire clk,
@@ -27,7 +27,7 @@ module XGMII_RX_ENGINE # (
 	input full,
 	output reg wr_en,
 
-	output reg [7:0] xgmii_pktcount,
+	output reg [7:0] xgmii_pktcount = 8'h0,
 
 	output wire [7:0] led
 );
