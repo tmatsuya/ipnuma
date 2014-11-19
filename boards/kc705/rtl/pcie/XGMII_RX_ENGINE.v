@@ -70,6 +70,7 @@ always @(posedge xgmii_clk) begin
 	end else begin
 		tlp_frame_end <= 1'b0;
 		din[63:0] <= xgmii_rxd;
+		din[71:68] <= 4'b0000;
 		wr_en <= 1'b0;
 		case (rx_state)
 		RX_IDLE: begin
@@ -118,7 +119,7 @@ always @(posedge xgmii_clk) begin
 			if (xgmii_rxc[7:0] != 8'h00)
 				rx_state <= RX_GAP;
 			else begin
-				din[71:64] <= 8'b0000_1101; // Start TLP
+				din[67:64] <= 4'b1101; // Start TLP
 				// bit64:xgmii_rxd[29]; length:xgmii_rxd[9:0]
 				dwlen <= (xgmii_rxd[30] ? xgmii_rxd[9:0] : 10'd0) - 10'd1 + {9'd0, xgmii_rxd[29]}; // tlp DWlength
 				wr_en <= 1'b1;
@@ -130,17 +131,17 @@ always @(posedge xgmii_clk) begin
 			dwlen <= dwlen - 10'd2;
 			case (dwlen)
 			10'd0: begin
-				din[71:64] <= 8'b0000_1111; // End TLP (2DW)
+				din[67:64] <= 4'b1111; // End TLP (2DW)
 				tlp_frame_end <= 1'b1;
 				rx_state <= RX_TLP1;
 			end
 			10'd1023: begin
-				din[71:64] <= 8'b0000_0111; // End TLP (1DW)
+				din[67:64] <= 4'b0111; // End TLP (1DW)
 				tlp_frame_end <= 1'b1;
 				rx_state <= RX_TLP1;
 			end
 			default: begin
-				din[71:64] <= 8'b0000_1101; // TLP (2DW)
+				din[67:64] <= 4'b1101; // TLP (2DW)
 			end
 			endcase
 		end
