@@ -65,11 +65,12 @@ parameter RX_IDLE  = 3'b000;
 parameter RX_HEAD  = 3'b001;
 parameter RX_TLP1  = 3'b010;
 parameter RX_TLP2  = 3'b011;
-parameter RX_GAP   = 3'b100;
+parameter RX_TLP3  = 3'b100;
+parameter RX_GAP   = 3'b101;
 
 reg [2:0] rx_state = RX_IDLE;
 `ifndef ORF
-reg [63:0] tlp1 = 64'h0, tlp2 = 64'h0;
+reg [63:0] tlp1 = 64'h0, tlp2 = 64'h0, tlp3 = 64'h0;
 `endif
 
 always @(posedge xgmii_clk) begin
@@ -88,6 +89,7 @@ always @(posedge xgmii_clk) begin
 `ifndef ORF
 		tlp1 <= 64'h0;
 		tlp2 <= 64'h0;
+		tlp3 <= 64'h0;
 `endif
 	end else begin
 		tlp_frame_end <= 1'b0;
@@ -156,8 +158,7 @@ always @(posedge xgmii_clk) begin
 		RX_TLP2: begin
 `ifndef ORF
 			tlp2 <= xgmii_rxd[63:0];
-			tlp_frame_end <= 1'b1;
-			rx_state <= RX_IDLE;
+			rx_state <= RX_TLP3;
 `else
 			wr_en <= 1'b1;
 			dwlen <= dwlen - 10'd2;
@@ -178,6 +179,13 @@ always @(posedge xgmii_clk) begin
 			endcase
 `endif
 		end
+`ifndef ORF
+		RX_TLP3: begin
+			tlp3 <= xgmii_rxd[63:0];
+			tlp_frame_end <= 1'b1;
+			rx_state <= RX_IDLE;
+		end
+`endif
 `ifdef ORF
 		RX_GAP: begin
         		s_axis_tx_req = 1'b0;
@@ -210,13 +218,16 @@ end
 //-----------------------------------
 // ORF Special
 //-----------------------------------
-parameter ORF_IDLE = 2'b00;
-parameter ORF_ACK  = 2'b01;
-parameter ORF_TLP1 = 2'b10;
-parameter ORF_TLP2 = 2'b11;
-reg [1:0] orf_state = ORF_IDLE;
+parameter ORF_IDLE = 3'b000;
+parameter ORF_ACK  = 3'b001;
+parameter ORF_TLP1 = 3'b010;
+parameter ORF_TLP2 = 3'b011;
+parameter ORF_TLP3 = 3'b100;
+reg [2:0] orf_state = ORF_IDLE;
+reg [9:0] len = 10'h0;
 always @(posedge clk) begin
 	if (sys_rst) begin
+		len <= 10'h0;
 		s_axis_tx_tvalid <= 1'b0;
 		s_axis_tx_tlast  <= 1'b0;
 		orf_state <= ORF_IDLE;
@@ -237,6 +248,7 @@ always @(posedge clk) begin
 				orf_state <= ORF_TLP1;
 		end
 		ORF_TLP1: begin
+			len <= (tlp1[30] ? tlp1[9:0] : 10'd0) - 10'd1 + {9'd0, tlp1[29]}; // tlp DWlength
         		s_axis_tx_req    <= 1'b1;
 			s_axis_tx_tvalid <= 1'b1;
 			s_axis_tx_tlast  <= 1'b0;
@@ -245,12 +257,50 @@ always @(posedge clk) begin
 			orf_state  <= ORF_TLP2;
 		end
 		ORF_TLP2: begin
+			len <= len - 10'd2;
         		s_axis_tx_req    <= 1'b1;
 			s_axis_tx_tvalid <= 1'b1;
-			s_axis_tx_tlast  <= 1'b1;
 			s_axis_tx_tdata  <=  tlp2;
-			s_axis_tx_tkeep  <= 8'hff;
-			orf_state  <= ORF_IDLE;
+			case (len)
+			10'd0: begin	// End TLP (2DW)
+				s_axis_tx_tkeep  <= 8'hff;
+				s_axis_tx_tlast  <= 1'b1;
+				orf_state  <= ORF_IDLE;
+			end
+			10'd1023: begin	// End TLP (1DW)
+				s_axis_tx_tkeep  <= 8'h0f;
+				s_axis_tx_tlast  <= 1'b1;
+				orf_state  <= ORF_IDLE;
+			end
+			default: begin	// TLP (2DW)
+				s_axis_tx_tkeep  <= 8'hff;
+				s_axis_tx_tlast  <= 1'b0;
+				orf_state  <= ORF_TLP3;
+			end
+			endcase
+		end
+		ORF_TLP3: begin
+			len <= len - 10'd2;
+        		s_axis_tx_req    <= 1'b1;
+			s_axis_tx_tvalid <= 1'b1;
+			s_axis_tx_tdata  <=  tlp3;
+			case (len)
+			10'd0: begin	// End TLP (2DW)
+				s_axis_tx_tkeep  <= 8'hff;
+				s_axis_tx_tlast  <= 1'b1;
+				orf_state  <= ORF_IDLE;
+			end
+			10'd1023: begin	// End TLP (1DW)
+				s_axis_tx_tkeep  <= 8'h0f;
+				s_axis_tx_tlast  <= 1'b1;
+				orf_state  <= ORF_IDLE;
+			end
+			default: begin	// TLP (2DW)
+				s_axis_tx_tkeep  <= 8'hff;
+				s_axis_tx_tlast  <= 1'b0;
+				orf_state  <= ORF_IDLE;
+			end
+			endcase
 		end
 		endcase
 	end
