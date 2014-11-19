@@ -29,23 +29,27 @@ module PIO_TX_SNOOP (
 	output reg rd_en,
 
 	input wire [7:0] xgmii_pktcount,
-	output reg [7:0] tlp_pktcount = 8'h00
+	output reg [7:0] tlp_pktcount = 8'h00,
 
+	output reg [7:0] debug = 8'h00
 );
 
 // Local wires
 parameter TLP_IDLE       = 2'b00;
 parameter TLP_SEARCH     = 2'b01;
 parameter TLP_HEADER0    = 2'b10;
-parameter TLP_DATA       = 2'b11;
 reg [1:0] tlp_state = TLP_IDLE;
+
+reg [7:0] retry = 8'hff;
 
 always @(posedge clk) begin
 	if (sys_rst) begin
+debug <= 8'h00;
 		rd_en <= 1'b0;
 		s_axis_tx_req <= 1'b0;
 		tlp_pktcount <= 8'h00;
 		tlp_state <= TLP_IDLE;
+retry <= 8'hff;
 	end else begin
 		rd_en <= 1'b0;
 		s_axis_tx_tdata <= dout[63:0];
@@ -55,6 +59,10 @@ always @(posedge clk) begin
 		case (tlp_state)
 		TLP_IDLE: begin
 			if (xgmii_pktcount != tlp_pktcount) begin
+if (retry == 8'h0) begin
+	tlp_pktcount <= tlp_pktcount + 8'd1;
+end
+retry <= retry - 8'd1;
 				s_axis_tx_req <= 1'b1;
 				if (s_axis_tx_ack)
 					tlp_state <= TLP_SEARCH;
@@ -66,7 +74,7 @@ always @(posedge clk) begin
 			if (rd_en && dout[64]) begin  // TLP start?
 				s_axis_tx_tvalid <= 1'b1;
 				tlp_state <= TLP_HEADER0;
-			end else if (dout[71:64] == 8'h00) begin
+			end else if (dout[67:64] == 4'h00) begin
 				tlp_state <= TLP_IDLE;
 			end
 		end
@@ -75,6 +83,7 @@ always @(posedge clk) begin
 			if (rd_en) begin
 				s_axis_tx_tvalid <= 1'b1;
 				if (dout[65]) begin  // TLP end?
+retry <= 8'hff;
 					tlp_pktcount <= tlp_pktcount + 8'd1;
 					s_axis_tx_tlast <= 1'b1;
 					s_axis_tx_req <= 1'b0;

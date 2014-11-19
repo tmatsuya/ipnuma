@@ -29,7 +29,7 @@ module XGMII_RX_ENGINE # (
 
 	output reg [7:0] xgmii_pktcount = 8'h0,
 
-	output wire [7:0] led
+	output wire [7:0] debug
 );
 
 reg [7:0] led_r = 8'h00;
@@ -171,6 +171,6 @@ always @(posedge clk) begin
 	end
 end
 
-assign led = led_r;
+assign debug = led_r;
 
 endmodule

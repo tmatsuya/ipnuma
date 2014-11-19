@@ -436,7 +436,7 @@ XGMII_RX_ENGINE XGMII_RX_ENGINE_inst (
 
 	.xgmii_pktcount(xgmii_pktcount),
 
-	.led() //debug)
+	.debug()
 );
 
 //
@@ -470,11 +470,14 @@ PIO_TX_SNOOP PIO_TX_SNOOP_inst (
 	.rd_en(rx0_phyq_rd_en),
 
 	.xgmii_pktcount(xgmii_pktcount),
-	.tlp_pktcount(tlp_pktcount)
+	.tlp_pktcount(tlp_pktcount),
+
+	.debug(debug)
 );
 //assign debug = {xgmii_pktcount[3:0],tlp_pktcount[3:0]};
-assign debug = {xgmii_pktcount[7:0]};
+//assign debug = {xgmii_pktcount[7:0]};
 assign led = debug;
+//assign led = {s_axis_tx1_req, s_axis_tx1_ack, s_axis_tx2_req, s_axis_tx2_ack};
 `else
 `endif
 
