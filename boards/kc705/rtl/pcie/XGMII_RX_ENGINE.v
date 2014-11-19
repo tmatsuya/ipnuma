@@ -128,17 +128,21 @@ always @(posedge xgmii_clk) begin
 		RX_TLP2: begin
 			wr_en <= 1'b1;
 			dwlen <= dwlen - 10'd2;
-			if (dwlen == 10'd0) begin
+			case (dwlen)
+			10'd0: begin
 				din[71:64] <= 8'b0000_1111; // End TLP (2DW)
 				tlp_frame_end <= 1'b1;
 				rx_state <= RX_TLP1;
-			end else if (dwlen == 10'd1023) begin
+			end
+			10'd1023: begin
 				din[71:64] <= 8'b0000_0111; // End TLP (1DW)
 				tlp_frame_end <= 1'b1;
 				rx_state <= RX_TLP1;
-			end else begin
+			end
+			default: begin
 				din[71:64] <= 8'b0000_1101; // TLP (2DW)
 			end
+			endcase
 		end
 		RX_GAP: begin
 			gap <= gap - 4'h1;
