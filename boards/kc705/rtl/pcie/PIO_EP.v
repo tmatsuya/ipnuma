@@ -420,6 +420,19 @@ wire [7:0] xgmii_pktcount;
 XGMII_RX_ENGINE XGMII_RX_ENGINE_inst (
 	.sys_rst(sys_rst),           // I
 	.clk(clk),                   // I
+`ifndef ORF
+    // AXIS TX
+    .s_axis_tx_req(s_axis_tx2_req),
+    .s_axis_tx_ack(s_axis_tx2_ack),
+    .s_axis_tx_tready(s_axis_tx2_tready),     // I
+    .s_axis_tx_tdata(s_axis_tx2_tdata),       // O
+    .s_axis_tx_tkeep(s_axis_tx2_tkeep),       // O
+    .s_axis_tx_tlast(s_axis_tx2_tlast),       // O
+    .s_axis_tx_tvalid(s_axis_tx2_tvalid),     // O
+    .tx_src_dsc(tx2_src_dsc),                 // O
+`endif
+
+    .cfg_completer_id(cfg_completer_id),           // I [15:0]
 	// XGMII
         .xgmii_clk(xgmii_clk),
         .xgmii_rxc(xgmii_0_rxc),
@@ -442,6 +455,7 @@ XGMII_RX_ENGINE XGMII_RX_ENGINE_inst (
 //
 // PCIE-TX SNOOP
 wire [7:0] tlp_pktcount;
+`ifdef ORF
 PIO_TX_SNOOP PIO_TX_SNOOP_inst (
     .clk(clk),               // I
     .sys_rst(sys_rst),        // I
@@ -474,6 +488,7 @@ PIO_TX_SNOOP PIO_TX_SNOOP_inst (
 
 	.debug(debug)
 );
+`endif
 //assign debug = {xgmii_pktcount[3:0],tlp_pktcount[3:0]};
 //assign debug = {xgmii_pktcount[7:0]};
 assign led = debug;

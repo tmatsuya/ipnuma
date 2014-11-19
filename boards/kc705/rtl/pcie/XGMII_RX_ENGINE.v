@@ -13,6 +13,20 @@ module XGMII_RX_ENGINE # (
 ) (
 	input wire sys_rst,
 	input wire clk,
+`ifndef ORF
+	//AXIS TX
+        output reg s_axis_tx_req = 1'b0,
+        input wire s_axis_tx_ack,
+        input wire s_axis_tx_tready,
+        output reg [63:0] s_axis_tx_tdata,
+        output reg [7:0] s_axis_tx_tkeep,
+        output reg s_axis_tx_tlast,
+        output reg s_axis_tx_tvalid,
+        output wire tx_src_dsc,
+
+        input wire [15:0] cfg_completer_id,
+`endif
+
 	// XGMII
 	input wire xgmii_clk,
 	input wire [7:0] xgmii_rxc,
@@ -52,7 +66,11 @@ parameter RX_HEAD  = 3'b001;
 parameter RX_TLP1  = 3'b010;
 parameter RX_TLP2  = 3'b011;
 parameter RX_GAP   = 3'b100;
+
 reg [2:0] rx_state = RX_IDLE;
+`ifndef ORF
+reg [63:0] tlp1 = 64'h0, tlp2 = 64'h0;
+`endif
 
 always @(posedge xgmii_clk) begin
 	if (sys_rst) begin
@@ -67,6 +85,10 @@ always @(posedge xgmii_clk) begin
 		led_r <= 8'h00;
 		tlp_frame_end <= 1'b0;
 		rx_state <= RX_IDLE;
+`ifndef ORF
+		tlp1 <= 64'h0;
+		tlp2 <= 64'h0;
+`endif
 	end else begin
 		tlp_frame_end <= 1'b0;
 		din[63:0] <= xgmii_rxd;
@@ -116,6 +138,10 @@ always @(posedge xgmii_clk) begin
 			endcase
 		end
 		RX_TLP1: begin
+`ifndef ORF
+			tlp1 <= xgmii_rxd[63:0];
+			rx_state <= RX_TLP2;
+`else
 			if (xgmii_rxc[7:0] != 8'h00)
 				rx_state <= RX_GAP;
 			else begin
@@ -125,8 +151,14 @@ always @(posedge xgmii_clk) begin
 				wr_en <= 1'b1;
 				rx_state <= RX_TLP2;
 			end
+`endif
 		end
 		RX_TLP2: begin
+`ifndef ORF
+			tlp2 <= xgmii_rxd[63:0];
+			tlp_frame_end <= 1'b1;
+			rx_state <= RX_IDLE;
+`else
 			wr_en <= 1'b1;
 			dwlen <= dwlen - 10'd2;
 			case (dwlen)
@@ -144,14 +176,18 @@ always @(posedge xgmii_clk) begin
 				din[67:64] <= 4'b1101; // TLP (2DW)
 			end
 			endcase
+`endif
 		end
+`ifdef ORF
 		RX_GAP: begin
+        		s_axis_tx_req = 1'b0;
 			gap <= gap - 4'h1;
 			if (gap == 4'h0)
 				rx_state <= RX_IDLE;
 			din <= 72'h00;
 			wr_en <= 1'b1;
 		end
+`endif
 		endcase
 	end
 end
@@ -168,6 +204,55 @@ always @(posedge clk) begin
 		prev_xgmii_end <= {tlp_frame_end, prev_xgmii_end[3:1]};
 		if (prev_xgmii_end == 4'b0001)
 			xgmii_pktcount <= xgmii_pktcount + 8'd1;
+	end
+end
+
+//-----------------------------------
+// ORF Special
+//-----------------------------------
+parameter ORF_IDLE = 2'b00;
+parameter ORF_ACK  = 2'b01;
+parameter ORF_TLP1 = 2'b10;
+parameter ORF_TLP2 = 2'b11;
+reg [1:0] orf_state = ORF_IDLE;
+always @(posedge clk) begin
+	if (sys_rst) begin
+		s_axis_tx_tvalid <= 1'b0;
+		s_axis_tx_tlast  <= 1'b0;
+		orf_state <= ORF_IDLE;
+	end else begin
+		case (orf_state)
+		ORF_IDLE: begin
+			s_axis_tx_tvalid <= 1'b0;
+			s_axis_tx_tlast  <= 1'b0;
+			if (prev_xgmii_end == 4'b0001) begin
+				s_axis_tx_req <= 1'b1;
+				orf_state <= ORF_ACK;
+			end else
+				s_axis_tx_req <= 1'b0;
+		end
+		ORF_ACK: begin
+			s_axis_tx_req <= 1'b1;
+			if (s_axis_tx_ack)
+				orf_state <= ORF_TLP1;
+		end
+		ORF_TLP1: begin
+        		s_axis_tx_req    <= 1'b1;
+			s_axis_tx_tvalid <= 1'b1;
+			s_axis_tx_tlast  <= 1'b0;
+			s_axis_tx_tdata  <=  tlp1;
+			s_axis_tx_tkeep  <= 8'hff;
+			orf_state  <= ORF_TLP2;
+		end
+		ORF_TLP2: begin
+        		s_axis_tx_req    <= 1'b1;
+			s_axis_tx_tvalid <= 1'b1;
+			s_axis_tx_tlast  <= 1'b1;
+			s_axis_tx_tdata  <=  tlp2;
+			s_axis_tx_tkeep  <= 8'hff;
+			orf_state  <= ORF_IDLE;
+		end
+		endcase
 	end
 end
 
