@@ -50,21 +50,20 @@ int main(int argc,char **argv)
 	init_numa();
 	printf("baraddr=%x,mmuaddr=%x\n", baraddr, mmuaddr);
 
-	st = mmuaddr;
+	st = baraddr;
 	poff=st % 4096;
 	if ((fd=open(MEM_DEVICE,O_RDWR)) <0) {
 		fprintf(stderr,"cannot open %s\n",MEM_DEVICE);
 		return 1;
 	}
 
-	fprintf(stdout,"mmap: start %08X len:%08X Total=%dMB\n",st-poff,len+poff, len/1000);
 	mmapped = mmap(0, len+poff, PROT_READ|PROT_WRITE, MAP_SHARED, fd, st-poff);
 	if(mmapped==MAP_FAILED) {
 		fprintf(stderr,"cannot mmap\n");
 		return 1;
 	}
 
-	i = 0xd0000000;
+	i = htonl(0xd0000000);
 	if ( ioctl( numa_fd, IPNUMA_IOCTL_SETIFV4ADDR, &i) < 0 ) {
 		fprintf(stderr,"cannot IOCTL\n");
 		return 1;
@@ -72,7 +71,7 @@ int main(int argc,char **argv)
 
 	while (1) {
 		printf("data?");
-		scanf("%lx", &sdata);
+		scanf("%d", &sdata);
 		*(int *)(mmapped + 0) = sdata;
 	}
 
