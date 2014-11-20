@@ -41,6 +41,7 @@ int main(int argc,char **argv)
 	for (i=0; i<(80*5); ++i)
 		*(int *)(mmapped + i*8) = 0x0720;
 
+	munmap(mmapped,len);
 	close(fd);
 	return (0);
 }
