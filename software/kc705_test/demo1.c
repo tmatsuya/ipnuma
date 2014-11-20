@@ -32,13 +32,15 @@ int main(int argc,char **argv)
 		return 1;
 	}
 
-	while (1) {
-		for (i=0; i<(80*3); ++i)
-			*(int *)(mmapped + i*8) = (((((i+j) % 14)+1)<<8) |  (i+j) & 0xff);
-		sleep(1);
-		++j;
+	for (j=0; j<=1000; ++j) {
+		for (i=0; i<(80*5); ++i)
+			*(int *)(mmapped + i*8) = (((((i+j) % 14)+1)<<8)|(i+j) & 0xff);
+		usleep(10000);
 	}
-//	munmap(mmapped,len);
+
+	for (i=0; i<(80*5); ++i)
+		*(int *)(mmapped + i*8) = 0x0720;
+
 	close(fd);
 	return (0);
 }
