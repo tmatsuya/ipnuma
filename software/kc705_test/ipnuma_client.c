@@ -140,7 +140,7 @@ int main(int argc, char **argv)
 			sdata[ i*4+9 ] = (tlp[i] >> 24) & 0xff;
 		}
 
-		if (sendto(sockfd, sdata, 6+(tlp_len*4), 0, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0){
+		if (sendto(sockfd, sdata, 6+((tlp_len|1)*4), 0, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0){
 			perror("sendto()");
 		}
 
