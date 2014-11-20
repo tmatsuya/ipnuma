@@ -19,7 +19,7 @@
 #define	MEM_DEVICE	"/dev/mem"
 
 int numa_fd = -1;
-unsigned long pa, mem0p, mmuaddr, baraddr;
+unsigned long pa, mem0p, mmuaddr, baraddr, sdata;
 
 
 int init_numa(void)
@@ -44,9 +44,8 @@ int init_numa(void)
 int main(int argc,char **argv)
 {
 	unsigned char *mmapped;
-	int rdata = -1, rdata2, sdata = 0;
 	int fd, i;
-	unsigned int st,len=0x40000,poff;
+	unsigned int st,len=0x100,poff;
 
 	init_numa();
 	printf("baraddr=%x,mmuaddr=%x\n", baraddr, mmuaddr);
@@ -58,14 +57,6 @@ int main(int argc,char **argv)
 		return 1;
 	}
 
-	printf("remote physical address?");
-	scanf("%lx", &mem0p);
-	i = htonl(mem0p);
-	if ( ioctl( numa_fd, IPNUMA_IOCTL_SETIFV4ADDR, &i) < 0 ) {
-		fprintf(stderr,"cannot IOCTL\n");
-		return 1;
-	}
-
 	fprintf(stdout,"mmap: start %08X len:%08X Total=%dMB\n",st-poff,len+poff, len/1000);
 	mmapped = mmap(0, len+poff, PROT_READ|PROT_WRITE, MAP_SHARED, fd, st-poff);
 	if(mmapped==MAP_FAILED) {
@@ -73,11 +64,17 @@ int main(int argc,char **argv)
 		return 1;
 	}
 
+	i = 0xd0000000;
+	if ( ioctl( numa_fd, IPNUMA_IOCTL_SETIFV4ADDR, &i) < 0 ) {
+		fprintf(stderr,"cannot IOCTL\n");
+		return 1;
+	}
 
-#ifdef NO
-	rdata2 = rdata;
-	*(int *)(mmapped + 0x37760) = sdata;
-#endif
+	while (1) {
+		printf("data?");
+		scanf("%lx", &sdata);
+		*(int *)(mmapped + 0) = sdata;
+	}
 
 	munmap(mmapped,len);
 	close(fd);
