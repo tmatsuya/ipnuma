@@ -32,7 +32,9 @@ module PIO_RX_SNOOP # (
 	input wire req_gap,
 	output reg [71:0] din,
 	input wire full,
-	output reg wr_en
+	output reg wr_en,
+
+	input wire [3:0] dipsw
 );
 
 // Local wires
@@ -48,6 +50,7 @@ reg [63:0] rx_tdata2 = 64'h00;
 reg [7:0] rx_tkeep2 = 8'h00;
 reg rx_tvalid2 = 1'b0;
 reg rx_tlast2 = 1'b0;
+reg completion = 1'b0;
 reg [2:0] gap = 3'd0;
 
 always @(posedge clk) begin
@@ -57,6 +60,7 @@ always @(posedge clk) begin
 		rx_tkeep2 <= 8'h00;
 		rx_tvalid2 <= 1'b0;
 		rx_tlast2 <= 1'b0;
+		completion <= 1'b0;
 		gap <= 3'd0;
 		din <= {8'h00, 64'h00_00_00_00_00_00_00_00};
 		state <= IDLE;
@@ -69,14 +73,20 @@ always @(posedge clk) begin
 //			gap <= Gap;
 		case (state)
 			IDLE: begin
-				if (m_axis_rx_tvalid && m_axis_rx_tuser[4]) begin  // BAR2 only
+//				if (m_axis_rx_tvalid && m_axis_rx_tuser[4]) begin  // BAR2 only
+				if (m_axis_rx_tvalid && (m_axis_rx_tuser[4]|m_axis_rx_tdata[28:24]==5'b01010)) begin  // BAR2 or completion  only
 					fmt <= m_axis_rx_tdata[30:29];
 					type <= m_axis_rx_tdata[28:24];
 					length <= m_axis_rx_tdata[9:0];
 					state <= HEADER1;
 					wr_en <= 1'b1;
-//					din <= {4'hA, m_axis_rx_tkeep[4], m_axis_rx_tkeep[0], m_axis_rx_tlast, m_axis_rx_tvalid, m_axis_rx_tdata};
-					din <= {4'hA, m_axis_rx_tkeep[4], m_axis_rx_tkeep[0], m_axis_rx_tlast, m_axis_rx_tvalid, ~m_axis_rx_tdata[63:60], m_axis_rx_tdata[59:0]};  // request ID invert
+					if (m_axis_rx_tdata[28:24]!=5'b01010) begin // if non-comletion then request_id invert
+						completion <= 1'b0;
+						din <= {4'hA, m_axis_rx_tkeep[4], m_axis_rx_tkeep[0], m_axis_rx_tlast, m_axis_rx_tvalid, ~m_axis_rx_tdata[63:60], m_axis_rx_tdata[59:0]};  // request ID invert
+					end else begin
+						completion <= 1'b1;
+						din <= {4'hA, m_axis_rx_tkeep[4], m_axis_rx_tkeep[0], m_axis_rx_tlast, m_axis_rx_tvalid, m_axis_rx_tdata};
+					end
 //				end else begin
 //					if (gap == 3'd0) begin
 //						wr_en <= 1'b0;
@@ -97,7 +107,7 @@ always @(posedge clk) begin
 					end else begin			// 64bit address
 						din[63:0] <= {if_v4addr[31:20], m_axis_rx_tdata[19:0], 32'h0000_0000};
 					end
-				end else if (type[4:1] == 4'b0101)  // completor TLP
+				end else if (completion)  // completor TLP
 					din[63:0] <= {m_axis_rx_tdata[63:32], ~m_axis_rx_tdata[31:28], m_axis_rx_tdata[27:0]};  // Inver Request ID
 				else
 					din[63:0] <= {m_axis_rx_tdata};

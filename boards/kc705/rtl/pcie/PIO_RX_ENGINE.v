@@ -111,7 +111,8 @@ module PIO_RX_ENGINE  #(
   output reg [7:0]   wr_be,                         // Memory Write Byte Enable
   output reg [31:0]  wr_data,                       // Memory Write Data
   output reg         wr_en,                         // Memory Write Enable
-  input              wr_busy                        // Memory Write Busy
+  input              wr_busy,                       // Memory Write Busy
+  input [3:0] dipsw 
 );
 
   localparam PIO_RX_MEM_RD32_FMT_TYPE = 7'b00_00000;
@@ -164,7 +165,8 @@ module PIO_RX_ENGINE  #(
 
       end
 
-      assign sop = !in_packet_q && m_axis_rx_tvalid;
+//      assign sop = !in_packet_q && m_axis_rx_tvalid;
+      assign sop = !in_packet_q && m_axis_rx_tvalid && (~m_axis_rx_tuser[4]|dipsw[1]);  // macchan
 
       always @ ( posedge clk ) begin
 
@@ -1102,4 +1104,3 @@ assign    erom_bar_hit_n  = ~(m_axis_rx_tuser[8]);
   // synthesis translate_on
 
 endmodule // PIO_RX_ENGINE
-

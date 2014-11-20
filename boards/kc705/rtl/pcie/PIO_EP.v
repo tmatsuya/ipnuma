@@ -218,7 +218,9 @@ wire [7:0] debug;
     .wr_be(wr_be),                          // O [7:0]
     .wr_data(wr_data),                      // O [31:0]
     .wr_en(wr_en),                          // O
-    .wr_busy(wr_busy)                       // I
+    .wr_busy(wr_busy),                      // I
+
+    .dipsw(dipsw)
                                             
   );
 
@@ -363,7 +365,9 @@ PIO_RX_SNOOP PIO_RX_SNOOP_inst (
 	.req_gap(req_gap),
 	.din(tx0_phyq_din),
 	.full(tx0_phyq_full),
-	.wr_en(tx0_phyq_wr_en)
+	.wr_en(tx0_phyq_wr_en),
+
+	.dipsw(dipsw)
 );
 
 //
