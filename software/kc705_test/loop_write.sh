@@ -1,6 +1,6 @@
 # gpu BAR1 as 0xD0000000
 mode=0
-addr="0xd0000000"
+addr="0xc0000000"
 while true
 do
 sudo ifconfig eth1 192.168.1.1 up

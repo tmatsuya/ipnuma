@@ -23,11 +23,12 @@ int main(int argc, char **argv)
 	int i, j, dwlen, dwlen2;
 	int tlp[10], tlp_len;
 	char sdata[BUFSIZE], dest_ip[256];
-	long long int write_addr, write_data = 0xa1b2c3d4;
+	long long int addr, write_data = 0xa1b2c3d4;
 
 	if ( argc < 2) {
-		fprintf( stderr, "usage: %s [dest IP] <mode> <write_address> <write_data>\n", argv[0] );
-		fprintf( stderr, "      mode  0:3DW+1DW 1:3DW+2DW 2:4DW+1DW 3:4DW+2DW\n");
+		fprintf( stderr, "usage: %s [dest IP] <mode> <address> [write_data]\n", argv[0] );
+		fprintf( stderr, "      mode  0:write,3DW+1DW 1:3DW+2DW 2:4DW+1DW 3:4DW+2DW\n");
+		fprintf( stderr, "      mode  4:read,3DW+1DW 5:3DW+2DW 6:4DW+1DW 7:4DW+2DW\n");
 		exit(-1);
 	}
 
@@ -35,15 +36,15 @@ int main(int argc, char **argv)
 
 	if ( argc >= 3 ) {
 		mode = atoi(argv[2]);
-		if (mode < 0 || mode > 3) {
+		if (mode < 0 || mode > 7) {
 			fprintf( stderr, "invalid mode\n");
 			exit(-1);
 		}
 	}
 
 	if ( argc >= 4 ) {
-		write_addr = strtoll( argv[3], NULL, 0);
-		printf("mode=%d, write_addr=%16llx", mode, write_addr);
+		addr = strtoll( argv[3], NULL, 0);
+		printf("mode=%d, addr=%16llx", mode, addr);
 	}
 
 	if ( argc >= 5 ) {
@@ -115,7 +116,7 @@ int main(int argc, char **argv)
 //		sdata[ 4] = 0xc1;// write command(b7), 64bit(b6), length(b5-b0)=4DW
 //		sdata[ 5] = 0xff;	// LBE(b8-4), FBE(b3-0)
 
-//		sdata[ 6] = (write_addr >> 32) & 0xff;
+//		sdata[ 6] = (addr >> 32) & 0xff;
 
 		tlp_len = 0;
 		switch (mode) {
@@ -123,15 +124,21 @@ int main(int argc, char **argv)
 			case 1: tlp[tlp_len++] = 0x40000002; break;
 			case 2: tlp[tlp_len++] = 0x60000001; break;
 			case 3: tlp[tlp_len++] = 0x60000002; break;
+			case 4: tlp[tlp_len++] = 0x00000001; break;
+			case 5: tlp[tlp_len++] = 0x00000002; break;
+			case 6: tlp[tlp_len++] = 0x20000001; break;
+			case 7: tlp[tlp_len++] = 0x20000002; break;
 			default:tlp[tlp_len++] = 0x40000001; break;
 		}
 		tlp[tlp_len++] = 0x123401ff;
 		if (mode & 2)
-			tlp[tlp_len++] = write_addr>>32; //0x000b8000;
-		tlp[tlp_len++] = write_addr; //0x000b8000;
-		tlp[tlp_len++] = write_data; //0xa1b2c3d4;
-		if (mode & 1)
-			tlp[tlp_len++] = write_data>>32; //0xa1b2c3d4;
+			tlp[tlp_len++] = addr>>32; //0x000b8000;
+		tlp[tlp_len++] = addr; //0x000b8000;
+		if (mode <4) { // write ?
+			tlp[tlp_len++] = write_data; 		//0xa1b2c3d4;
+			if (mode & 1)
+				tlp[tlp_len++] = write_data>>32; //0xa1b2c3d4;
+		}
 
 		for (i=0; i<tlp_len; ++i) {
 			sdata[ i*4+6 ] = (tlp[i] >>  0) & 0xff;
