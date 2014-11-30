@@ -220,7 +220,9 @@ wire [7:0] debug;
     .wr_en(wr_en),                          // O
     .wr_busy(wr_busy),                      // I
 
-    .dipsw(dipsw)
+    .dipsw(dipsw),
+
+    .debug(debug)
                                             
   );
 

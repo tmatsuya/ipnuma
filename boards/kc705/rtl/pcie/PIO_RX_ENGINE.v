@@ -112,7 +112,8 @@ module PIO_RX_ENGINE  #(
   output reg [31:0]  wr_data,                       // Memory Write Data
   output reg         wr_en,                         // Memory Write Enable
   input              wr_busy,                       // Memory Write Busy
-  input [3:0] dipsw 
+  input [3:0] dipsw ,
+  input [7:0] debug
 );
 
   localparam PIO_RX_MEM_RD32_FMT_TYPE = 7'b00_00000;
