@@ -237,7 +237,11 @@ wire [7:0] s_axis_tx1_tkeep, s_axis_tx2_tkeep;
 wire s_axis_tx1_tlast, s_axis_tx2_tlast;
 wire s_axis_tx1_tvalid, s_axis_tx2_tvalid;
 wire tx1_src_dsc, tx2_src_dsc;
-TX_MUX TX_MUX_inst (
+TX_MUX # (
+	.C_DATA_WIDTH( C_DATA_WIDTH ),
+	.KEEP_WIDTH( KEEP_WIDTH ),
+	.TCQ( TCQ )
+) TXMUX_inst (
         .clk(clk),
         .sys_rst(sys_rst),
         // AXIS Output

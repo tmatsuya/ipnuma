@@ -1,12 +1,18 @@
 `timescale 1ps/1ps
 
-module TX_MUX (
+module TX_MUX # (
+	// RX/TX interface data width
+	parameter C_DATA_WIDTH = 64,
+	parameter TCQ = 1,
+	// TSTRB width
+	parameter KEEP_WIDTH = C_DATA_WIDTH / 8
+)(
 	input clk,
 	input sys_rst,
 	// AXIS Output
 	input s_axis_tx_tready,
-	output [63:0] s_axis_tx_tdata,
-	output [7:0] s_axis_tx_tkeep,
+	output [C_DATA_WIDTH-1:0] s_axis_tx_tdata,
+	output [KEEP_WIDTH-1:0] s_axis_tx_tkeep,
 	output s_axis_tx_tlast,
 	output s_axis_tx_tvalid,
 	output tx_src_dsc,
@@ -14,8 +20,8 @@ module TX_MUX (
 	input s_axis_tx1_req,
 	output reg s_axis_tx1_ack = 1'b0,
 	output s_axis_tx1_tready,
-	input [63:0] s_axis_tx1_tdata,
-	input [7:0] s_axis_tx1_tkeep,
+	input [C_DATA_WIDTH-1:0] s_axis_tx1_tdata,
+	input [KEEP_WIDTH-1:0] s_axis_tx1_tkeep,
 	input s_axis_tx1_tlast,
 	input s_axis_tx1_tvalid,
 	input tx1_src_dsc,
@@ -23,8 +29,8 @@ module TX_MUX (
 	input s_axis_tx2_req,
 	output reg s_axis_tx2_ack = 1'b0,
 	output s_axis_tx2_tready,
-	input [63:0] s_axis_tx2_tdata,
-	input [7:0] s_axis_tx2_tkeep,
+	input [C_DATA_WIDTH-1:0] s_axis_tx2_tdata,
+	input [KEEP_WIDTH-1:0] s_axis_tx2_tkeep,
 	input s_axis_tx2_tlast,
 	input s_axis_tx2_tvalid,
 	input tx2_src_dsc
