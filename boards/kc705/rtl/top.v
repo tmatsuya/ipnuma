@@ -6,8 +6,13 @@ module top # (
 	parameter PCIE_EXT_CLK        = "TRUE",    // Use External Clocking Module
 	parameter PCIE_EXT_GT_COMMON  = "FALSE",
 	parameter REF_CLK_FREQ        = 0,     // 0 - 100 MHz, 1 - 125 MHz, 2 - 250 MHz
+`ifdef PCIE_X8
+	parameter C_DATA_WIDTH        = 128, // RX/TX interface data width
+`else
 	parameter C_DATA_WIDTH        = 64, // RX/TX interface data width
-	parameter KEEP_WIDTH          = C_DATA_WIDTH / 8 // TSTRB width
+`endif
+	parameter KEEP_WIDTH          = C_DATA_WIDTH / 8, // TSTRB width
+	parameter LINK_WIDTH          = C_DATA_WIDTH / 16 // PCIe Link Width
 ) (
 	input wire sysclk_p,
 	input wire sysclk_n,
@@ -47,10 +52,10 @@ module top # (
 	input sys_clk_p,
 	input sys_clk_n,
 	input sys_rst_n,
-	output [3:0] pci_exp_txp,
-	output [3:0] pci_exp_txn,
-	input [3:0] pci_exp_rxp,
-	input [3:0] pci_exp_rxn,
+	output [LINK_WIDTH-1:0] pci_exp_txp,
+	output [LINK_WIDTH-1:0] pci_exp_txn,
+	input [LINK_WIDTH-1:0] pci_exp_rxp,
+	input [LINK_WIDTH-1:0] pci_exp_rxn,
 `endif
 	output fmc_ok_led,
 	input [1:0] fmc_gbtclk0_fsel,
@@ -704,8 +709,13 @@ assign fmc_clk_312_5 = (fmc_gbtclk0_fsel == 2'b11) ? 1'b1 : 1'b0;
 
 // Local Parameters
   localparam TCQ               = 1;
+`ifdef PCIE_X8
+  localparam USER_CLK_FREQ     = 4;
+  localparam USER_CLK2_DIV2    = "TRUE";
+`else
   localparam USER_CLK_FREQ     = 3;
   localparam USER_CLK2_DIV2    = "FALSE";
+`endif
   localparam USERCLK2_FREQ     = (USER_CLK2_DIV2 == "TRUE") ? (USER_CLK_FREQ == 4) ? 3 : (USER_CLK_FREQ == 3) ? 2 : USER_CLK_FREQ: USER_CLK_FREQ;
 
  //-----------------------------I/O BUFFERS------------------------//
@@ -742,7 +752,7 @@ assign fmc_clk_312_5 = (fmc_gbtclk0_fsel == 2'b11) ? 1'b1 : 1'b0;
 
 pcie_7x_0_support #
    (	 
-    .LINK_CAP_MAX_LINK_WIDTH        ( 4 ),  // PCIe Lane Width
+    .LINK_CAP_MAX_LINK_WIDTH        ( LINK_WIDTH ),  // PCIe Lane Width
     .C_DATA_WIDTH                   ( C_DATA_WIDTH ),                       // RX/TX interface data width
     .KEEP_WIDTH                     ( KEEP_WIDTH ),                         // TSTRB width
     .PCIE_REFCLK_FREQ               ( REF_CLK_FREQ ),                       // PCIe reference clock frequency
@@ -776,7 +786,11 @@ pcie_7x_0_support_i
   .pipe_oobclk_out                            ( ),
   .pipe_userclk2_out                          ( ),
   .pipe_mmcm_lock_out                         ( ),
+`ifdef PCIE_X8
+  .pipe_pclk_sel_slave                        ( 8'b0),
+`else
   .pipe_pclk_sel_slave                        ( 4'b0),
+`endif
   .pipe_mmcm_rst_n                            ( pipe_mmcm_rst_n ),        // Async      | Async
 
 
