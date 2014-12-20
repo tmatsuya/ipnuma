@@ -1,4 +1,5 @@
 `timescale 1ps/1ps
+`include "../setup.v"
 
 (* DowngradeIPIdentifiedWarnings = "yes" *)
 module PIO_EP_MEM_ACCESS  #(
@@ -136,7 +137,11 @@ function [31:0] dec_data;
 	endcase
 endfunction
 //assign rd_data = rd_addr[13:12] == 2'b11 ? bios_data : read_data;
+`ifdef PCIE_X8
+assign rd_data = dec_data(rd_addr[13:12], read_data, 32'h0, 32'h00);
+`else
 assign rd_data = dec_data(rd_addr[13:12], read_data, 32'h0, bios_data);
+`endif
 assign wr_busy = 1'b0;
 
 endmodule
