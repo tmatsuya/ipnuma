@@ -754,8 +754,7 @@ module PIO_RX_ENGINE  #(
                         req_be       <= #TCQ m_axis_rx_tdata[39:32];
 
                         //lower qw
-                        req_addr     <= #TCQ {region_select[1:0],
-                                                 m_axis_rx_tdata[77:66],2'b00};
+                        req_addr     <= #TCQ {region_select[1:0], m_axis_rx_tdata[77:66],2'b00};
                         req_compl    <= #TCQ 1'b1;
                         req_compl_wd <= #TCQ 1'b1;
                         state        <= #TCQ PIO_RX_WAIT_STATE;
@@ -801,7 +800,7 @@ module PIO_RX_ENGINE  #(
                         // Upper 32-bits of 64-bit address not used, but would be captured
                         // in this state if used.  Upper 32 address bits are on
                         //m_axis_rx_tdata[127:96]
-                        req_addr     <= #TCQ {region_select[1:0], m_axis_rx_tdata[74:66],2'b00};
+                        req_addr     <= #TCQ {region_select[1:0], m_axis_rx_tdata[77:66],2'b00};
                         req_compl    <= #TCQ 1'b1;
                         req_compl_wd <= #TCQ 1'b1;
                         state        <= #TCQ PIO_RX_WAIT_STATE;
@@ -841,7 +840,7 @@ module PIO_RX_ENGINE  #(
                         req_be       <= #TCQ m_axis_rx_tdata[39:32];
 
                         //lower qw
-                        req_addr     <= #TCQ {region_select[1:0], m_axis_rx_tdata[74:66],2'b00};
+                        req_addr     <= #TCQ {region_select[1:0], m_axis_rx_tdata[77:66],2'b00};
                         req_compl    <= #TCQ 1'b1;
                         req_compl_wd <= #TCQ 1'b1;
                         state        <= #TCQ PIO_RX_WAIT_STATE;

@@ -344,6 +344,7 @@ localparam PIO_TX_CPLD_QW1        = 2'b11;
           s_axis_tx_tvalid  <= #TCQ 1'b0;
           s_axis_tx_tdata   <= #TCQ {C_DATA_WIDTH{1'b0}};
           s_axis_tx_tkeep   <= #TCQ {KEEP_WIDTH{1'b0}};
+          s_axis_tx_req     <= #TCQ 1'b0;
           compl_done        <= #TCQ 1'b0;
           hold_state        <= #TCQ 1'b0;
         end // if !rst_n
@@ -352,7 +353,7 @@ localparam PIO_TX_CPLD_QW1        = 2'b11;
   
           if (req_compl_q2 | hold_state)
           begin
-            if (s_axis_tx_tready) 
+            if (s_axis_tx_tready & s_axis_tx_ack) 
             begin
   
               s_axis_tx_tlast   <= #TCQ 1'b1;
@@ -392,10 +393,13 @@ localparam PIO_TX_CPLD_QW1        = 2'b11;
   
               compl_done        <= #TCQ 1'b1;
               hold_state        <= #TCQ 1'b0;
+              s_axis_tx_req     <= #TCQ 1'b0;
   
             end // if (s_axis_tx_tready) 
-            else
+            else begin
               hold_state        <= #TCQ 1'b1;
+              s_axis_tx_req     <= #TCQ 1'b1;
+            end
   
           end // if (req_compl_q2 | hold_state)
           else
