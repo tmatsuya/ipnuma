@@ -3,6 +3,7 @@ mode=0
 addr="0xd0000000"
 while true
 do
+sudo ifconfig enp3s0f0 192.168.1.1 up
 sudo ifconfig eth1 192.168.1.1 up
 sudo arp -s 192.168.1.2 00:37:76:00:00:01
 mode=0
