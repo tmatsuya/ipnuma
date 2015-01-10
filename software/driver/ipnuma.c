@@ -322,9 +322,12 @@ static void __devexit ipnuma_remove_one (struct pci_dev *pdev)
 		iounmap(mmio1_ptr);
 		mmio1_ptr = 0L;
 	}
+	if ( dma_virt_ptr )
+		dma_free_coherent(&pcidev->dev, DMA_BUF_SIZE, dma_virt_ptr, dma_phys_ptr);
 	pci_release_regions (pdev);
 	pci_disable_device (pdev);
 	printk("%s\n", __func__);
+	misc_deregister(&ipnuma_dev);
 }
 
 
@@ -354,12 +357,7 @@ static int __init ipnuma_init(void)
 static void __exit ipnuma_cleanup(void)
 {
 	printk("%s\n", __func__);
-	misc_deregister(&ipnuma_dev);
 	pci_unregister_driver(&ipnuma_pci_driver);
-
-	if ( dma_virt_ptr )
-		dma_free_coherent(&pcidev->dev, DMA_BUF_SIZE, dma_virt_ptr, dma_phys_ptr);
-
 }
 
 MODULE_LICENSE("GPL");
