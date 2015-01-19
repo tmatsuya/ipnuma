@@ -21,7 +21,7 @@
 
 TimeWatcher tw;
 int numa_fd = -1;
-unsigned long pa, mem0p, baraddr;
+unsigned long long pa, mem0p = 0LL, baraddr;
 unsigned char if_ipv4[4], if_mac[6];
 unsigned char dest_ipv4[4], dest_mac[6];
 
@@ -78,7 +78,7 @@ int init_numa(int server_flag)
 		fprintf(stderr,"cannot IOCTL\n");
 		return 1;
 	}
-	printf("mem0paddr=%012lX\n", mem0p);
+	printf("mem0paddr=%012llX\n", mem0p);
 	if ( ioctl( numa_fd, IPNUMA_IOCTL_GETBARADDR, &baraddr) < 0 ) {
 		fprintf(stderr,"cannot IOCTL\n");
 		return 1;
@@ -139,7 +139,7 @@ int main(int argc,char **argv)
 		start(&tw);
 		while (rdata < 20000) {
 			rdata2 = rdata;
-			*(int *)(mmapped + 0x37760) = sdata;
+			*(int *)(mmapped + (mem0p & 0xfff)) = sdata;
 			do {
 				asm volatile ("clflush (%0)" :: "r"(&rdata));
 //				usleep(1);
@@ -157,7 +157,7 @@ int main(int argc,char **argv)
 		sdata = 0;
 		while (1) {
 			rdata2 = rdata;
-			*(int *)(mmapped + 0x37760) = sdata;
+			*(int *)(mmapped + (mem0p & 0xfff)) = sdata;
 			do {
 				asm volatile ("clflush (%0)" :: "r"(&rdata));
 //				usleep(1);
