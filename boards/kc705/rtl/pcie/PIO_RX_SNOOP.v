@@ -106,7 +106,7 @@ always @(posedge clk) begin
 					if (fmt[0] == 1'b0) begin	// 32bit address
 						din[63:0] <= {m_axis_rx_tdata[63:32], mem0_paddr[31:20], m_axis_rx_tdata[19:0]};
 					end else begin			// 64bit address
-						din[63:0] <= {mem0_paddr[31:20], m_axis_rx_tdata[19:0], 32'h0000_0000};
+						din[63:0] <= {mem0_paddr[31:20], m_axis_rx_tdata[19:0], 16'h00, mem0_paddr[47:32]};
 					end
 				end else if (completion)  // completor TLP
 					din[63:0] <= {m_axis_rx_tdata[63:32], ~m_axis_rx_tdata[31:28], m_axis_rx_tdata[27:0]};  // Inver Request ID
