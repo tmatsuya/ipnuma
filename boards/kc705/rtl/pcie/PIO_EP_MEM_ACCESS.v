@@ -51,6 +51,7 @@ always @(posedge clk) begin
 		dest_macaddr <= 48'hffffff_ffffff;
 		mem0_paddr <= (48'hd000_0000>>12);
 	end else begin
+		if (rd_addr[13:12] == 2'b01) begin // BAR0
 		case (rd_addr[5:0])
 			6'h00: // if ipv4_addr
 				read_data[31:0] <= {if_v4addr[31:0]};
@@ -70,7 +71,8 @@ always @(posedge clk) begin
 				read_data[31:0] <= {mem0_paddr[39:32], mem0_paddr[47:40], 16'h00};
 			default: read_data[31:0] <= 32'h0;
 		endcase
-		if (wr_en == 1'b1) begin
+		end
+		if (wr_addr[13:12] == 2'b01 && wr_en == 1'b1) begin // BAR0
 			case (wr_addr[5:0])
 				6'h00: begin // if ipv4_addr
 					if (wr_be[0])
