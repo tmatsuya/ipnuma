@@ -22,10 +22,11 @@ module PIO_EP_MEM_ACCESS  #(
 	output	wr_busy,      // O	 Write Controller Busy
 
 	// PCIe user registers
-	output reg [31:0] if_v4addr = 32'hd000_0000, //{8'd10, 8'd0, 8'd21, 8'd199},
+	output reg [31:0] if_v4addr = {8'd10, 8'd0, 8'd21, 8'd199},
 	output reg [47:0] if_macaddr = 48'h003776_000001,
 	output reg [31:0] dest_v4addr = {8'd10, 8'd0, 8'd21, 8'd255},
 	output reg [47:0] dest_macaddr = 48'hffffff_ffffff,
+	output reg [47:12] mem0_paddr = (48'hd000_0000>>12),
 
 	input [7:0] debug
 );
@@ -44,10 +45,11 @@ reg [31:0] read_data;
 always @(posedge clk) begin
 	if (sys_rst) begin
 		// PCIe User Registers
-		if_v4addr = 32'hd000_0000; //{8'd10, 8'd0, 8'd21, 8'd199};
-		if_macaddr = 48'h003776_000001;
-		dest_v4addr = {8'd10, 8'd0, 8'd21, 8'd255};
-		dest_macaddr = 48'hffffff_ffffff;
+		if_v4addr <= {8'd10, 8'd0, 8'd21, 8'd199};
+		if_macaddr <= 48'h003776_000001;
+		dest_v4addr <= {8'd10, 8'd0, 8'd21, 8'd255};
+		dest_macaddr <= 48'hffffff_ffffff;
+		mem0_paddr <= (48'hd000_0000>>12);
 	end else begin
 		case (rd_addr[5:0])
 			6'h00: // if ipv4_addr
@@ -62,6 +64,10 @@ always @(posedge clk) begin
 				read_data[31:0] <= {dest_macaddr[47:16]};
 			6'h07: // dest dst_mac 15-00bit
 				read_data[31:0] <= {dest_macaddr[15:0],16'h00};
+			6'h0A: // mem0 remote physical address
+				read_data[31:0] <= {8'h00, mem0_paddr[15:12],4'b0, mem0_paddr[23:16], mem0_paddr[31:24]};
+			6'h0B: // 
+				read_data[31:0] <= {mem0_paddr[39:32], mem0_paddr[47:40], 16'h00};
 			default: read_data[31:0] <= 32'h0;
 		endcase
 		if (wr_en == 1'b1) begin
@@ -117,6 +123,20 @@ always @(posedge clk) begin
 						dest_macaddr[15: 8] <= wr_data[31:24];
 					if (wr_be[1])
 						dest_macaddr[ 7: 0] <= wr_data[23:16];
+				end
+				6'h0A: begin // mem0 remote physical address
+					if (wr_be[1])
+						mem0_paddr[15:12] <= wr_data[23:20];
+					if (wr_be[2])
+						mem0_paddr[23:16] <= wr_data[15:8];
+					if (wr_be[3])
+						mem0_paddr[31:24] <= wr_data[7:0];
+				end
+				6'h0b: begin
+					if (wr_be[0])
+						mem0_paddr[39:32] <= wr_data[31:24];
+					if (wr_be[1])
+						mem0_paddr[47:40] <= wr_data[23:16];
 				end
 			endcase
 		end

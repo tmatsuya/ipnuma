@@ -102,6 +102,7 @@ module PIO_EP #(
 	output [47:0] if_macaddr,
 	output [31:0] dest_v4addr,
 	output [47:0] dest_macaddr,
+	output [47:12] mem0_paddr,
 
 	// XGMII
 	input xgmii_clk,
@@ -172,6 +173,7 @@ wire [7:0] debug;
 	.if_macaddr(if_macaddr),
 	.dest_v4addr(dest_v4addr),
 	.dest_macaddr(dest_macaddr),
+	.mem0_paddr(mem0_paddr),
 
 	.debug(debug)
       );
@@ -366,6 +368,7 @@ PIO_RX_SNOOP PIO_RX_SNOOP_inst (
 	.if_macaddr(if_macaddr),
 	.dest_v4addr(dest_v4addr),
 	.dest_macaddr(dest_macaddr),
+	.mem0_paddr(mem0_paddr),
 
 	// XGMII-TX FIFO
 	.req_gap(req_gap),
@@ -393,7 +396,8 @@ XGMII_TX_ENGINE XGMII_TX_ENGINE_inst (
 	.if_v4addr(if_v4addr),
 	.if_macaddr(if_macaddr),
 	.dest_v4addr(dest_v4addr),
-	.dest_macaddr(dest_macaddr)
+	.dest_macaddr(dest_macaddr),
+	.mem0_paddr(mem0_paddr)
 );
 `else
 assign xgmii_0_txd = 64'h07_07_07_07_07_07_07_07;

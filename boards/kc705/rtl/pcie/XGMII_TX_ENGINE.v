@@ -25,7 +25,8 @@ module XGMII_TX_ENGINE (
 	input wire [31:0] if_v4addr,
 	input wire [47:0] if_macaddr,
 	input wire [31:0] dest_v4addr,
-	input wire [47:0] dest_macaddr
+	input wire [47:0] dest_macaddr,
+	input wire [47:12] mem0_paddr
 );
 
 //-----------------------------------

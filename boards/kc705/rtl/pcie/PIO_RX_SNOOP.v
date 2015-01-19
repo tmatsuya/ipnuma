@@ -27,6 +27,7 @@ module PIO_RX_SNOOP # (
 	input wire [47:0] if_macaddr,
 	input wire [31:0] dest_v4addr,
 	input wire [47:0] dest_macaddr,
+	input wire [47:12] mem0_paddr,
 
 	// XGMII-TX FIFO
 	input wire req_gap,
@@ -103,9 +104,9 @@ always @(posedge clk) begin
 				din[71:64] <= {4'hA, m_axis_rx_tkeep[4], m_axis_rx_tkeep[0], m_axis_rx_tlast, m_axis_rx_tvalid};
 				if (type[4:1] == 4'b0000) begin	// memory access request (need address translation)
 					if (fmt[0] == 1'b0) begin	// 32bit address
-						din[63:0] <= {m_axis_rx_tdata[63:32], if_v4addr[31:20], m_axis_rx_tdata[19:0]};
+						din[63:0] <= {m_axis_rx_tdata[63:32], mem0_paddr[31:20], m_axis_rx_tdata[19:0]};
 					end else begin			// 64bit address
-						din[63:0] <= {if_v4addr[31:20], m_axis_rx_tdata[19:0], 32'h0000_0000};
+						din[63:0] <= {mem0_paddr[31:20], m_axis_rx_tdata[19:0], 32'h0000_0000};
 					end
 				end else if (completion)  // completor TLP
 					din[63:0] <= {m_axis_rx_tdata[63:32], ~m_axis_rx_tdata[31:28], m_axis_rx_tdata[27:0]};  // Inver Request ID
