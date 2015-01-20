@@ -55,7 +55,7 @@ int main(int argc, char **argv)
 	i = 0;
 
 	start(&tw);
-	while (*count_s < 200000) {
+	while (*count_s < 2000000) {
 		if (sendto(sock_s, buf_s, BUFSIZE, 0, (struct sockaddr *)&addr_s, sizeof(addr_s)) < 0){
 			perror("sendto()");
 		}
