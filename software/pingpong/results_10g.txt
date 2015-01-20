@@ -1,0 +1,32 @@
+<Test environment 2014/1/20>
+[fedora21@jgn-tv2 pingpong]$ uname -a
+Linux jgn-tv2 3.17.8-300.fc21.x86_64 #1 SMP Thu Jan 8 23:32:49 UTC 2015 x86_64
+x86_64 x86_64 GNU/Linux
+[centos6.6@jgn-tv4 pingpong]$ uname -a
+Linux jgn-tv4 2.6.32-504.3.3.el6.x86_64 #1 SMP Wed Dec 17 01:55:02 UTC 2014
+x86_64 x86_64 x86_64 GNU/Linux
+
+<IP-NUMA KC705 2014/1/20>
+physical address=000072D3DBAC
+if_ipv4=192.168.1.1
+if_mac=00:37:76:10:00:01
+dest_ipv4=192.168.1.2
+dest_mac=00:37:76:10:00:02
+mem0paddr=000064EBC000
+baraddr=000080000000
+mmap: start 80000000 len:00040000 Total=262MB
+local physical address=000072D3DBAC
+remote physical address?00004959FC88
+5.9684660435(sec)
+
+2,000,000 loop
+----------------------------------
+<SOCKET Pingpong 10G 2014/1/20>
+[tmatsuya@jgn-tv2 pingpong]$ ./socket_pingpong 192.168.1.2
+22.1291010380(sec)
+1000000,2000000,1999999
+[tmatsuya@jgn-tv4 pingpong]$ ./socket_pingpong 192.168.1.1
+22.2436699867(sec)
+1000000,2000000,1999999
+
+
