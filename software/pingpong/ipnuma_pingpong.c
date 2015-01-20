@@ -137,7 +137,7 @@ int main(int argc,char **argv)
 	if ( !strcmp( argv[1], "s") ) {
 		while (rdata < 0);
 		start(&tw);
-		while (rdata < 20000) {
+		while (rdata < 2000000) {
 			rdata2 = rdata;
 			*(int *)(mmapped + (mem0p & 0xfff)) = sdata;
 			do {
