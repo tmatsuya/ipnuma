@@ -53,7 +53,7 @@ int init_numa(int server_flag)
 		fprintf(stderr,"cannot IOCTL\n");
 		return 1;
 	}
-	printf("physical address=%012lX\n", pa);
+	printf("physical address=%012llX\n", pa);
 	if ( ioctl( numa_fd, IPNUMA_IOCTL_SETIFV4ADDR, if_ipv4) < 0 ) {
 		fprintf(stderr,"cannot IOCTL\n");
 		return 1;
@@ -83,7 +83,7 @@ int init_numa(int server_flag)
 		fprintf(stderr,"cannot IOCTL\n");
 		return 1;
 	}
-	printf("baraddr=%012lX\n", baraddr);
+	printf("baraddr=%012llX\n", baraddr);
 
 	return 0;
 }
@@ -91,7 +91,8 @@ int init_numa(int server_flag)
 int main(int argc,char **argv)
 {
 	unsigned char *mmapped;
-	int rdata = -1, rdata2, sdata = 0;
+	int rdata __attribute__((aligned(64))) = -1;
+	int rdata2, sdata = 0;
 	int fd;
 	unsigned int st,len=0x40000,poff;
 	struct timespec treq;
@@ -121,9 +122,9 @@ int main(int argc,char **argv)
 		return 1;
 	}
 
-	printf("local physical address=%012lX\n", pa);
+	printf("local physical address=%012llX\n", pa);
 	printf("remote physical address?");
-	scanf("%lx", &mem0p);
+	scanf("%llx", &mem0p);
 
 	if ( ioctl( numa_fd, IPNUMA_IOCTL_SETMEM0PADDR, &mem0p) < 0 ) {
 		fprintf(stderr,"cannot IOCTL\n");
