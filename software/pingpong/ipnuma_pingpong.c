@@ -19,6 +19,7 @@
 #define	NUMA_DEVICE	"/dev/ipnuma/0"
 #define	MEM_DEVICE	"/dev/mem"
 
+int rdata __attribute__((aligned(64)));
 TimeWatcher tw;
 int numa_fd = -1;
 unsigned long long pa, mem0p = 0LL, baraddr;
@@ -91,7 +92,6 @@ int init_numa(int server_flag)
 int main(int argc,char **argv)
 {
 	unsigned char *mmapped;
-	int rdata __attribute__((aligned(64))) = -1;
 	int rdata2, sdata = 0;
 	int fd;
 	unsigned int st,len=0x40000,poff;
@@ -108,6 +108,7 @@ int main(int argc,char **argv)
 	else
 		init_numa(0);
 
+	rdata = -1;
 	st = baraddr;
 	poff=st % 4096;
 	if ((fd=open(MEM_DEVICE,O_RDWR)) <0) {
