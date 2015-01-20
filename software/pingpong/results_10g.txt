@@ -6,22 +6,24 @@ x86_64 x86_64 GNU/Linux
 Linux jgn-tv4 2.6.32-504.3.3.el6.x86_64 #1 SMP Wed Dec 17 01:55:02 UTC 2014
 x86_64 x86_64 x86_64 GNU/Linux
 
-<IP-NUMA KC705 2014/1/20>
-physical address=000072D3DBAC
+<IP-NUMA KC705 2014/1/21>
+
+[tmatsuya@jgn-tv4 pingpong]$ sudo ./ipnuma_pingpong s
+physical address=0000663A8640
 if_ipv4=192.168.1.1
 if_mac=00:37:76:10:00:01
 dest_ipv4=192.168.1.2
 dest_mac=00:37:76:10:00:02
-mem0paddr=000064EBC000
+mem0paddr=000000008100
 baraddr=000080000000
 mmap: start 80000000 len:00040000 Total=262MB
-local physical address=000072D3DBAC
-remote physical address?00004959FC88
-5.9684660435(sec)
-
-2,000,000 loop
+local physical address=0000663A8640
+remote physical address?000049B79100
+loop=2000001
+2.2580339909(sec)
 ----------------------------------
 <SOCKET Pingpong 10G 2014/1/20>
+
 [tmatsuya@jgn-tv2 pingpong]$ ./socket_pingpong 192.168.1.2
 22.1291010380(sec)
 1000000,2000000,1999999
