@@ -55,6 +55,7 @@
 //--               design.
 //--
 //------------------------------------------------------------------------------
+`include "../setup.v"
 
 `timescale 1ps / 1ps
 
@@ -179,7 +180,11 @@ module  pcie_app_7x#(
   assign cfg_dsn = {`PCI_EXP_EP_DSN_2, `PCI_EXP_EP_DSN_1};  // Assign the input DSN
   assign s_axis_tx_tuser[0] = 1'b0;                // Unused for V6
   assign s_axis_tx_tuser[1] = 1'b0;                // Error forward packet
+`ifdef ENABLE_STREAM
+  assign s_axis_tx_tuser[2] = 1'b1;                // Stream packet
+`else
   assign s_axis_tx_tuser[2] = 1'b0;                // Stream packet
+`endif
 
   assign cfg_err_cor = 1'b0;                       // Never report Correctable Error
   assign cfg_err_ur = 1'b0;                        // Never report UR
