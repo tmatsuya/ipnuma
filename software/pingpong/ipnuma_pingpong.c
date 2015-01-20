@@ -19,7 +19,7 @@
 #define	NUMA_DEVICE	"/dev/ipnuma/0"
 #define	MEM_DEVICE	"/dev/mem"
 
-int rdata __attribute__((aligned(64)));
+volatile int rdata __attribute__((aligned(64)));
 TimeWatcher tw;
 int numa_fd = -1;
 unsigned long long pa, mem0p = 0LL, baraddr;
@@ -137,7 +137,10 @@ int main(int argc,char **argv)
 	treq.tv_nsec = 1;
 
 	if ( !strcmp( argv[1], "s") ) {
-		while (rdata < 0);
+		while (rdata < 0) {
+				asm volatile ("clflush (%0)" :: "r"(&rdata));
+				asm volatile("mfence":::"memory");
+		}
 		start(&tw);
 		while (rdata < 2000000) {
 			rdata2 = rdata;
@@ -148,11 +151,13 @@ int main(int argc,char **argv)
 //				nanosleep(&treq, NULL);
 //				clock_nanosleep(CLOCK_REALTIME, 0, &treq, NULL);
 //				asm volatile("rep; nop" ::: "memory");
+				asm volatile("mfence":::"memory");
 			} while (rdata == rdata2);
 			sdata = rdata+1;
 		
 		}
 		end(&tw);
+		printf("loop=%lld\n", rdata);
 		print_time_sec(&tw);
 	}
 	if ( !strcmp( argv[1], "c") ) {
@@ -166,6 +171,7 @@ int main(int argc,char **argv)
 //				nanosleep(&treq, NULL);
 //				clock_nanosleep(CLOCK_REALTIME, 0, &treq, NULL);
 //				asm volatile("rep; nop" ::: "memory");
+				asm volatile("mfence":::"memory");
 			} while (rdata == rdata2);
 			sdata = rdata+1;
 		}
