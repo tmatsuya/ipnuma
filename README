@@ -1,4 +1,4 @@
-PCI-Express Core with Bus Master (Work In Progress)
+IP-NUMA (Work In Progress)
 -----------------------------
 [> Directory Structure
  /boards/     Top-level design files, constraint files and Makefiles
@@ -7,19 +7,23 @@ PCI-Express Core with Bus Master (Work In Progress)
  /software/   Software.
 
 [> Support Boards
-1- Lattice ECP3 Versakit
+1- Xilinx KC705 board (10G Ethernet, SFP+)
+1- Lattice ECP3 Versakit (Gigabit ethernet)
 
 [> Building tools
-You will need:
+ - Xilinx Vivado 2014.4
+          or
  - Lattice diamond 2.0/2.1/2.2
 
 [> How to build
-1- cd boards/ecp3versa/synthesis
-2- make
+ - cd boards/kc705/synthesis && ./make_batch.sh
+          or
+ - cd boards/ecp3versa/synthesis && make
 
 
 [> Memo ]
 available BAR2 range:
-64MB -> xpc	(0xfc00000c)
 1GB  -> fujitsu	(0xc000000c)
+64MB -> xpc	(0xfc00000c)
 
+Takeshi Matsuya (macchan@sfc.wide.ad.jp)
