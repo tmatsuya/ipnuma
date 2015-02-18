@@ -3,6 +3,7 @@
 # Takeshi Matsuya (macchan@sfc.wide.ad.jp)
 
 DEFAULT_BOARD="KC705"
+#DEFAULT_BOARD="ZYBO"
 
 
 function flash {
@@ -52,17 +53,21 @@ esac
 }
 
 function load {
+case "${board}" in
+	"ZYBO" ) device="xc7z010_1" ;;
+	* ) device="*" ;;
+esac
 	vivado -mode tcl -nojournal -nolog <<EOF
 	open_hw
 	connect_hw_server -url localhost:3121
 	current_hw_target [lindex [get_hw_targets ${target}] 0]
 	set_property PARAM.FREQUENCY 15000000 [lindex [get_hw_targets ${target}] 0]
 	open_hw_target
-	set_property PROGRAM.FILE {${bitfile}} [lindex [get_hw_devices] 0]
-	current_hw_device [lindex [get_hw_devices] 0]
-	set_property PROGRAM.FILE {${bitfile}} [lindex [get_hw_devices] 0]
-	program_hw_devices [lindex [get_hw_devices] 0]
-	refresh_hw_device [lindex [get_hw_devices] 0]
+	set_property PROGRAM.FILE {${bitfile}} [lindex [get_hw_devices ${device}] 0]
+	current_hw_device [lindex [get_hw_devices ${device}] 0]
+	set_property PROGRAM.FILE {${bitfile}} [lindex [get_hw_devices ${device}] 0]
+	program_hw_devices [lindex [get_hw_devices ${device}] 0]
+	refresh_hw_device [lindex [get_hw_devices ${device}] 0]
 	close_hw_target -quiet
 	disconnect_hw_server -quiet
 EOF
@@ -101,7 +106,7 @@ function usage {
 	echo "       $0 mcs   bit_file [-b board]             ... generate mcs file"
 	echo ""
 	echo "  target example : 210203336974A"
-	echo "  supported board: kc705"
+	echo "  supported board: kc705 zybo"
 	exit 0
 }
 
