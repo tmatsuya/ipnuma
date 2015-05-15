@@ -1,0 +1,44 @@
+<Test environment 2015/5/15>
+[tmatsuya@jgn-tv2 pingpong]$ uname -a
+Linux jgn-tv2 3.19.7-200.fc21.x86_64 #1 SMP Thu May 7 22:00:21 UTC 2015 x86_64 x86_64 x86_64 GNU/Linux
+[tmatsuya@jgn-tv3 pingpong]$ uname -a
+Linux jgn-tv3 3.19.7-200.fc21.x86_64 #1 SMP Thu May 7 22:00:21 UTC 2015 x86_64 x86_64 x86_64 GNU/Linux
+
+<IP-NUMA KC705 2015/5/15>
+
+[tmatsuya@jgn-tv2 pingpong]$ sudo ./ipnuma_pingpong s
+physical address=00006095A100
+if_ipv4=192.168.1.1
+if_mac=00:37:76:10:00:01
+dest_ipv4=192.168.1.2
+dest_mac=00:37:76:10:00:02
+mem0paddr=000000000000
+baraddr=000080000000
+mmap: start 80000000 len:00040000 Total=262MB
+local physical address=00006095A100
+remote physical address?00006DBAE100
+loop=2000001
+2.1615040302(sec)
+[tmatsuya@jgn-tv2 pingpong]$ sudo ./ipnuma_pingpong s
+physical address=000068794100
+if_ipv4=192.168.1.1
+if_mac=00:37:76:10:00:01
+dest_ipv4=192.168.1.2
+dest_mac=00:37:76:10:00:02
+mem0paddr=00000000E100
+baraddr=000080000000
+mmap: start 80000000 len:00040000 Total=262MB
+local physical address=000068794100
+remote physical address?00006EC37100
+loop=2000001
+2.1705050468(sec)
+----------------------------------
+<SOCKET Pingpong 10G 2015/5/15>
+
+[tmatsuya@jgn-tv2 pingpong]$ ./socket_pingpong 192.168.1.2
+22.1079888344(sec)
+1000000,2000000,1999999
+[tmatsuya@jgn-tv2 pingpong]$ ./socket_pingpong 192.168.1.2
+22.5805330276(sec)
+1000000,2000000,1999999
+
