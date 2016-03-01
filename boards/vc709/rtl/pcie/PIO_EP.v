@@ -257,7 +257,7 @@ module PIO_EP #(
   //
   // ENDPOINT MEMORY : 8KB memory aperture implemented in FPGA BlockRAM(*)
   //
-
+wire [7:0] debug;
   PIO_EP_MEM_ACCESS EP_MEM (
 
     .user_clk(user_clk),     // I
@@ -284,8 +284,14 @@ module PIO_EP #(
     .gen_leg_intr(gen_leg_intr),
     .gen_transaction(gen_transaction),
 
-	.dipsw(dipsw),
-	.led(led)
+	// PCIe user registers
+	.if_v4addr(if_v4addr),
+	.if_macaddr(if_macaddr),
+	.dest_v4addr(dest_v4addr),
+	.dest_macaddr(dest_macaddr),
+	.mem0_paddr(mem0_paddr),
+
+	.debug(debug)
   );
 
   //
@@ -517,5 +523,6 @@ app app_inst (
 	.led()
 );
 
+assign led = debug;
 
 endmodule // PIO_EP

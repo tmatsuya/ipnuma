@@ -106,8 +106,17 @@ module PIO_EP_MEM_ACCESS #(
   output reg           gen_msi_intr,
   output reg           gen_msix_intr,
 
-	input [7:0] dipsw,
-	output reg [7:0] led = 8'h00
+	// PCIe user registers
+	output reg [31:0] if_v4addr = {8'd10, 8'd0, 8'd21, 8'd199},
+	output reg [47:0] if_macaddr = 48'h003776_000001,
+	output reg [31:0] dest_v4addr = {8'd10, 8'd0, 8'd21, 8'd255},
+	output reg [47:0] dest_macaddr = 48'hffffff_ffffff,
+	output reg [47:12] mem0_paddr = (48'hd000_0000>>12),
+
+	input wire [7:0] dipsw,
+	output reg [7:0] led = 8'h00,
+
+	input wire [7:0] debug
 
   );
 
@@ -388,14 +397,23 @@ always @(posedge user_clk) begin
 	if (!reset_n) begin
 	end else if (rd_addr[13:12] == 2'b01) begin  // if BAR0 ?
 		case (rd_addr[7:0])
-		8'h00: // ID
-			read_data[31:0] <= {id[7:0], id[15:8], id[23:16], id[31:24]};
-		8'h01: // dipsw
-			read_data[31:0] <= {dipsw[7:0], 24'h0};
-		8'h02: // led
-			read_data[31:0] <= {led, 24'h0};
-		default:
-			read_data[31:0] <= 32'h00;
+		8'h00: // if ipv4_addr
+			read_data[31:0] <= {if_v4addr[31:0]};
+		8'h02: // if mac 47-16bit
+			read_data[31:0] <= {if_macaddr[47:16]};
+		8'h03: // if mac 15-00bit
+			read_data[31:0] <= {if_macaddr[15:0],8'h00,debug[7:0]};
+		8'h04: // dest ipv4_addr
+			read_data[31:0] <= {dest_v4addr[31:0]};
+		8'h06: // dest dst_mac 47-16bit
+			read_data[31:0] <= {dest_macaddr[47:16]};
+		8'h07: // dest dst_mac 15-00bit
+			read_data[31:0] <= {dest_macaddr[15:0],16'h00};
+		8'h0A: // mem0 remote physical address
+			read_data[31:0] <= {8'h00, mem0_paddr[15:12],4'b0, mem0_paddr[23:16], mem0_paddr[31:24]};
+		8'h0B: // 
+			read_data[31:0] <= {mem0_paddr[39:32], mem0_paddr[47:40], 16'h00};
+		default: read_data[31:0] <= 32'h0;
 		endcase
 	end
 end
@@ -405,21 +423,79 @@ end
 //===============================================================//
 always @(posedge user_clk) begin
 	if (!reset_n) begin
+		// PCIe User Registers
+		if_v4addr <= {8'd10, 8'd0, 8'd21, 8'd199};
+		if_macaddr <= 48'h003776_000001;
+		dest_v4addr <= {8'd10, 8'd0, 8'd21, 8'd255};
+		dest_macaddr <= 48'hffffff_ffffff;
+		mem0_paddr <= (48'hd000_0000>>12);
 	end else if (wr_addr[13:12] == 2'b01 && wr_en) begin   // if BAR0 and write enable ?
 		case (wr_addr[7:0])
-		8'h00: begin // ID
+		6'h00: begin // if ipv4_addr
 			if (wr_be[0])
-				id[31:24] <= wr_data[7:0];
+				if_v4addr[31:24] <= wr_data[31:24];
 			if (wr_be[1])
-				id[23:16] <= wr_data[15:8];
+				if_v4addr[23:16] <= wr_data[23:16];
 			if (wr_be[2])
-				id[15:8] <= wr_data[23:16];
+				if_v4addr[15: 8] <= wr_data[15:8];
 			if (wr_be[3])
-				id[7:0] <= wr_data[31:24];
+				if_v4addr[ 7: 0] <= wr_data[7:0];
 		end
-		8'h02: begin // led
+		6'h02: begin // if mac 47-16bit
+			if (wr_be[0])
+				if_macaddr[47:40] <= wr_data[31:24];
+			if (wr_be[1])
+				if_macaddr[39:32] <= wr_data[23:16];
+			if (wr_be[2])
+				if_macaddr[31:23] <= wr_data[15: 8];
 			if (wr_be[3])
-				led[7:0] <= wr_data[31:24];
+				if_macaddr[23:16] <= wr_data[ 7: 0];
+		end
+		6'h03: begin // if mac 15-00bit
+			if (wr_be[0])
+				if_macaddr[15: 8] <= wr_data[31:24];
+			if (wr_be[1])
+				if_macaddr[ 7: 0] <= wr_data[23:16];
+		end
+		6'h04: begin // dest ipv4_addr
+			if (wr_be[0])
+				dest_v4addr[31:24] <= wr_data[31:24];
+			if (wr_be[1])
+				dest_v4addr[23:16] <= wr_data[23:16];
+			if (wr_be[2])
+				dest_v4addr[15: 8] <= wr_data[15:8];
+			if (wr_be[3])
+				dest_v4addr[ 7: 0] <= wr_data[7:0];
+		end
+		6'h06: begin // dest mac 47-16bit
+			if (wr_be[0])
+				dest_macaddr[47:40] <= wr_data[31:24];
+			if (wr_be[1])
+				dest_macaddr[39:32] <= wr_data[23:16];
+			if (wr_be[2])
+				dest_macaddr[31:24] <= wr_data[15:8];
+			if (wr_be[3])
+				dest_macaddr[23:16] <= wr_data[7:0];
+		end
+		6'h07: begin // dest mac 15-00bit
+			if (wr_be[0])
+				dest_macaddr[15: 8] <= wr_data[31:24];
+			if (wr_be[1])
+				dest_macaddr[ 7: 0] <= wr_data[23:16];
+		end
+		6'h0A: begin // mem0 remote physical address
+			if (wr_be[1])
+				mem0_paddr[15:12] <= wr_data[23:20];
+			if (wr_be[2])
+				mem0_paddr[23:16] <= wr_data[15:8];
+			if (wr_be[3])
+				mem0_paddr[31:24] <= wr_data[7:0];
+		end
+		6'h0b: begin
+			if (wr_be[0])
+				mem0_paddr[39:32] <= wr_data[31:24];
+			if (wr_be[1])
+				mem0_paddr[47:40] <= wr_data[23:16];
 		end
 		endcase
 	end
