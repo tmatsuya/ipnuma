@@ -192,6 +192,20 @@ module PIO #(
   input                            cfg_power_state_change_interrupt,
   output                           cfg_power_state_change_ack,
 
+	input wire sys_rst,
+	// PCIe user registers
+	output [31:0] if_v4addr,
+	output [47:0] if_macaddr,
+	output [31:0] dest_v4addr,
+	output [47:0] dest_macaddr,
+
+	// XGMII
+	input xgmii_clk,
+	output [63:0] xgmii_0_txd,
+	output [ 7:0] xgmii_0_txc,
+	input  [63:0] xgmii_0_rxd,
+	input  [ 7:0] xgmii_0_rxc,
+
 	input [7:0] dipsw,
 	output [7:0] led
 
@@ -287,6 +301,20 @@ module PIO #(
     .cfg_interrupt_msix_data                 ( cfg_interrupt_msix_data ),
     .req_completion                          ( req_completion ),
     .completion_done                         ( completion_done ),
+
+	.sys_rst( sys_rst ),
+	// PCIe user registers
+	.if_v4addr(if_v4addr),
+	.if_macaddr(if_macaddr),
+	.dest_v4addr(dest_v4addr),
+	.dest_macaddr(dest_macaddr),
+
+	// XGMII
+	.xgmii_clk(xgmii_clk),
+	.xgmii_0_txd(xgmii_0_txd),
+	.xgmii_0_txc(xgmii_0_txc),
+	.xgmii_0_rxd(xgmii_0_rxd),
+	.xgmii_0_rxc(xgmii_0_rxc),
 
 	.dipsw(dipsw),
 	.led(led)

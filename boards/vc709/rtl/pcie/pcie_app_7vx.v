@@ -238,8 +238,23 @@ module  pcie_app_7vx#(
   input                                      user_reset,
   input                                      user_lnk_up,
 
-	input wire [7:0] dipsw,
-	output wire [7:0] led
+	input wire sys_rst,
+	// PCIe user registers
+	output wire [31:0] if_v4addr,
+	output wire [47:0] if_macaddr,
+	output wire [31:0] dest_v4addr,
+	output wire [47:0] dest_macaddr,
+
+	// XGMII
+	input xgmii_clk,
+	output wire [63:0] xgmii_0_txd,
+	output wire [ 7:0] xgmii_0_txc,
+	input wire [63:0] xgmii_0_rxd,
+	input wire [ 7:0] xgmii_0_rxc,
+	input wire xphy_status,
+
+        input [7:0] dipsw,
+        output [7:0] led
 
 );
 
@@ -391,6 +406,20 @@ PIO #(
   .user_clk                                       ( user_clk ),
   .reset_n                                        ( ~user_reset ),
   .user_lnk_up                                    ( user_lnk_up ),
+
+	.sys_rst( sys_rst ),
+	// PCIe user registers
+	.if_v4addr(if_v4addr),
+	.if_macaddr(if_macaddr),
+	.dest_v4addr(dest_v4addr),
+	.dest_macaddr(dest_macaddr),
+
+        // XGMII
+	.xgmii_clk(xgmii_clk),
+	.xgmii_0_txd(xgmii_0_txd),
+	.xgmii_0_txc(xgmii_0_txc),
+	.xgmii_0_rxd(xgmii_0_rxd),
+	.xgmii_0_rxc(xgmii_0_rxc),
 
 	.dipsw(dipsw),
 	.led(led)

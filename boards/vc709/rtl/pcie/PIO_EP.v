@@ -187,6 +187,21 @@ module PIO_EP #(
   output                           req_completion,
   output                           completion_done,
 
+	input wire sys_rst,
+	// PCIe user registers
+	output [31:0] if_v4addr,
+	output [47:0] if_macaddr,
+	output [31:0] dest_v4addr,
+	output [47:0] dest_macaddr,
+	output [47:12] mem0_paddr,
+
+        // XGMII
+	input xgmii_clk,
+	output [63:0] xgmii_0_txd,
+	output [ 7:0] xgmii_0_txc,
+	input  [63:0] xgmii_0_rxd,
+	input  [ 7:0] xgmii_0_rxc,
+
 	input [7:0] dipsw,
 	output [7:0] led
 
@@ -491,7 +506,16 @@ module PIO_EP #(
     assign req_completion = req_compl || req_compl_wd || req_compl_ur;
     assign completion_done = compl_done || interrupt_done ;
 
+app app_inst (
+	.sys_rst(sys_rst),
+	.xgmii_clk(xgmii_clk),
+	.xgmii_txd(xgmii_0_txd),
+	.xgmii_txc(xgmii_0_txc),
+	.xgmii_rxd(xgmii_0_rxd),
+	.xgmii_rxc(xgmii_0_rxc),
+	.dipsw(dipsw),
+	.led()
+);
+
+
 endmodule // PIO_EP
-
-
-

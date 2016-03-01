@@ -11,15 +11,8 @@ module  app (
 	output wire [7:0] xgmii_txc,
 	input wire [63:0] xgmii_rxd,
 	input wire [7:0] xgmii_rxc,
-	input wire [7:0] xphy_status,
-	// BUTTON
-	input wire button_n,
-	input wire button_s,
-	input wire button_w,
-	input wire button_e,
-	input wire button_c,
 	// DIP SW
-	input wire [3:0] dipsw,
+	input wire [7:0] dipsw,
 	// Diagnostic LEDs
 	output wire [7:0] led	   
 );
