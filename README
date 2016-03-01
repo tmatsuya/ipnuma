@@ -11,7 +11,8 @@ IP-NUMA (Work In Progress)
 1- Lattice ECP3 Versakit (Gigabit ethernet)
 
 [> Building tools
- - Xilinx Vivado 2014.4
+ - Xilinx Vivado 2014.4 (only KC705 board)
+ - Xilinx Vivado 2015.4 (only VC709 board)
           or
  - Lattice diamond 2.0/2.1/2.2
 
