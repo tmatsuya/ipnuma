@@ -132,7 +132,7 @@ static unsigned int ipnuma_poll(struct file *filp, poll_table *wait)
 }
 
 
-static int ipnuma_ioctl(struct file *filp,
+static long ipnuma_ioctl(struct file *filp,
 			unsigned int cmd, unsigned long arg)
 {
 	unsigned long *ptr, ret;
