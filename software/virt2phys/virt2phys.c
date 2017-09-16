@@ -83,7 +83,6 @@ static unsigned long long any_v2p(unsigned long long vaddr)
 #else
 	pud = pud_offset(pgd, vaddr);
 #endif
-#if 1
 	if (bad_address(pud)) {
 		printk(KERN_ALERT "[nskk] Alert: bad address of pud %p\n", pud);
 		goto bad;
@@ -119,7 +118,6 @@ static unsigned long long any_v2p(unsigned long long vaddr)
 #else
 	pte->pte |= _PAGE_RW; // | _PAGE_USER;
 	paddr = pte_val(*pte);
-#endif
 #endif
 
 out:
