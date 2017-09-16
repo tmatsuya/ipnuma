@@ -16,9 +16,17 @@ module top # (
 ) (
 	input wire sysclk_p,
 	input wire sysclk_n,
-	// SI570 user clock (input 156.25MHz)
-	input wire si570_refclk_p,
-	input wire si570_refclk_n,
+        //-SI5324 I2C programming interface
+        inout wire i2c_clk,
+        inout wire i2c_data,
+        output wire i2c_mux_rst_n,
+        output wire si5324_rst_n,
+	// 156.25MHz clock in
+	input wire xphy_refclk_clk_p,
+	input wire xphy_refclk_clk_n,
+        // SI570 user clock (input 156.25MHz)
+        input wire si570_refclk_p,
+        input wire si570_refclk_n,
 	// USER SMA GPIO clock (output to USER SMA clock)
 	output wire user_sma_gpio_p,
 	output wire user_sma_gpio_n,
@@ -80,6 +88,27 @@ IBUFDS IBUFDS_clk200 (
 	.O(clk200)
 );
 
+`ifdef USE_SI5324
+wire            clk50;
+reg [1:0]       clk_divide = 2'b00;
+always @(posedge clk200)
+        clk_divide  <= clk_divide + 1'b1;
+
+BUFG buffer_clk50 (
+        .I    (clk_divide[1]),
+        .O    (clk50    )
+);
+
+//-SI 5324 programming
+clock_control cc_inst (
+        .i2c_clk(i2c_clk),
+        .i2c_data(i2c_data),
+        .i2c_mux_rst_n(i2c_mux_rst_n),
+        .si5324_rst_n(si5324_rst_n),
+        .rst(sys_rst),
+        .clk50(clk50)
+);
+`endif
 wire clksi570;
 IBUFDS IBUFDS_0 (
 	.I(si570_refclk_p),
@@ -440,7 +469,7 @@ network_path network_path_inst_1 (
 	.prtad(xphy1_prtad),
 	.xphy_status(xphy1_status),
 	.clk156(clk156),
-	.soft_reset(~axi_str_c2s1_aresetn),
+	.soft_reset(1'b0),
 	.sys_rst((sys_rst & ~mmcm_locked_clk156)),
 	.nw_rst_out(nw1_reset_i),   
 	.dclk(dclk_i), 
@@ -496,7 +525,7 @@ network_path network_path_inst_4 (
 	.prtad(xphy4_prtad),
 	.xphy_status(xphy4_status),
 	.clk156(clk156),
-	.soft_reset(~axi_str_c2s1_aresetn),
+	.soft_reset(1'b0),
 	.sys_rst((sys_rst & ~mmcm_locked_clk156)),
 	.nw_rst_out(nw4_reset_i),   
 	.dclk(dclk_i), 
@@ -504,7 +533,8 @@ network_path network_path_inst_4 (
 	.xgmii_txc(xgmii4_txc),
 	.xgmii_rxd(xgmii4_rxdtmp),
 	.xgmii_rxc(xgmii4_rxctmp),
-	.polarity(dipsw[0])	// macchan
+//	.polarity(dipsw[0])	// macchan
+	.polarity(1'b0)	// macchan
 ); 
 
 xgmiisync xgmiisync_4 (
@@ -554,8 +584,13 @@ xgbaser_gt_diff_quad_wrapper xgbaser_gt_wrapper_inst_0 (
 xgbaser_gt_same_quad_wrapper xgbaser_gt_wrapper_inst_0 (
 	.areset(sys_rst),
 `ifdef ENABLE_XGMII4
+`ifdef USE_SI5324
+        .refclk_p(xphy_refclk_clk_p),
+        .refclk_n(xphy_refclk_clk_n),
+`else
 	.refclk_p(sma_mgt_refclk_p),
 	.refclk_n(sma_mgt_refclk_n),
+`endif
 `else
 	.refclk_p(xphy0_refclk_p),
 	.refclk_n(xphy0_refclk_n),
@@ -1134,10 +1169,17 @@ pcie_app_7x  #(
 
 	// XGMII
 	.xgmii_clk(clk156),
+`ifdef ENABLE_XGMII01
+	.xgmii_0_txd(xgmii0_txd),
+	.xgmii_0_txc(xgmii0_txc),
+	.xgmii_0_rxd(xgmii0_rxd),
+	.xgmii_0_rxc(xgmii0_rxc),
+`else
 	.xgmii_0_txd(xgmii4_txd),
 	.xgmii_0_txc(xgmii4_txc),
 	.xgmii_0_rxd(xgmii4_rxd),
 	.xgmii_0_rxc(xgmii4_rxc),
+`endif
 
 	.dipsw(dipsw),
 	.led(led)

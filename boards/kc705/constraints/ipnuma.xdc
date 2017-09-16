@@ -2,6 +2,30 @@
 # This XDC is intended for use with the Xilinx KC705 Development Board with a 
 # xc7k325t-ffg900-2 part
 ###############################################################################
+
+# 156.25 MHz clock control LOCs
+set_property IOSTANDARD LVCMOS25 [get_ports i2c_clk]
+set_property SLEW SLOW [get_ports i2c_clk]
+set_property DRIVE 16 [get_ports i2c_clk]
+set_property PULLUP TRUE [get_ports i2c_clk]
+set_property PACKAGE_PIN K21  [get_ports i2c_clk]
+
+set_property IOSTANDARD LVCMOS25 [get_ports i2c_data]
+set_property SLEW SLOW [get_ports i2c_data]
+set_property DRIVE 16 [get_ports i2c_data]
+set_property PULLUP TRUE [get_ports i2c_data]
+set_property PACKAGE_PIN L21  [get_ports i2c_data]
+
+set_property IOSTANDARD LVCMOS25 [get_ports i2c_mux_rst_n]
+set_property SLEW SLOW [get_ports i2c_mux_rst_n]
+set_property DRIVE 16 [get_ports i2c_mux_rst_n]
+set_property PACKAGE_PIN P23  [get_ports i2c_mux_rst_n]
+
+set_property IOSTANDARD LVCMOS25 [get_ports si5324_rst_n]
+set_property SLEW SLOW [get_ports si5324_rst_n]
+set_property DRIVE 16 [get_ports si5324_rst_n]
+set_property PACKAGE_PIN AE20 [get_ports si5324_rst_n]
+
 ##---------------------------------------------------------------------------------------
 ## 10GBASE-R constraints
 ##---------------------------------------------------------------------------------------
@@ -9,8 +33,8 @@
 set_property PACKAGE_PIN C8 [get_ports xphy0_refclk_p]
 set_property PACKAGE_PIN C7 [get_ports xphy0_refclk_n]
 ##GT Ref clk (SI5326 SI5326_OUT_C_{P,N}, MGTREFCLK0{P,N})
-#set_property PACKAGE_PIN L8 [get_ports xphy4_refclk_p]
-#set_property PACKAGE_PIN L7 [get_ports xphy4_refclk_n]
+set_property PACKAGE_PIN L8 [get_ports xphy_refclk_clk_p]
+set_property PACKAGE_PIN L7 [get_ports xphy_refclk_clk_n]
 
 ### Comment the following lines for different quad instance
 ###---------- Set placement for gt0_gtx_wrapper_i/GTX_DUAL ------

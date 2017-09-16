@@ -49,6 +49,9 @@ read_verilog "../rtl/pcie/PIO_TX_SNOOP.v"
 read_verilog "../rtl/pcie/XGMII_RX_ENGINE.v"
 read_verilog "../rtl/pcie/TX_MUX.v"
 read_verilog "../rtl/biosrom.v"
+read_vhdl "../rtl/clock_control/clock_control.vhd"
+read_vhdl "../rtl/clock_control/clock_control_program.vhd"
+read_vhdl "../rtl/clock_control/kcpsm6.vhd"
 
 
 # NGC files
