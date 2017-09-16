@@ -33,7 +33,7 @@
 #ifndef	DRV_NAME
 #define	DRV_NAME	"virt2phys"
 #endif
-#define	DRV_VERSION	"0.0.2"
+#define	DRV_VERSION	"0.1.0"
 #define	virt2phys_DRIVER_NAME	DRV_NAME " Generic Etherpipe driver " DRV_VERSION
 
 #if LINUX_VERSION_CODE > KERNEL_VERSION(3,8,0)
@@ -55,6 +55,9 @@ static int bad_address(void *p)
 static unsigned long long any_v2p(unsigned long long vaddr)
 {
 	pgd_t *pgd = pgd_offset(current->mm, vaddr);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)
+	p4d_t *p4d;
+#endif
 	pud_t *pud;
 	pmd_t *pmd;
 	pte_t *pte;
@@ -72,7 +75,15 @@ static unsigned long long any_v2p(unsigned long long vaddr)
 		goto out;
 	}
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)
+	p4d = p4d_offset(pgd, vaddr);
+	if (p4d_none(*p4d))
+		return 0;
+	pud = pud_offset(p4d, vaddr);
+#else
 	pud = pud_offset(pgd, vaddr);
+#endif
+#if 1
 	if (bad_address(pud)) {
 		printk(KERN_ALERT "[nskk] Alert: bad address of pud %p\n", pud);
 		goto bad;
@@ -108,6 +119,7 @@ static unsigned long long any_v2p(unsigned long long vaddr)
 #else
 	pte->pte |= _PAGE_RW; // | _PAGE_USER;
 	paddr = pte_val(*pte);
+#endif
 #endif
 
 out:
@@ -180,9 +192,9 @@ static long virt2phys_ioctl(struct file *filp,
 	printk("%s\n", __func__);
 	if (cmd == 1) {
 		ptr = (unsigned long long *)arg;
-printk( "VA=%p\n", *ptr);
+printk( "VA=%p\n", (unsigned long long *)*ptr);
 		ret = any_v2p(*ptr);
-printk( "PA=%p\n", ret);
+printk( "PA=%p\n", (unsigned long long *)ret);
 		*ptr = ret;
 		return 0;
 	}
