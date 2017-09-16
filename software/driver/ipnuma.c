@@ -25,7 +25,11 @@
 #define	__devexit_p
 #endif
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 8, 0)
+static const struct pci_device_id ipnuma_pci_tbl[] = {
+#else
 static DEFINE_PCI_DEVICE_TABLE(ipnuma_pci_tbl) = {
+#endif
 	{0x3776, 0x8010, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
 	{0,}
 };

@@ -27,6 +27,9 @@ static int bad_address(void *p)
 static unsigned long any_v2p(unsigned long vaddr)
 {
 	pgd_t *pgd = pgd_offset(current->mm, vaddr);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)
+	p4d_t *p4d;
+#endif
 	pud_t *pud;
 	pmd_t *pmd;
 	pte_t *pte;
@@ -43,8 +46,14 @@ static unsigned long any_v2p(unsigned long vaddr)
 		printk(KERN_ALERT "[nskk] Alert: pgd not present %lu\n", *pgd);
 		goto out;
 	}
-
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)
+	p4d = p4d_offset(pgd, vaddr);
+	if (p4d_none(*p4d))
+		return 0;
+	pud = pud_offset(p4d, vaddr);
+#else
 	pud = pud_offset(pgd, vaddr);
+#endif
 	if (bad_address(pud)) {
 		printk(KERN_ALERT "[nskk] Alert: bad address of pud %p\n", pud);
 		goto bad;
